@@ -1,0 +1,59 @@
+<template>
+    <div class="slds-grid slds-grid_align-spread slds-m-bottom_x-small">
+        <strong class="slds-text-body_regular">Currency &times; Amount</strong>
+        <lightning-button
+            label="Add Row"
+            icon-name="utility:add"
+            variant="brand"
+            onclick={addRow}>
+        </lightning-button>
+    </div>
+
+    <template if:true={hasRows}>
+        <template for:each={rows} for:item="row" for:index="idx">
+            <div key={row.key} class="slds-grid slds-gutters slds-m-bottom_x-small">
+                <div class="slds-col slds-size_5-of-12">
+                    <lightning-combobox
+                        label="Currency"
+                        variant="label-hidden"
+                        placeholder="Select currency"
+                        value={row.currencyIsoCode}
+                        options={row.options}
+                        data-idx={idx}
+                        onchange={handleCurrencyChange}
+                        required>
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_5-of-12">
+                    <lightning-input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        label="Amount"
+                        variant="label-hidden"
+                        placeholder="0.00"
+                        value={row.amount}
+                        data-idx={idx}
+                        onchange={handleAmountChange}
+                        required>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning-button-icon
+                        icon-name="utility:delete"
+                        alternative-text="Remove"
+                        title="Remove"
+                        data-idx={idx}
+                        onclick={removeRow}>
+                    </lightning-button-icon>
+                </div>
+            </div>
+        </template>
+    </template>
+
+    <template if:false={hasRows}>
+        <p class="slds-text-color_weak slds-text-body_small">
+            No rows yet. Click <strong>Add Row</strong> to specify a currency-amount pair.
+        </p>
+    </template>
+</template>

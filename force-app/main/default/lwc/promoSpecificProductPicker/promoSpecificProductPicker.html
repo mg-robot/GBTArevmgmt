@@ -1,0 +1,50 @@
+<template>
+    <lightning-input
+        type="search"
+        label="Search products"
+        value={searchTerm}
+        placeholder="Type at least 2 characters..."
+        onchange={handleSearch}>
+    </lightning-input>
+
+    <template if:true={loading}>
+        <lightning-spinner alternative-text="Searching" size="small"></lightning-spinner>
+    </template>
+
+    <template if:true={hasResults}>
+        <div class="slds-box slds-box_x-small slds-m-top_xx-small results-box">
+            <ul class="slds-listbox slds-listbox_vertical">
+                <template for:each={results} for:item="p">
+                    <li key={p.id} class="slds-listbox__item">
+                        <div
+                            class="slds-listbox__option slds-listbox__option_plain slds-p-around_x-small slds-cursor_pointer"
+                            data-name={p.name}
+                            data-code={p.productCode}
+                            onclick={addProduct}>
+                            <span class="slds-text-body_regular">{p.name}</span>
+                            <span class="slds-text-body_small slds-text-color_weak slds-m-left_xx-small">
+                                ({p.productCode})
+                            </span>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </template>
+
+    <template if:true={hasSelected}>
+        <div class="slds-m-top_small">
+            <strong class="slds-text-body_small">Selected ({selectedCount})</strong>
+            <div class="slds-pill_container slds-m-top_xx-small">
+                <template for:each={selected} for:item="p">
+                    <lightning-pill
+                        key={p.productCode}
+                        label={p.label}
+                        name={p.productCode}
+                        onremove={removeProduct}>
+                    </lightning-pill>
+                </template>
+            </div>
+        </div>
+    </template>
+</template>

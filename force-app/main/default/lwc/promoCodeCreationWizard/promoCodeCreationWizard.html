@@ -1,0 +1,316 @@
+<template>
+    <div class="wizard-container slds-p-around_medium">
+
+        <div class="slds-text-heading_small slds-m-bottom_x-small">
+            New Promo Code &mdash; Step {currentStep} of 9: {stepTitle}
+        </div>
+
+        <template if:true={errorMessage}>
+            <div
+                class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-bottom_small"
+                role="alert">
+                <h2>{errorMessage}</h2>
+            </div>
+        </template>
+
+        <!-- Step 1: Identity -->
+        <template if:true={isStep1}>
+            <p class="slds-text-color_weak slds-m-bottom_small">
+                What code string should members enter? What name displays on the cart? What terms appear at apply?
+            </p>
+            <lightning-input
+                label="Code"
+                value={code}
+                required
+                maxlength="50"
+                onchange={handleCodeChange}
+                message-when-pattern-mismatch="Uppercase alphanumeric only"
+                pattern="[A-Z0-9]+">
+            </lightning-input>
+            <template if:true={hasCodeConflicts}>
+                <p class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
+                    Note: this code is already used in {codeConflictsLabel}. New currencies are still allowed.
+                </p>
+            </template>
+            <lightning-input
+                label="Display Name"
+                value={displayName}
+                required
+                maxlength="80"
+                class="slds-m-top_small"
+                onchange={handleDisplayNameChange}>
+            </lightning-input>
+            <lightning-input-rich-text
+                label="Terms"
+                value={terms}
+                class="slds-m-top_small"
+                onchange={handleTermsChange}>
+            </lightning-input-rich-text>
+        </template>
+
+        <!-- Step 2: Discount Type -->
+        <template if:true={isStep2}>
+            <p class="slds-text-color_weak slds-m-bottom_small">
+                Is this a Percent discount or a fixed Amount discount?
+            </p>
+            <lightning-radio-group
+                name="discountType"
+                label="Discount Type"
+                options={discountTypeOptions}
+                value={discountType}
+                type="radio"
+                required
+                onchange={handleDiscountTypeChange}>
+            </lightning-radio-group>
+        </template>
+
+        <!-- Step 3: Discount Value (branches by type) -->
+        <template if:true={isStep3}>
+            <template if:true={isPercent}>
+                <p class="slds-text-color_weak slds-m-bottom_small">
+                    What percent off (0&ndash;100)? Apply to all org currencies (default), or pick specific currencies.
+                </p>
+                <lightning-input
+                    type="number"
+                    label="Percent Off"
+                    min="0.01"
+                    max="100"
+                    step="0.01"
+                    required
+                    value={percentValue}
+                    onchange={handlePercentValueChange}>
+                </lightning-input>
+                <lightning-checkbox-group
+                    label="Currencies"
+                    options={currencyOptions}
+                    value={selectedPercentCurrencies}
+                    class="slds-m-top_small"
+                    onchange={handlePercentCurrenciesChange}>
+                </lightning-checkbox-group>
+            </template>
+            <template if:true={isAmount}>
+                <p class="slds-text-color_weak slds-m-bottom_small">
+                    Which currencies should this code apply in? What fixed amount in each?
+                </p>
+                <c-promo-currency-amount-input
+                    available-currencies={availableCurrencies}
+                    initial-amounts={amounts}
+                    onchange={handleAmountsChange}>
+                </c-promo-currency-amount-input>
+            </template>
+        </template>
+
+        <!-- Step 4: Validity Window -->
+        <template if:true={isStep4}>
+            <p class="slds-text-color_weak slds-m-bottom_small">
+                When does this code become effective? When does it expire?
+            </p>
+            <lightning-input
+                type="datetime"
+                label="Effective Start"
+                value={effectiveStart}
+                required
+                onchange={handleStartChange}>
+            </lightning-input>
+            <lightning-input
+                type="datetime"
+                label="Effective End"
+                value={effectiveEnd}
+                required
+                class="slds-m-top_small"
+                onchange={handleEndChange}>
+            </lightning-input>
+            <p class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
+                Status flips to Expired automatically when the end date passes (nightly job).
+            </p>
+        </template>
+
+        <!-- Step 5: Usage Limits -->
+        <template if:true={isStep5}>
+            <p class="slds-text-color_weak slds-m-bottom_small">
+                How many total redemptions allowed? How many per member?
+            </p>
+            <lightning-input
+                type="number"
+                label="Total Usage Limit"
+                placeholder="Blank = unlimited"
+                step="1"
+                min="1"
+                value={totalLimit}
+                onchange={handleTotalLimitChange}>
+            </lightning-input>
+            <lightning-input
+                type="number"
+                label="Per-Member Usage Limit"
+                placeholder="Blank = unlimited"
+                step="1"
+                min="1"
+                class="slds-m-top_small"
+                value={perMemberLimit}
+                onchange={handlePerMemberLimitChange}>
+            </lightning-input>
+            <p class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
+                Reservations against limits happen at Apply; counter increments at Order Activation.
+            </p>
+        </template>
+
+        <!-- Step 6: Applicability -->
+        <template if:true={isStep6}>
+            <p class="slds-text-color_weak slds-m-bottom_small">
+                Which member types can use it? Which regions? Which products? Restricted to a sponsor account?
+            </p>
+            <lightning-checkbox-group
+                label="Member Type Scope (blank = all)"
+                options={memberTypeOptions}
+                value={memberTypeScope}
+                onchange={handleMemberTypeScopeChange}>
+            </lightning-checkbox-group>
+            <lightning-checkbox-group
+                label="Region Scope (blank = all)"
+                options={regionOptions}
+                value={regionScope}
+                class="slds-m-top_small"
+                onchange={handleRegionScopeChange}>
+            </lightning-checkbox-group>
+            <lightning-radio-group
+                label="Product Scope Type"
+                options={productScopeTypeOptions}
+                value={productScopeType}
+                type="radio"
+                class="slds-m-top_small"
+                onchange={handleProductScopeTypeChange}>
+            </lightning-radio-group>
+            <template if:true={isProductScopeProductType}>
+                <lightning-combobox
+                    label="Product Type"
+                    options={productTypeOptions}
+                    value={specificProducts}
+                    class="slds-m-top_small"
+                    onchange={handleProductTypeChange}>
+                </lightning-combobox>
+            </template>
+            <template if:true={isProductScopeSpecificProducts}>
+                <div class="slds-m-top_small">
+                    <c-promo-specific-product-picker
+                        initial-csv={specificProducts}
+                        onchange={handleSpecificProductsChange}>
+                    </c-promo-specific-product-picker>
+                </div>
+            </template>
+            <lightning-record-picker
+                label="Sponsor Account (optional)"
+                object-api-name="Account"
+                value={sponsorAccountId}
+                class="slds-m-top_small"
+                onchange={handleSponsorChange}>
+            </lightning-record-picker>
+        </template>
+
+        <!-- Step 7: Combinability -->
+        <template if:true={isStep7}>
+            <p class="slds-text-color_weak slds-m-bottom_small">
+                Can this code stack with other codes? If yes, which combination group does it belong to?
+            </p>
+            <lightning-input
+                type="checkbox"
+                label="Combinable"
+                checked={combinable}
+                onchange={handleCombinableChange}>
+            </lightning-input>
+            <template if:true={combinable}>
+                <lightning-combobox
+                    label="Combination Group"
+                    required
+                    options={combinationGroupOptions}
+                    value={combinationGroup}
+                    class="slds-m-top_small"
+                    onchange={handleCombinationGroupChange}>
+                </lightning-combobox>
+            </template>
+        </template>
+
+        <!-- Step 8: Approval -->
+        <template if:true={isStep8}>
+            <p class="slds-text-color_weak slds-m-bottom_small">
+                Does this code require approval before activation?
+            </p>
+            <lightning-input
+                type="checkbox"
+                label="Approval Required"
+                checked={approvalRequired}
+                onchange={handleApprovalRequiredChange}>
+            </lightning-input>
+            <p class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
+                Records are created in Draft regardless. Approval Process integration is a follow-up (GBTAP1-239).
+            </p>
+        </template>
+
+        <!-- Step 9: Review -->
+        <template if:true={isStep9}>
+            <p>
+                This will create <strong>{recordCount}</strong> Promo Code record(s), all in Draft, sharing
+                Code <strong>{code}</strong>:
+            </p>
+            <ul class="summary-list slds-m-vertical_small">
+                <template for:each={recordPreview} for:item="r">
+                    <li key={r.label}>{r.label}</li>
+                </template>
+            </ul>
+
+            <div class="slds-box slds-box_x-small slds-theme_shade slds-m-top_small">
+                <dl class="slds-dl_horizontal">
+                    <dt class="slds-dl_horizontal__label">Display Name</dt>
+                    <dd class="slds-dl_horizontal__detail">{displayName}</dd>
+                    <dt class="slds-dl_horizontal__label">Discount Type</dt>
+                    <dd class="slds-dl_horizontal__detail">{discountType}</dd>
+                    <dt class="slds-dl_horizontal__label">Effective</dt>
+                    <dd class="slds-dl_horizontal__detail">{effectiveStart} &rarr; {effectiveEnd}</dd>
+                    <dt class="slds-dl_horizontal__label">Total Limit</dt>
+                    <dd class="slds-dl_horizontal__detail">{totalLimitDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Per-Member Limit</dt>
+                    <dd class="slds-dl_horizontal__detail">{perMemberLimitDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Member Types</dt>
+                    <dd class="slds-dl_horizontal__detail">{memberTypeDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Regions</dt>
+                    <dd class="slds-dl_horizontal__detail">{regionDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Product Scope</dt>
+                    <dd class="slds-dl_horizontal__detail">{productScopeDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Sponsor Account</dt>
+                    <dd class="slds-dl_horizontal__detail">{sponsorDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Combinable</dt>
+                    <dd class="slds-dl_horizontal__detail">{combinableDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Approval Required</dt>
+                    <dd class="slds-dl_horizontal__detail">{approvalDisplay}</dd>
+                </dl>
+            </div>
+        </template>
+
+        <template if:true={isSubmitting}>
+            <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+        </template>
+
+        <div class="slds-grid slds-grid_align-spread slds-m-top_medium">
+            <lightning-button label="Cancel" onclick={handleCancel}></lightning-button>
+            <div>
+                <template if:true={canGoBack}>
+                    <lightning-button
+                        label="Back"
+                        class="slds-m-right_x-small"
+                        onclick={handleBack}>
+                    </lightning-button>
+                </template>
+                <template if:true={isLastStep}>
+                    <lightning-button
+                        label="Create Promo Code(s)"
+                        variant="brand"
+                        disabled={isSubmitting}
+                        onclick={handleSubmit}>
+                    </lightning-button>
+                </template>
+                <template if:false={isLastStep}>
+                    <lightning-button label="Next" variant="brand" onclick={handleNext}></lightning-button>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>
