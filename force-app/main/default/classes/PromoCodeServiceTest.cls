@@ -2,19 +2,19 @@
 private class PromoCodeServiceTest {
 
     private static PromoCodeService.PromoCodeInput baseInput() {
-        PromoCodeService.PromoCodeInput in = new PromoCodeService.PromoCodeInput();
-        in.code = 'TESTCODE';
-        in.displayName = 'Test Code';
-        in.discountType = 'Percent';
-        in.percentValue = 10;
-        in.percentCurrencies = new List<String>{ UserInfo.getDefaultCurrency() };
-        in.effectiveStart = Datetime.now();
-        in.effectiveEnd = Datetime.now().addDays(30);
-        in.combinable = true;
-        in.combinationGroup = 'General';
-        in.productScopeType = 'All Items';
-        in.approvalRequired = false;
-        return in;
+        PromoCodeService.PromoCodeInput inp = new PromoCodeService.PromoCodeInput();
+        inp.code = 'TESTCODE';
+        inp.displayName = 'Test Code';
+        inp.discountType = 'Percent';
+        inp.percentValue = 10;
+        inp.percentCurrencies = new List<String>{ UserInfo.getDefaultCurrency() };
+        inp.effectiveStart = Datetime.now();
+        inp.effectiveEnd = Datetime.now().addDays(30);
+        inp.combinable = true;
+        inp.combinationGroup = 'General';
+        inp.productScopeType = 'All Items';
+        inp.approvalRequired = false;
+        return inp;
     }
 
     @IsTest
@@ -69,18 +69,18 @@ private class PromoCodeServiceTest {
 
     @IsTest
     static void createBulk_amountSuccess() {
-        PromoCodeService.PromoCodeInput in = baseInput();
-        in.code = 'AMOUNTCODE';
-        in.discountType = 'Amount';
-        in.percentValue = null;
-        in.percentCurrencies = null;
+        PromoCodeService.PromoCodeInput inp = baseInput();
+        inp.code = 'AMOUNTCODE';
+        inp.discountType = 'Amount';
+        inp.percentValue = null;
+        inp.percentCurrencies = null;
         PromoCodeService.CurrencyAmount ca = new PromoCodeService.CurrencyAmount();
         ca.currencyIsoCode = UserInfo.getDefaultCurrency();
         ca.amount = 25;
-        in.amounts = new List<PromoCodeService.CurrencyAmount>{ ca };
+        inp.amounts = new List<PromoCodeService.CurrencyAmount>{ ca };
 
         Test.startTest();
-        PromoCodeService.CreateResult r = PromoCodeService.createBulk(in);
+        PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
         Test.stopTest();
 
         System.assertEquals(true, r.success, r.errorMessage);
@@ -93,29 +93,29 @@ private class PromoCodeServiceTest {
 
     @IsTest
     static void createBulk_invalidPercentRejected() {
-        PromoCodeService.PromoCodeInput in = baseInput();
-        in.percentValue = 150;
+        PromoCodeService.PromoCodeInput inp = baseInput();
+        inp.percentValue = 150;
 
-        PromoCodeService.CreateResult r = PromoCodeService.createBulk(in);
+        PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
         System.assertEquals(false, r.success);
         System.assert(r.errorMessage.contains('between 0 and 100'));
     }
 
     @IsTest
     static void createBulk_amountWithoutAmountsRejected() {
-        PromoCodeService.PromoCodeInput in = baseInput();
-        in.discountType = 'Amount';
-        in.amounts = null;
+        PromoCodeService.PromoCodeInput inp = baseInput();
+        inp.discountType = 'Amount';
+        inp.amounts = null;
 
-        PromoCodeService.CreateResult r = PromoCodeService.createBulk(in);
+        PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
         System.assertEquals(false, r.success);
         System.assert(r.errorMessage.contains('currency-amount'));
     }
 
     @IsTest
     static void createBulk_missingRequiredFieldsRejected() {
-        PromoCodeService.PromoCodeInput in = new PromoCodeService.PromoCodeInput();
-        PromoCodeService.CreateResult r = PromoCodeService.createBulk(in);
+        PromoCodeService.PromoCodeInput inp = new PromoCodeService.PromoCodeInput();
+        PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
         System.assertEquals(false, r.success);
         System.assert(r.errorMessage.contains('Missing required'));
     }

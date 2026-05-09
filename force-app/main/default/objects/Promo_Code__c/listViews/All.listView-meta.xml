@@ -3,7 +3,6 @@
     <fullName>All</fullName>
     <columns>NAME</columns>
     <columns>Code__c</columns>
-    <columns>CurrencyIsoCode</columns>
     <columns>Discount_Type__c</columns>
     <columns>Discount_Value__c</columns>
     <columns>Status__c</columns>

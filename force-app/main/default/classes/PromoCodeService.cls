@@ -77,12 +77,12 @@ public with sharing class PromoCodeService {
         if (String.isBlank(searchTerm) || searchTerm.length() < 2) {
             return options;
         }
-        String like = '%' + String.escapeSingleQuotes(searchTerm) + '%';
+        String pattern = '%' + String.escapeSingleQuotes(searchTerm) + '%';
         for (Product2 p : [
             SELECT Id, Name, ProductCode
             FROM Product2
             WHERE IsActive = true
-            AND (Name LIKE :like OR ProductCode LIKE :like)
+            AND (Name LIKE :pattern OR ProductCode LIKE :pattern)
             ORDER BY Name
             LIMIT 20
         ]) {
