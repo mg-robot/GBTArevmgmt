@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>VR_PromoCode_Lock_Core_Fields_After_Create</fullName>
+    <fullName>VR_PromoCode_Lock_After_Create</fullName>
     <active>true</active>
     <description>Locks core fields against post-create change. Allowed-edit fields (Status, Effective dates, Confirmed Usage Count) are not listed. Bypassed by the Bypass_Promo_Code_Lock custom permission.</description>
     <errorConditionFormula>AND(
