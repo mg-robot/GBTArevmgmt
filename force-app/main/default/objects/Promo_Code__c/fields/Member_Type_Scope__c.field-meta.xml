@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Member_Type_Scope__c</fullName>
-    <description>Blank = all member types. Picklist values per Membership Ops canonical list (TBD).</description>
+    <description>Blank = all member types. Values mirror the Membership Product Family product names so apply-time scoping can be checked directly against the cart's product.</description>
     <label>Member Type Scope</label>
     <required>false</required>
     <trackHistory>false</trackHistory>
@@ -11,21 +11,41 @@
     <valueSet>
         <restricted>true</restricted>
         <valueSetDefinition>
-            <sorted>false</sorted>
+            <sorted>true</sorted>
             <value>
-                <fullName>Individual</fullName>
+                <fullName>Allied Membership</fullName>
                 <default>false</default>
-                <label>Individual</label>
+                <label>Allied Membership</label>
             </value>
             <value>
-                <fullName>Allied</fullName>
+                <fullName>Direct Membership</fullName>
                 <default>false</default>
-                <label>Allied</label>
+                <label>Direct Membership</label>
             </value>
             <value>
-                <fullName>Enterprise Individual</fullName>
+                <fullName>Educator Membership</fullName>
                 <default>false</default>
-                <label>Enterprise Individual</label>
+                <label>Educator Membership</label>
+            </value>
+            <value>
+                <fullName>Government Membership</fullName>
+                <default>false</default>
+                <label>Government Membership</label>
+            </value>
+            <value>
+                <fullName>Nonprofit Membership</fullName>
+                <default>false</default>
+                <label>Nonprofit Membership</label>
+            </value>
+            <value>
+                <fullName>Press Membership</fullName>
+                <default>false</default>
+                <label>Press Membership</label>
+            </value>
+            <value>
+                <fullName>Student Membership</fullName>
+                <default>false</default>
+                <label>Student Membership</label>
             </value>
         </valueSetDefinition>
     </valueSet>
