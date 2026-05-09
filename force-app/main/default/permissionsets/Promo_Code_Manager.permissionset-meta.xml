@@ -3,6 +3,10 @@
     <description>Membership Ops staff who create and manage Promo Codes. Full CRUD on Promo_Code__c and Promo_Code_Item__c, plus FLS on every field. Does NOT include Bypass_Promo_Code_Lock; that is granted via a separate, tightly-controlled permission set.</description>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Promo Code Manager</label>
+    <classAccesses>
+        <apexClass>PromoCodeService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <objectPermissions>
         <allowCreate>true</allowCreate>
         <allowDelete>true</allowDelete>
