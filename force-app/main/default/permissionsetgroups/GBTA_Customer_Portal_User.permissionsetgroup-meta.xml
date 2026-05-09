@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>GBTA Customer Portal User</label>
+    <permissionSets>ChargentBase__Chargent_Create_Payment_Methods</permissionSets>
+    <permissionSets>ChargentBase__Chargent_Edit_Payment_Methods</permissionSets>
+    <permissionSets>ChargentBase__Chargent_Read_Gateways</permissionSets>
+    <permissionSets>ChargentBase__Permission_Set_for_Payment_Request_Base</permissionSets>
+    <permissionSets>ChargentOrders__Chargent_Payment_Methods_Use_Pay_Forms</permissionSets>
+    <permissionSets>ChargentOrders__Permission_Set_for_Payment_Request_Chargent_Orders</permissionSets>
+    <permissionSets>Customer_Community_Place_Order</permissionSets>
+    <permissionSets>GBTA_Membership_Join</permissionSets>
+    <permissionSets>force__BRECmtyRuntime</permissionSets>
+    <permissionSets>force__CreateOrderFromQuoteCustomerCommunityPlusLoginUser</permissionSets>
+    <permissionSets>force__QuotePricesTaxesCustomerCommunityPlusLoginUser</permissionSets>
+    <status>Updated</status>
+</PermissionSetGroup>

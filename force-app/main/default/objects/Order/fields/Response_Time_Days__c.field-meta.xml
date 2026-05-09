@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Response_Time_Days__c</fullName>
+    <description>Number of days between order creation and approval/denial</description>
+    <externalId>false</externalId>
+    <formula>IF(
+  NOT(ISBLANK(Global_Partner__c)),
+  IF(
+    ISBLANK(Approved_Denied_Date__c),
+    TODAY() - DATEVALUE(CreatedDate),
+    Approved_Denied_Date__c - DATEVALUE(CreatedDate)
+  ),
+  NULL
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Number of days between order creation and approval/denial</inlineHelpText>
+    <label>Response Time (Days)</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

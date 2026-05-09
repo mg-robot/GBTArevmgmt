@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Orders_Approved_Denied_By_Partner_Admin</fullName>
+    <columns>ORDERS.ORDER_NUMBER</columns>
+    <columns>CONTRACT.CONTRACT_NUMBER</columns>
+    <columns>Action__c</columns>
+    <columns>SALES.ACCOUNT.NAME</columns>
+    <columns>ORDERS.EFFECTIVE_DATE</columns>
+    <columns>ORDERS.STATUS</columns>
+    <columns>Global_Partner_Admin__c</columns>
+    <columns>Global_Partner__c</columns>
+    <columns>Partner_Membership_Status__c</columns>
+    <columns>Approved_Denied_Date__c</columns>
+    <columns>ORDERS.CREATED_DATE</columns>
+    <columns>Response_Time_Days__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Global_Partner__c</field>
+        <operation>notEqual</operation>
+    </filters>
+    <filters>
+        <field>Partner_Membership_Status__c</field>
+        <operation>equals</operation>
+        <value>Approved,Denied</value>
+    </filters>
+    <label>Orders Approved/Denied By Partner Admin</label>
+</ListView>

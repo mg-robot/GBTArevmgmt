@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Global_Partner__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Internal lookup to the Global Partner (Account). Used by pricing logic to set GBTA Membership SKUs to $0 for included benefits (e.g., ITM, NATM, NBTA, VDR, DBTA, SBTA, FBTA). Populated by staff/automation; activation still required.</description>
+    <inlineHelpText>Select the Global Partner account (e.g., ITM, NATM, NBTA, VDR, DBTA, SBTA, FBTA). When set and eligible, GBTA Membership prices at $0. Member still must be validated/activated. Internal use only; hidden from members.</inlineHelpText>
+    <label>Global Partner</label>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Orders</relationshipLabel>
+    <relationshipName>Orders</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Lookup</type>
+</CustomField>
