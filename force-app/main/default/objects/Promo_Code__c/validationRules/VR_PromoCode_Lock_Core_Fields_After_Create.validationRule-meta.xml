@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>VR_PromoCode_Lock_Core_Fields_After_Create</fullName>
+    <active>true</active>
+    <description>Locks core fields against post-create change. Allowed-edit fields (Status, Effective dates, Confirmed Usage Count) are not listed. Bypassed by the Bypass_Promo_Code_Lock custom permission.</description>
+    <errorConditionFormula>AND(
+  NOT(ISNEW()),
+  NOT($Permission.Bypass_Promo_Code_Lock),
+  OR(
+    ISCHANGED(Code__c),
+    ISCHANGED(CurrencyIsoCode),
+    ISCHANGED(Discount_Type__c),
+    ISCHANGED(Discount_Value__c),
+    ISCHANGED(Total_Usage_Limit__c),
+    ISCHANGED(Per_Member_Usage_Limit__c),
+    ISCHANGED(Member_Type_Scope__c),
+    ISCHANGED(Region_Scope__c),
+    ISCHANGED(Product_Scope_Type__c),
+    ISCHANGED(Specific_Products__c),
+    ISCHANGED(Sponsor_Account__c),
+    ISCHANGED(Combinable__c),
+    ISCHANGED(Combination_Group__c),
+    ISCHANGED(Display_Name__c),
+    ISCHANGED(Terms__c),
+    ISCHANGED(Approval_Required__c)
+  )
+)</errorConditionFormula>
+    <errorMessage>This field is locked after the promo code is created. Allowed updates: Status, Effective dates, and Confirmed Usage Count. To make a correction, an admin must grant the Bypass Promo Code Lock permission (or temporarily disable this rule).</errorMessage>
+</ValidationRule>

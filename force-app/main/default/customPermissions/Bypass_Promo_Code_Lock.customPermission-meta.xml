@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomPermission xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Allows holder to edit core fields on a Promo Code after creation, bypassing VR_PromoCode_Lock_Core_Fields_After_Create. Grant via a tightly-controlled permission set; keep membership small for audit clarity.</description>
+    <isLicensed>false</isLicensed>
+    <label>Bypass Promo Code Lock</label>
+</CustomPermission>

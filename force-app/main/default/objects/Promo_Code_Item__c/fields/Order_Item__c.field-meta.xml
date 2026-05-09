@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Order_Item__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The order line that received the discount.</description>
+    <label>Order Item</label>
+    <referenceTo>OrderItem</referenceTo>
+    <relationshipLabel>Promo Code Items</relationshipLabel>
+    <relationshipName>Promo_Code_Items</relationshipName>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

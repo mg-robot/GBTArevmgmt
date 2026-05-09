@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Promo_Code__c</fullName>
+    <description>Master-detail to the Promo Code parent. Inherits CurrencyIsoCode and sharing.</description>
+    <label>Promo Code</label>
+    <referenceTo>Promo_Code__c</referenceTo>
+    <relationshipLabel>Promo Code Items</relationshipLabel>
+    <relationshipName>Promo_Code_Items</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

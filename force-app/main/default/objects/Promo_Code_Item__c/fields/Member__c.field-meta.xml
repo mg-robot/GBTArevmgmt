@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Member__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Member account (Person Account in v1) that redeemed the code. Drives per-member usage queries directly. Populated by Apex at apply time from cart context.</description>
+    <label>Member</label>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Promo Code Items</relationshipLabel>
+    <relationshipName>Promo_Code_Items_Member</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
