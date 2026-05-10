@@ -17,7 +17,7 @@
     ISCHANGED(Region_Scope__c),
     ISCHANGED(Product_Scope_Type__c),
     ISCHANGED(Specific_Products__c),
-    ISCHANGED(Sponsor_Account__c),
+    ISCHANGED(Account__c),
     ISCHANGED(Combinable__c),
     ISCHANGED(Combination_Group__c),
     ISCHANGED(Display_Name__c),

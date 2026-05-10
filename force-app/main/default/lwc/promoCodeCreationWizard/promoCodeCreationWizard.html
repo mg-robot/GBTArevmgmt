@@ -180,13 +180,13 @@
                 class="slds-m-top_small"
                 onchange={handleProductScopeTypeChange}>
             </lightning-radio-group>
-            <template if:true={isProductScopeProductType}>
+            <template if:true={isProductScopeProductFamily}>
                 <lightning-combobox
-                    label="Product Type"
-                    options={productTypeOptions}
+                    label="Product Family"
+                    options={productFamilyOptions}
                     value={specificProducts}
                     class="slds-m-top_small"
-                    onchange={handleProductTypeChange}>
+                    onchange={handleProductFamilyChange}>
                 </lightning-combobox>
             </template>
             <template if:true={isProductScopeSpecificProducts}>
@@ -198,11 +198,11 @@
                 </div>
             </template>
             <lightning-record-picker
-                label="Sponsor Account (optional)"
+                label="Account (optional)"
                 object-api-name="Account"
-                value={sponsorAccountId}
+                value={accountId}
                 class="slds-m-top_small"
-                onchange={handleSponsorChange}>
+                onchange={handleAccountChange}>
             </lightning-record-picker>
         </template>
 
@@ -275,8 +275,8 @@
                     <dd class="slds-dl_horizontal__detail">{regionDisplay}</dd>
                     <dt class="slds-dl_horizontal__label">Product Scope</dt>
                     <dd class="slds-dl_horizontal__detail">{productScopeDisplay}</dd>
-                    <dt class="slds-dl_horizontal__label">Sponsor Account</dt>
-                    <dd class="slds-dl_horizontal__detail">{sponsorDisplay}</dd>
+                    <dt class="slds-dl_horizontal__label">Account</dt>
+                    <dd class="slds-dl_horizontal__detail">{accountDisplay}</dd>
                     <dt class="slds-dl_horizontal__label">Combinable</dt>
                     <dd class="slds-dl_horizontal__detail">{combinableDisplay}</dd>
                     <dt class="slds-dl_horizontal__label">Approval Required</dt>

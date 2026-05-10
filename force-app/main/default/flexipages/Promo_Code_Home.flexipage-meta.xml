@@ -10,16 +10,24 @@
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
+                    <name>entityName</name>
+                    <value>Promo_Code__c</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
                     <name>filterName</name>
                     <value>All</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>limit</name>
+                    <name>pageSize</name>
                     <value>30</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>objectApiName</name>
-                    <value>Promo_Code__c</value>
+                    <name>enableInlineEdit</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>hideSearchBar</name>
+                    <value>false</value>
                 </componentInstanceProperties>
                 <componentName>flexipage:filterListCard</componentName>
                 <identifier>listView</identifier>
@@ -30,7 +38,7 @@
     </flexiPageRegions>
     <masterLabel>Promo Code Home</masterLabel>
     <template>
-        <name>flexipage:appHomeTemplateDesktop</name>
+        <name>flexipage:defaultAppHomeTemplate</name>
     </template>
     <type>AppPage</type>
 </FlexiPage>

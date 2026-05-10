@@ -11,11 +11,11 @@ export default class PromoSpecificProductPicker extends LightningElement {
 
     connectedCallback() {
         if (this.initialCsv) {
-            const codes = this.initialCsv
+            const names = this.initialCsv
                 .split(',')
                 .map((s) => s.trim())
                 .filter(Boolean);
-            this.selected = codes.map((c) => ({ productCode: c, label: c }));
+            this.selected = names.map((n) => ({ name: n, label: n }));
         }
     }
 
@@ -40,8 +40,8 @@ export default class PromoSpecificProductPicker extends LightningElement {
         this.loading = true;
         searchProducts({ searchTerm: this.searchTerm })
             .then((r) => {
-                const taken = new Set(this.selected.map((s) => s.productCode));
-                this.results = (r || []).filter((p) => !taken.has(p.productCode));
+                const taken = new Set(this.selected.map((s) => s.name));
+                this.results = (r || []).filter((p) => !taken.has(p.name));
             })
             .catch(() => {
                 this.results = [];
@@ -54,24 +54,24 @@ export default class PromoSpecificProductPicker extends LightningElement {
     addProduct(e) {
         const name = e.currentTarget.dataset.name;
         const code = e.currentTarget.dataset.code;
-        if (!this.selected.some((s) => s.productCode === code)) {
+        if (!this.selected.some((s) => s.name === name)) {
             this.selected = [
                 ...this.selected,
-                { productCode: code, label: `${name} (${code})` }
+                { name, label: code ? `${name} (${code})` : name }
             ];
             this.fireChange();
         }
-        this.results = this.results.filter((r) => r.productCode !== code);
+        this.results = this.results.filter((r) => r.name !== name);
     }
 
     removeProduct(e) {
-        const code = e.target.name;
-        this.selected = this.selected.filter((s) => s.productCode !== code);
+        const name = e.target.name;
+        this.selected = this.selected.filter((s) => s.name !== name);
         this.fireChange();
     }
 
     fireChange() {
-        const csv = this.selected.map((s) => s.productCode).join(',');
+        const csv = this.selected.map((s) => s.name).join(',');
         this.dispatchEvent(
             new CustomEvent('change', { detail: { csv, count: this.selected.length } })
         );

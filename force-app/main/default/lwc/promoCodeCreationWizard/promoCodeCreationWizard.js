@@ -33,7 +33,7 @@ const DISCOUNT_TYPE_OPTIONS = [
     { label: 'Amount', value: 'Amount' }
 ];
 
-const PRODUCT_TYPE_VALUES = [
+const PRODUCT_FAMILY_VALUES = [
     { label: 'Membership', value: 'Membership' },
     { label: 'Chapter', value: 'Chapter' },
     { label: 'Section', value: 'Section' }
@@ -62,7 +62,7 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
     regionScope = [];
     productScopeType = 'All Items';
     specificProducts = '';
-    sponsorAccountId = null;
+    accountId = null;
     combinable = true;
     combinationGroup = 'General';
     approvalRequired = false;
@@ -122,7 +122,7 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
 
     get isPercent() { return this.discountType === 'Percent'; }
     get isAmount() { return this.discountType === 'Amount'; }
-    get isProductScopeProductType() { return this.productScopeType === 'Product Type'; }
+    get isProductScopeProductFamily() { return this.productScopeType === 'Product Family'; }
     get isProductScopeSpecificProducts() { return this.productScopeType === 'Specific Products'; }
 
     get discountTypeOptions() { return DISCOUNT_TYPE_OPTIONS; }
@@ -131,7 +131,7 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
     get regionOptions() { return this._regionOptions; }
     get productScopeTypeOptions() { return this._productScopeTypeOptions; }
     get combinationGroupOptions() { return this._combinationGroupOptions; }
-    get productTypeOptions() { return PRODUCT_TYPE_VALUES; }
+    get productFamilyOptions() { return PRODUCT_FAMILY_VALUES; }
 
     get hasCodeConflicts() { return this.codeConflicts && this.codeConflicts.length > 0; }
     get codeConflictsLabel() { return this.codeConflicts ? this.codeConflicts.join(', ') : ''; }
@@ -162,10 +162,10 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
     get regionDisplay() { return (this.regionScope || []).length ? this.regionScope.join(', ') : 'All'; }
     get productScopeDisplay() {
         if (this.productScopeType === 'All Items') return 'All Items';
-        if (this.productScopeType === 'Product Type') return `Product Type: ${this.specificProducts || '(none)'}`;
+        if (this.productScopeType === 'Product Family') return `Product Family: ${this.specificProducts || '(none)'}`;
         return `Specific: ${this.specificProducts || '(none)'}`;
     }
-    get sponsorDisplay() { return this.sponsorAccountId ? this.sponsorAccountId : 'Any'; }
+    get accountDisplay() { return this.accountId ? this.accountId : 'Any'; }
     get combinableDisplay() { return this.combinable ? `Yes (group: ${this.combinationGroup})` : 'No'; }
     get approvalDisplay() { return this.approvalRequired ? 'Yes' : 'No'; }
 
@@ -204,9 +204,9 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
         this.productScopeType = e.detail.value;
         if (this.productScopeType === 'All Items') this.specificProducts = '';
     }
-    handleProductTypeChange(e) { this.specificProducts = e.detail.value; }
+    handleProductFamilyChange(e) { this.specificProducts = e.detail.value; }
     handleSpecificProductsChange(e) { this.specificProducts = e.detail.csv; }
-    handleSponsorChange(e) { this.sponsorAccountId = e.detail.recordId || null; }
+    handleAccountChange(e) { this.accountId = e.detail.recordId || null; }
     handleCombinableChange(e) {
         this.combinable = e.target.checked;
         if (!this.combinable) this.combinationGroup = '';
@@ -310,8 +310,8 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
                 }
                 return null;
             case 6:
-                if (this.productScopeType === 'Product Type' && !this.specificProducts) {
-                    return 'Pick a Product Type (Membership / Chapter / Section).';
+                if (this.productScopeType === 'Product Family' && !this.specificProducts) {
+                    return 'Pick a Product Family (Membership / Chapter / Section).';
                 }
                 if (this.productScopeType === 'Specific Products' && !this.specificProducts) {
                     return 'Pick at least one specific product.';
@@ -357,7 +357,7 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
             regionScope: this.regionScope,
             productScopeType: this.productScopeType,
             specificProducts: this.specificProducts,
-            sponsorAccountId: this.sponsorAccountId,
+            accountId: this.accountId,
             combinable: this.combinable,
             combinationGroup: this.combinationGroup,
             approvalRequired: this.approvalRequired

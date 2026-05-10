@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Product_Scope_Type__c</fullName>
-    <description>Drives how Specific_Products__c is interpreted. All Items: ignore Specific_Products__c. Product Type: single value (Membership/Chapter/Section). Specific Products: comma-separated Product Codes.</description>
+    <description>Drives how Specific_Products__c is interpreted. All Items: ignore Specific_Products__c. Product Family: single value matching Product2.Family (e.g., Membership, Chapter, Section). Specific Products: comma-separated Product2.Name values.</description>
     <label>Product Scope Type</label>
     <required>false</required>
     <trackHistory>false</trackHistory>
@@ -17,9 +17,9 @@
                 <label>All Items</label>
             </value>
             <value>
-                <fullName>Product Type</fullName>
+                <fullName>Product Family</fullName>
                 <default>false</default>
-                <label>Product Type</label>
+                <label>Product Family</label>
             </value>
             <value>
                 <fullName>Specific Products</fullName>

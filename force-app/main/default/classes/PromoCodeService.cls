@@ -16,7 +16,7 @@ public with sharing class PromoCodeService {
         @AuraEnabled public List<String> regionScope;
         @AuraEnabled public String productScopeType;
         @AuraEnabled public String specificProducts;
-        @AuraEnabled public Id sponsorAccountId;
+        @AuraEnabled public Id accountId;
         @AuraEnabled public Boolean combinable;
         @AuraEnabled public String combinationGroup;
         @AuraEnabled public Boolean approvalRequired;
@@ -177,7 +177,7 @@ public with sharing class PromoCodeService {
                     ? null : String.join(input.regionScope, ';'),
                 Product_Scope_Type__c = input.productScopeType,
                 Specific_Products__c = input.specificProducts,
-                Sponsor_Account__c = input.sponsorAccountId,
+                Account__c = input.accountId,
                 Combinable__c = input.combinable == true,
                 Combination_Group__c = input.combinationGroup,
                 Display_Name__c = input.displayName,

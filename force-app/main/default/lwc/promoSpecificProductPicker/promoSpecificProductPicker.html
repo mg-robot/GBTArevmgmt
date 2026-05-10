@@ -22,9 +22,11 @@
                             data-code={p.productCode}
                             onclick={addProduct}>
                             <span class="slds-text-body_regular">{p.name}</span>
-                            <span class="slds-text-body_small slds-text-color_weak slds-m-left_xx-small">
-                                ({p.productCode})
-                            </span>
+                            <template if:true={p.productCode}>
+                                <span class="slds-text-body_small slds-text-color_weak slds-m-left_xx-small">
+                                    ({p.productCode})
+                                </span>
+                            </template>
                         </div>
                     </li>
                 </template>
@@ -38,9 +40,9 @@
             <div class="slds-pill_container slds-m-top_xx-small">
                 <template for:each={selected} for:item="p">
                     <lightning-pill
-                        key={p.productCode}
+                        key={p.name}
                         label={p.label}
-                        name={p.productCode}
+                        name={p.name}
                         onremove={removeProduct}>
                     </lightning-pill>
                 </template>
