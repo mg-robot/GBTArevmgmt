@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>c:promoCodeLauncher</componentName>
+                <identifier>launcher</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>filterName</name>
+                    <value>All</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>limit</name>
+                    <value>30</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>objectApiName</name>
+                    <value>Promo_Code__c</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:filterListCard</componentName>
+                <identifier>listView</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>main</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <masterLabel>Promo Code Home</masterLabel>
+    <template>
+        <name>flexipage:appHomeTemplateDesktop</name>
+    </template>
+    <type>AppPage</type>
+</FlexiPage>
