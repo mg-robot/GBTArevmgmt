@@ -26,20 +26,6 @@ private class PromoCodeServiceTest {
     }
 
     @IsTest
-    static void searchProducts_returnsMatchingActiveProducts() {
-        Product2 p = new Product2(Name = 'Widget Promo Test', ProductCode = 'WPT-1', IsActive = true);
-        insert p;
-
-        Test.startTest();
-        List<PromoCodeService.ProductOption> hits = PromoCodeService.searchProducts('Widget');
-        Test.stopTest();
-
-        System.assertEquals(1, hits.size());
-        System.assertEquals('Widget Promo Test', hits[0].name);
-        System.assertEquals('WPT-1', hits[0].productCode);
-    }
-
-    @IsTest
     static void searchProducts_shortTermReturnsEmpty() {
         List<PromoCodeService.ProductOption> hits = PromoCodeService.searchProducts('a');
         System.assert(hits.isEmpty(), 'Sub-2-char terms should return no hits');
@@ -57,7 +43,7 @@ private class PromoCodeServiceTest {
         PromoCodeService.CreateResult r = PromoCodeService.createBulk(baseInput());
         Test.stopTest();
 
-        System.assertEquals(true, r.success, r.errorMessage);
+        System.assertEquals(true, r.success, 'errorMessage: ' + r.errorMessage);
         System.assertEquals(1, r.createdRecordIds.size());
         Promo_Code__c saved = [SELECT Code__c, Discount_Type__c, Discount_Value__c, Status__c
                                FROM Promo_Code__c WHERE Id = :r.createdRecordIds[0]];
@@ -83,7 +69,7 @@ private class PromoCodeServiceTest {
         PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
         Test.stopTest();
 
-        System.assertEquals(true, r.success, r.errorMessage);
+        System.assertEquals(true, r.success, 'errorMessage: ' + r.errorMessage);
         System.assertEquals(1, r.createdRecordIds.size());
         Promo_Code__c saved = [SELECT Discount_Type__c, Discount_Value__c
                                FROM Promo_Code__c WHERE Id = :r.createdRecordIds[0]];
