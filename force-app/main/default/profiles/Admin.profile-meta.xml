@@ -29,26 +29,6 @@
     </objectPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Promo_Code__c.Code__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Promo_Code__c.Discount_Type__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Promo_Code__c.Discount_Value__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Promo_Code__c.Status__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
         <field>Promo_Code__c.Effective_Start_Date__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -109,11 +89,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Promo_Code__c.Display_Name__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
         <field>Promo_Code__c.Terms__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -125,11 +100,6 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Promo_Code_Item__c.Order__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Promo_Code_Item__c.Order_Item__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -150,11 +120,6 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Promo_Code_Item__c.Discount_Value_Snapshot__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Promo_Code_Item__c.Status__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
