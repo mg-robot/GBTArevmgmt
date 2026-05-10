@@ -1,0 +1,28 @@
+<template>
+    <lightning-card icon-name="custom:custom45">
+        <div slot="title" class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+            <h2 class="slds-card__header-title">Promo Codes</h2>
+            <template if:false={showWizard}>
+                <lightning-button
+                    label="New Promo Code"
+                    variant="brand"
+                    icon-name="utility:add"
+                    onclick={handleOpen}>
+                </lightning-button>
+            </template>
+        </div>
+
+        <template if:true={showWizard}>
+            <div class="slds-p-around_small">
+                <c-promo-code-creation-wizard onclose={handleClose}></c-promo-code-creation-wizard>
+            </div>
+        </template>
+
+        <template if:false={showWizard}>
+            <p class="slds-p-horizontal_medium slds-p-bottom_small slds-text-color_weak slds-text-body_small">
+                Click <strong>New Promo Code</strong> to launch the 9-step creation wizard. Records are
+                created in Draft and require activation before members can apply them at checkout.
+            </p>
+        </template>
+    </lightning-card>
+</template>

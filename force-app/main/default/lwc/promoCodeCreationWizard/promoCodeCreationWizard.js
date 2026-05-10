@@ -231,6 +231,7 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
 
     handleCancel() {
         this.dispatchEvent(new CloseActionScreenEvent());
+        this.dispatchEvent(new CustomEvent('close'));
     }
 
     handleSubmit() {
@@ -261,6 +262,7 @@ export default class PromoCodeCreationWizard extends NavigationMixin(LightningEl
                         });
                     }
                     this.dispatchEvent(new CloseActionScreenEvent());
+                    this.dispatchEvent(new CustomEvent('close'));
                 } else {
                     this.errorMessage = (r && r.errorMessage) || 'Save failed.';
                 }
