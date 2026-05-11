@@ -39,11 +39,13 @@
         </div>
     </div>
 
-    <!-- Discount Type -->
+    <!-- Discount Details -->
     <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">Discount Type</h3>
+        <h3 class="section-heading">Discount Details</h3>
+        <span class="field-label">Discount Type<span class="required-asterisk">*</span></span>
         <lightning-radio-group
             label="Discount Type"
+            variant="label-hidden"
             options={discountTypeOptions}
             value={wizardData.discountType}
             type="radio"

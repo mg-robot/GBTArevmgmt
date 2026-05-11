@@ -128,9 +128,18 @@ public with sharing class PromoCodeService {
     public static CreateResult createBulk(PromoCodeInput input) {
         CreateResult result = new CreateResult();
 
-        if (input == null || String.isBlank(input.code) || String.isBlank(input.displayName) || String.isBlank(input.discountType)) {
+        if (input == null) {
             result.success = false;
-            result.errorMessage = 'Missing required fields (code, display name, or discount type).';
+            result.errorMessage = 'Missing input (no data received).';
+            return result;
+        }
+        List<String> missing = new List<String>();
+        if (String.isBlank(input.code)) missing.add('Code');
+        if (String.isBlank(input.displayName)) missing.add('Display Name');
+        if (String.isBlank(input.discountType)) missing.add('Discount Type');
+        if (!missing.isEmpty()) {
+            result.success = false;
+            result.errorMessage = 'Missing required fields: ' + String.join(missing, ', ');
             return result;
         }
 

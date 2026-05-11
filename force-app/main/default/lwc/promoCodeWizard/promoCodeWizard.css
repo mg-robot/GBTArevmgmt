@@ -1,6 +1,8 @@
 :host {
     --gbta-primary-navy: #002F6C;
     --gbta-accent-blue: #00A6E1;
+    --gbta-action-orange: #E5841C;
+    --gbta-action-orange-hover: #C46E15;
     --gbta-text-primary: #1F2937;
     --gbta-text-muted: #6B7280;
     --gbta-surface: #F8FAFC;

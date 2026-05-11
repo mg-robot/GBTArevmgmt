@@ -33,7 +33,7 @@ export default class PromoCodeWizard extends LightningModal {
         accountId: null,
         totalLimit: null,
         perMemberLimit: null,
-        combinable: true,
+        combinable: false,
         combinationGroup: '',
         approvalRequired: false
     };
@@ -118,17 +118,33 @@ export default class PromoCodeWizard extends LightningModal {
     submit(activate) {
         this.isSubmitting = true;
         this.errorMessage = '';
-        const input = { ...this.wizardData, activateImmediately: activate };
-        if (input.discountType === 'Percent') {
-            input.amounts = null;
-        } else if (input.discountType === 'Amount') {
-            input.percentValue = null;
-            input.percentCurrencies = null;
-        }
-        input.effectiveStart = input.effectiveStart || null;
-        input.effectiveEnd = input.effectiveEnd || null;
-        input.totalLimit = input.totalLimit === '' ? null : input.totalLimit;
-        input.perMemberLimit = input.perMemberLimit === '' ? null : input.perMemberLimit;
+        const w = this.wizardData || {};
+        // Read each property explicitly rather than spreading the @track proxy —
+        // spread can drop properties in some LWC reactivity edge cases.
+        const isPercent = w.discountType === 'Percent';
+        const isAmount = w.discountType === 'Amount';
+        const input = {
+            code: w.code,
+            displayName: w.displayName,
+            terms: w.terms,
+            discountType: w.discountType,
+            percentValue: isPercent ? w.percentValue : null,
+            percentCurrencies: isPercent ? w.percentCurrencies : null,
+            amounts: isAmount ? w.amounts : null,
+            effectiveStart: w.effectiveStart || null,
+            effectiveEnd: w.effectiveEnd || null,
+            totalLimit: w.totalLimit === '' || w.totalLimit == null ? null : w.totalLimit,
+            perMemberLimit: w.perMemberLimit === '' || w.perMemberLimit == null ? null : w.perMemberLimit,
+            memberTypeScope: w.memberTypeScope,
+            regionScope: w.regionScope,
+            productScopeType: w.productScopeType,
+            specificProducts: w.specificProducts,
+            accountId: w.accountId,
+            combinable: w.combinable,
+            combinationGroup: w.combinationGroup,
+            approvalRequired: w.approvalRequired,
+            activateImmediately: activate
+        };
 
         createBulk({ input })
             .then((r) => {

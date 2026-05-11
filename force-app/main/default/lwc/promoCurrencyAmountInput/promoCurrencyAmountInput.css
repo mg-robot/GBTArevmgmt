@@ -1,0 +1,6 @@
+.add-row-button {
+    --slds-c-button-brand-color-background: var(--gbta-action-orange, #E5841C);
+    --slds-c-button-brand-color-background-hover: var(--gbta-action-orange-hover, #C46E15);
+    --slds-c-button-brand-color-border: var(--gbta-action-orange, #E5841C);
+    --slds-c-button-brand-color-border-hover: var(--gbta-action-orange-hover, #C46E15);
+}
