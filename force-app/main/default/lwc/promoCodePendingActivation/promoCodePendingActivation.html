@@ -1,5 +1,5 @@
 <template>
-    <article class="tile">
+    <article class="tile" onclick={handleOpen} onkeydown={handleKeydown} tabindex="0" role="button" aria-label="Open Pending Activation list view">
         <header class="tile-header">
             <template if:true={iconUrl}>
                 <img src={iconUrl} alt="" class="tile-icon" />
@@ -14,14 +14,6 @@
             <p class="description">
                 All promo codes currently in <strong>Draft</strong> status, awaiting Membership Ops review and activation. Sorted by most recently created.
             </p>
-            <lightning-button
-                label="Open list view"
-                icon-name="utility:open"
-                icon-position="right"
-                variant="brand"
-                onclick={handleOpen}
-                class="open-button">
-            </lightning-button>
         </div>
     </article>
 </template>

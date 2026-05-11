@@ -27,4 +27,11 @@ export default class PromoCodePendingActivation extends NavigationMixin(Lightnin
             }
         });
     }
+
+    handleKeydown(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.handleOpen();
+        }
+    }
 }

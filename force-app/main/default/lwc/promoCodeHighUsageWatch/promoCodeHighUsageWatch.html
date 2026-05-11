@@ -1,5 +1,5 @@
 <template>
-    <article class="tile">
+    <article class="tile" onclick={handleOpen} onkeydown={handleKeydown} tabindex="0" role="button" aria-label="Open High Usage list view">
         <header class="tile-header">
             <template if:true={iconUrl}>
                 <img src={iconUrl} alt="" class="tile-icon" />
@@ -14,14 +14,6 @@
             <p class="description">
                 Currently-usable promo codes that have been redeemed at least once, ranked by total redemptions. Use to spot codes approaching their usage cap.
             </p>
-            <lightning-button
-                label="Open list view"
-                icon-name="utility:open"
-                icon-position="right"
-                variant="brand"
-                onclick={handleOpen}
-                class="open-button">
-            </lightning-button>
         </div>
     </article>
 </template>

@@ -27,4 +27,11 @@ export default class PromoCodeHighUsageWatch extends NavigationMixin(LightningEl
             }
         });
     }
+
+    handleKeydown(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.handleOpen();
+        }
+    }
 }
