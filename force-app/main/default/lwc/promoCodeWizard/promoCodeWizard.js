@@ -1,4 +1,3 @@
-import { track } from 'lwc';
 import LightningModal from 'lightning/modal';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import createBulk from '@salesforce/apex/PromoCodeService.createBulk';
@@ -16,7 +15,7 @@ export default class PromoCodeWizard extends LightningModal {
     errorMessage = '';
     availableCurrencies = [];
 
-    @track wizardData = {
+    wizardData = {
         code: '',
         displayName: '',
         terms: '',
@@ -146,7 +145,10 @@ export default class PromoCodeWizard extends LightningModal {
             activateImmediately: activate
         };
 
-        createBulk({ input })
+        // Strip any reactive proxy wrapping by round-tripping through JSON so Apex's
+        // @AuraEnabled deserializer gets a plain object literal.
+        const cleanInput = JSON.parse(JSON.stringify(input));
+        createBulk({ input: cleanInput })
             .then((r) => {
                 if (r && r.success) {
                     const action = activate ? 'created and activated' : 'saved as draft';
@@ -162,7 +164,8 @@ export default class PromoCodeWizard extends LightningModal {
                         status: r.status
                     });
                 } else {
-                    this.errorMessage = (r && r.errorMessage) || 'Save failed.';
+                    const diag = ` [debug: code="${w.code || ''}", displayName="${w.displayName || ''}", discountType="${w.discountType || ''}"]`;
+                    this.errorMessage = ((r && r.errorMessage) || 'Save failed.') + diag;
                     if (r && r.conflictCurrencies && r.conflictCurrencies.length) {
                         this.currentStep = 1;
                     }
