@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Promotion_Value__c</fullName>
-    <description>Numeric value of the applied promotion. Interpretation depends on Promotion_Type__c: Amount = currency amount discounted; Percent = percent off (0-100); Override = absolute override price.</description>
-    <inlineHelpText>Numeric value of the adjustment, interpreted per Promotion_Type__c.</inlineHelpText>
+    <description>Aggregate currency amount discounted on this line by the apply flow. Written by the pricing pre-hook from Pending Promo_Code_Item__c records. The pricing-procedure Formula element subtracts this value from NetPrice (floored at 0).</description>
+    <inlineHelpText>Currency amount discounted from this line by applied promo codes. Populated by the pricing pre-hook.</inlineHelpText>
     <label>Promotion Value</label>
     <precision>16</precision>
     <required>false</required>

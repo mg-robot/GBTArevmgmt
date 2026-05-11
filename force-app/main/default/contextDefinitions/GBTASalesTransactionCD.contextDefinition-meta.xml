@@ -11458,14 +11458,6 @@
                 <contextAttributeMappings>
                     <contextAttrHydrationDetails>
                         <objectName>OrderItem</objectName>
-                        <queryAttribute>Promotion_Type__c</queryAttribute>
-                    </contextAttrHydrationDetails>
-                    <contextAttribute>Promotion_Type__c</contextAttribute>
-                    <contextInputAttributeName>Promotion_Type__c</contextInputAttributeName>
-                </contextAttributeMappings>
-                <contextAttributeMappings>
-                    <contextAttrHydrationDetails>
-                        <objectName>OrderItem</objectName>
                         <queryAttribute>Promotion_Value__c</queryAttribute>
                     </contextAttrHydrationDetails>
                     <contextAttribute>Promotion_Value__c</contextAttribute>
@@ -22007,18 +21999,6 @@
             </contextAttributes>
             <contextAttributes>
                 <contextTags>
-                    <title>Promotion_Type__c</title>
-                </contextTags>
-                <customMappingAllowed>false</customMappingAllowed>
-                <dataType>picklist</dataType>
-                <fieldType>inputoutput</fieldType>
-                <key>false</key>
-                <title>Promotion_Type__c</title>
-                <transient>false</transient>
-                <value>false</value>
-            </contextAttributes>
-            <contextAttributes>
-                <contextTags>
                     <title>Promotion_Value__c</title>
                 </contextTags>
                 <customMappingAllowed>false</customMappingAllowed>
@@ -27570,7 +27550,7 @@
         </contextNodes>
         <isActive>true</isActive>
         <startDate>2025-09-02 00:00:00</startDate>
-        <versionNumber>4</versionNumber>
+        <versionNumber>6</versionNumber>
     </contextDefinitionVersions>
     <contextTtl>10</contextTtl>
     <hasSystemTags>false</hasSystemTags>

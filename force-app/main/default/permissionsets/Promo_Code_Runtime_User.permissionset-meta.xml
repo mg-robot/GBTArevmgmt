@@ -23,16 +23,6 @@
     </objectPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Promo_Code__c.Effective_Start_Date__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Promo_Code__c.Effective_End_Date__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
         <field>Promo_Code__c.Total_Usage_Limit__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -144,11 +134,6 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Promo_Code_Item__c.Release_Reason__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>OrderItem.Promotion_Type__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

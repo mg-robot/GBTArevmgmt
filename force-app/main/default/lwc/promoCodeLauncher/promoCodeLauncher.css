@@ -39,6 +39,7 @@
     background: #ffffff;
     border: 1px solid var(--gbta-card-border);
     border-radius: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     cursor: pointer;
     text-decoration: none;
     transition: border-color 120ms ease, box-shadow 120ms ease;
@@ -49,7 +50,7 @@
 .setup-card:hover,
 .setup-card:focus {
     border-color: var(--gbta-card-border-hover);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
     outline: none;
 }
 
