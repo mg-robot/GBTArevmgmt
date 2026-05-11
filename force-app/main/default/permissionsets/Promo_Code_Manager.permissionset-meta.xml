@@ -120,7 +120,7 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Promo_Code__c.Product_Scope_Type__c</field>
+        <field>Promo_Code__c.Product_Family_Scope__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

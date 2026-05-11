@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Application_Level__c</fullName>
+    <description>Per Order: promo value distributed proportionately across eligible lines by line subtotal. Per Line: full promo value applied to each eligible line (e.g., $20 promo on 3 lines = $60 total). Drives allocation behavior in PromoCodeAllocationEngine.</description>
+    <label>Application Level</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Per Order</fullName>
+                <default>true</default>
+                <label>Per Order</label>
+            </value>
+            <value>
+                <fullName>Per Line</fullName>
+                <default>false</default>
+                <label>Per Line</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

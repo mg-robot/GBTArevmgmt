@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Product_Scope_Type__c</fullName>
-    <description>Drives how Specific_Products__c is interpreted. All Items: ignore Specific_Products__c. Product Family: single value matching Product2.Family (e.g., Membership, Chapter, Section). Specific Products: comma-separated Product2.Name values.</description>
+    <description>Selects which OrderItems are eligible for the promo and drives which conditional sub-field defines the match set. All Items: no further filter. Product Family: uses Product_Family_Scope__c (Product2.Family in selected set). Specific Membership Types: uses Member_Type_Scope__c (Product2.Name CONTAINS selected). Specific Products: uses Specific_Products__c (CSV of Product2.Code).</description>
     <label>Product Scope Type</label>
-    <required>false</required>
+    <required>true</required>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
@@ -20,6 +20,11 @@
                 <fullName>Product Family</fullName>
                 <default>false</default>
                 <label>Product Family</label>
+            </value>
+            <value>
+                <fullName>Specific Membership Types</fullName>
+                <default>false</default>
+                <label>Specific Membership Types</label>
             </value>
             <value>
                 <fullName>Specific Products</fullName>
