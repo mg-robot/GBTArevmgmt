@@ -1,10 +1,8 @@
 :host {
-    --gbta-action-orange: #f16206;
+    --gbta-action-orange: #f28c15;
     --gbta-card-border: #d8dde6;
     --gbta-card-border-hover: #b0b8c4;
     --gbta-card-title: #0176d3;
-    --gbta-section-text: #181818;
-    --gbta-section-underline: #0176d3;
     --gbta-text-muted: #444444;
 
     display: block;
@@ -16,19 +14,20 @@
     display: block;
 }
 
-.section-heading {
-    color: var(--gbta-section-text);
-    font-size: 0.9375rem;
-    font-weight: 700;
-    padding-bottom: 0.375rem;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid var(--gbta-section-underline);
-}
-
+/*
+ * Two-column grid so the launch tile and its sibling placeholder sit side-by-side. Falls back to
+ * a single column under ~700px so each card keeps a comfortable minimum width.
+ */
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
     gap: 1rem;
+}
+
+@media (max-width: 700px) {
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .setup-card {
@@ -49,6 +48,17 @@
     border-color: var(--gbta-card-border-hover);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     outline: none;
+}
+
+/* Placeholder tile is non-interactive until wired up to a real action. */
+.setup-card_placeholder {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.setup-card_placeholder:hover {
+    border-color: var(--gbta-card-border);
+    box-shadow: none;
 }
 
 .card-icon {

@@ -1,16 +1,26 @@
 <template>
     <div class="section">
-        <h2 class="section-heading">Promo Code Setup</h2>
         <div class="cards-grid">
             <a class="setup-card" onclick={handleOpen} role="button" tabindex="0" onkeydown={handleKeydown}>
                 <div class="card-icon">
-                    <lightning-icon icon-name="standard:promotions" size="medium"></lightning-icon>
+                    <lightning-icon icon-name="standard:pricing_workspace" size="medium"></lightning-icon>
                 </div>
                 <div class="card-body">
                     <div class="card-title">{label.btnNew}</div>
                     <div class="card-description">{label.helper}</div>
                 </div>
             </a>
+
+            <!-- Placeholder slot for a second tile (e.g., Promo Code Usage). Filled in a later iteration. -->
+            <div class="setup-card setup-card_placeholder" aria-hidden="true">
+                <div class="card-icon">
+                    <lightning-icon icon-name="standard:dashboard_ea" size="medium"></lightning-icon>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Promo Code Usage</div>
+                    <div class="card-description">Coming soon &mdash; reporting on active redemptions and usage trends.</div>
+                </div>
+            </div>
         </div>
     </div>
 </template>

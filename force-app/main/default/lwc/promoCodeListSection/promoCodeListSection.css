@@ -1,3 +1,19 @@
 .view-picker {
     min-width: 14rem;
 }
+
+/*
+ * Brand the standard:promotions icon to the GBTA Promo Codes tab style (#f28c15) so the related
+ * list header reads as part of the Promotions surface. Targets both the SLDS custom property hook
+ * (modern lightning-icon) and the legacy `.slds-icon_container` class as a belt-and-suspenders.
+ */
+.promo-codes-brand-icon {
+    --slds-c-icon-color-background: #f28c15;
+    --slds-c-icon-color-foreground-default: #ffffff;
+    --sds-c-icon-color-background: #f28c15;
+    --sds-c-icon-color-foreground-default: #ffffff;
+}
+
+.promo-codes-brand-icon .slds-icon_container {
+    background-color: #f28c15;
+}
