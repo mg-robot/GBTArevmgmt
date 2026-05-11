@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Promo Code Wizard</masterLabel>
+    <description>Modal wizard for staff to create one or more Promo_Code__c records across currencies in a single transaction. Extends LightningModal; opened via PromoCodeWizard.open() from a launcher.</description>
+</LightningComponentBundle>

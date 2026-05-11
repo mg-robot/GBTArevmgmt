@@ -1,0 +1,95 @@
+<template>
+    <!-- Validity Window -->
+    <div class="slds-m-bottom_medium">
+        <h3 class="section-heading">Validity Window</h3>
+        <p class="helper-text">
+            Set when this code is valid. After the end date passes, members will see a
+            "this code is not valid right now" message at checkout — the code stays Active in the
+            system but won't apply.
+        </p>
+        <lightning-input
+            type="datetime"
+            label="Effective Start"
+            value={wizardData.effectiveStart}
+            onchange={handleStartChange}>
+        </lightning-input>
+        <lightning-input
+            type="datetime"
+            label="Effective End"
+            value={wizardData.effectiveEnd}
+            class="slds-m-top_small"
+            onchange={handleEndChange}>
+        </lightning-input>
+    </div>
+
+    <!-- Member & Region Scope -->
+    <div class="slds-m-bottom_medium">
+        <h3 class="section-heading">Member &amp; Region Scope</h3>
+        <p class="helper-text">
+            Leave blank to make this code available to everyone. Selecting member types or regions
+            restricts use to matching members.
+        </p>
+        <lightning-checkbox-group
+            label="Member Type Scope (blank = all)"
+            options={memberTypeOptions}
+            value={wizardData.memberTypeScope}
+            onchange={handleMemberTypeScopeChange}>
+        </lightning-checkbox-group>
+        <lightning-checkbox-group
+            label="Region Scope (blank = all)"
+            options={regionOptions}
+            value={wizardData.regionScope}
+            class="slds-m-top_small"
+            onchange={handleRegionScopeChange}>
+        </lightning-checkbox-group>
+    </div>
+
+    <!-- Product Applicability -->
+    <div class="slds-m-bottom_medium">
+        <h3 class="section-heading">Product Applicability</h3>
+        <p class="helper-text">
+            Choose what this code discounts. <strong>All Items</strong> discounts the entire cart.
+            <strong>Product Family</strong> matches against the Product's Family field (e.g.,
+            Membership, Chapter). <strong>Specific Products</strong> matches by product name.
+        </p>
+        <lightning-radio-group
+            label="Product Scope Type"
+            options={productScopeTypeOptions}
+            value={wizardData.productScopeType}
+            type="radio"
+            onchange={handleProductScopeTypeChange}>
+        </lightning-radio-group>
+        <template if:true={isProductFamily}>
+            <lightning-combobox
+                label="Product Family"
+                options={productFamilyOptions}
+                value={wizardData.specificProducts}
+                class="slds-m-top_small"
+                onchange={handleProductFamilyChange}>
+            </lightning-combobox>
+        </template>
+        <template if:true={isSpecificProducts}>
+            <div class="slds-m-top_small">
+                <c-promo-specific-product-picker
+                    initial-csv={wizardData.specificProducts}
+                    onchange={handleSpecificProductsChange}>
+                </c-promo-specific-product-picker>
+            </div>
+        </template>
+    </div>
+
+    <!-- Account Scope -->
+    <div class="slds-m-bottom_medium">
+        <h3 class="section-heading">Account Scope</h3>
+        <p class="helper-text">
+            Optional. Setting an Account here restricts the code to members affiliated with that
+            Account — useful for sponsorship deals or partner-restricted promotions.
+        </p>
+        <lightning-record-picker
+            label="Account (optional)"
+            object-api-name="Account"
+            value={wizardData.accountId}
+            onchange={handleAccountChange}>
+        </lightning-record-picker>
+    </div>
+</template>

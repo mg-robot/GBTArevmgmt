@@ -1,0 +1,82 @@
+<template>
+    <lightning-modal-header label="New Promo Code"></lightning-modal-header>
+
+    <lightning-modal-body>
+        <div class="progress-wrap">
+            <lightning-progress-indicator current-step={progressValue} type="path" variant="base" onstepclick={handleProgressClick}>
+                <lightning-progress-step label="Definition" value="step1"></lightning-progress-step>
+                <lightning-progress-step label="Scope & Eligibility" value="step2"></lightning-progress-step>
+                <lightning-progress-step label="Limits & Behavior" value="step3"></lightning-progress-step>
+                <lightning-progress-step label="Review & Activate" value="step4"></lightning-progress-step>
+            </lightning-progress-indicator>
+        </div>
+
+        <template if:true={errorMessage}>
+            <div class="wizard-error slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                <h2>{errorMessage}</h2>
+            </div>
+        </template>
+
+        <template if:true={isStep1}>
+            <c-promo-code-wizard-step-definition
+                wizard-data={wizardData}
+                available-currencies={availableCurrencies}
+                onfieldchange={handleFieldChange}
+                onstepvalidate={handleStepValidate}>
+            </c-promo-code-wizard-step-definition>
+        </template>
+        <template if:true={isStep2}>
+            <c-promo-code-wizard-step-scope
+                wizard-data={wizardData}
+                onfieldchange={handleFieldChange}
+                onstepvalidate={handleStepValidate}>
+            </c-promo-code-wizard-step-scope>
+        </template>
+        <template if:true={isStep3}>
+            <c-promo-code-wizard-step-limits
+                wizard-data={wizardData}
+                onfieldchange={handleFieldChange}
+                onstepvalidate={handleStepValidate}>
+            </c-promo-code-wizard-step-limits>
+        </template>
+        <template if:true={isStep4}>
+            <c-promo-code-wizard-step-review
+                wizard-data={wizardData}
+                onjumpto={handleJumpTo}>
+            </c-promo-code-wizard-step-review>
+        </template>
+
+        <template if:true={isSubmitting}>
+            <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+        </template>
+    </lightning-modal-body>
+
+    <lightning-modal-footer>
+        <lightning-button label="Cancel" onclick={handleCancel} class="slds-m-right_x-small"></lightning-button>
+        <template if:false={isFirstStep}>
+            <lightning-button label="Back" onclick={handleBack} class="slds-m-right_x-small"></lightning-button>
+        </template>
+        <template if:true={isReviewStep}>
+            <lightning-button
+                label="Save as Draft"
+                onclick={handleSaveDraft}
+                disabled={isSubmitting}
+                class="slds-m-right_x-small">
+            </lightning-button>
+            <lightning-button
+                label="Activate Now"
+                variant="brand"
+                onclick={handleActivateNow}
+                disabled={isSubmitting}>
+            </lightning-button>
+        </template>
+        <template if:false={isReviewStep}>
+            <lightning-button
+                label="Next"
+                variant="brand"
+                onclick={handleNext}
+                disabled={nextDisabled}>
+            </lightning-button>
+        </template>
+    </lightning-modal-footer>
+</template>

@@ -1,0 +1,96 @@
+<template>
+    <!-- Identity -->
+    <div class="slds-m-bottom_medium">
+        <h3 class="section-heading">Identity</h3>
+        <p class="helper-text">
+            Choose a code your members will type at checkout. Codes are case-insensitive and must be
+            unique within each currency. Members will see the <strong>Display Name</strong> in their
+            cart, not the raw code.
+        </p>
+        <lightning-input
+            label="Code"
+            value={wizardData.code}
+            maxlength="50"
+            pattern="[A-Z0-9]+"
+            message-when-pattern-mismatch="Uppercase alphanumeric only"
+            required
+            onchange={handleCodeChange}>
+        </lightning-input>
+        <template if:true={hasCodeConflicts}>
+            <p class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
+                Note: this code is already in use in {codeConflictsLabel}. New currencies are still allowed.
+            </p>
+        </template>
+        <lightning-input
+            label="Display Name"
+            value={wizardData.displayName}
+            maxlength="80"
+            required
+            class="slds-m-top_small"
+            onchange={handleDisplayNameChange}>
+        </lightning-input>
+        <div class="slds-m-top_small">
+            <lightning-input-rich-text
+                label-visible
+                label="Terms"
+                value={wizardData.terms}
+                onchange={handleTermsChange}>
+            </lightning-input-rich-text>
+        </div>
+    </div>
+
+    <!-- Discount Type -->
+    <div class="slds-m-bottom_medium">
+        <h3 class="section-heading">Discount Type</h3>
+        <lightning-radio-group
+            label="Discount Type"
+            options={discountTypeOptions}
+            value={wizardData.discountType}
+            type="radio"
+            required
+            onchange={handleDiscountTypeChange}>
+        </lightning-radio-group>
+    </div>
+
+    <!-- Discount Value -->
+    <template if:true={hasType}>
+        <div class="slds-m-bottom_medium">
+            <h3 class="section-heading">Discount Value</h3>
+            <template if:true={isPercent}>
+                <p class="helper-text">
+                    Percent discounts apply universally; one record is still created per currency
+                    for symmetry, but the percentage stays the same. Deselect currencies you don't
+                    want to support.
+                </p>
+                <lightning-input
+                    type="number"
+                    label="Percent Off"
+                    min="0.01"
+                    max="100"
+                    step="0.01"
+                    value={wizardData.percentValue}
+                    required
+                    onchange={handlePercentValueChange}>
+                </lightning-input>
+                <lightning-checkbox-group
+                    label="Currencies"
+                    options={currencyOptions}
+                    value={wizardData.percentCurrencies}
+                    class="slds-m-top_small"
+                    onchange={handlePercentCurrenciesChange}>
+                </lightning-checkbox-group>
+            </template>
+            <template if:true={isAmount}>
+                <p class="helper-text">
+                    Each currency you select will produce one promo code record. Members in that
+                    currency will see the amount in their local currency at checkout.
+                </p>
+                <c-promo-currency-amount-input
+                    available-currencies={availableCurrencies}
+                    initial-amounts={wizardData.amounts}
+                    onchange={handleAmountsChange}>
+                </c-promo-currency-amount-input>
+            </template>
+        </div>
+    </template>
+</template>
