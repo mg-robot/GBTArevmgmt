@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Promotion_Value__c</fullName>
     <description>Aggregate currency amount discounted on this line by the apply flow. Written by the pricing pre-hook from Pending Promo_Code_Item__c records. The pricing-procedure Formula element subtracts this value from NetPrice (floored at 0).</description>
-    <inlineHelpText>Currency amount discounted from this line by applied promo codes. Populated by the pricing pre-hook.</inlineHelpText>
+    <inlineHelpText>Aggregated promotional adjustment applied to this line in the line&apos;s currency. Populated by pricing pre-hook by summing per-code Applied_Discount_Amount__c values across all Pending Promo_Code_Items for the line. The Formula pricing element subtracts this from NetPrice.</inlineHelpText>
     <label>Promotion Value</label>
     <precision>16</precision>
     <required>false</required>

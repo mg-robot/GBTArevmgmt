@@ -1244,7 +1244,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>true</editable>
+        <editable>false</editable>
         <field>OrderItem.Promotion_Value__c</field>
         <readable>true</readable>
     </fieldPermissions>
