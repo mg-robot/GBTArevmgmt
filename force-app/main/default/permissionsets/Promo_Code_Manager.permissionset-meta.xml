@@ -15,6 +15,11 @@
     <description>Membership Ops staff who create and manage Promo Codes. Full CRUD on Promo_Code__c and Promo_Code_Item__c, plus FLS on every field. Does NOT include Bypass_Promo_Code_Lock; that is granted via a separate, tightly-controlled permission set.</description>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Order.Promo_Discount_Total__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>OrderItem.Promotion_Value__c</field>
         <readable>true</readable>
     </fieldPermissions>

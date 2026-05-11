@@ -29,6 +29,11 @@
     </objectPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Order.Promo_Discount_Total__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Promo_Code__c.Effective_Start_Date__c</field>
         <readable>true</readable>
     </fieldPermissions>

@@ -9675,6 +9675,14 @@
                     <contextInputAttributeName>STContractAccount__std</contextInputAttributeName>
                     <inheritedFrom>SalesTransactionContext__stdctx/version/OrderEntitiesMapping/SalesTransaction/STContractAccount__std</inheritedFrom>
                 </contextAttributeMappings>
+                <contextAttributeMappings>
+                    <contextAttrHydrationDetails>
+                        <objectName>Order</objectName>
+                        <queryAttribute>Promo_Discount_Total__c</queryAttribute>
+                    </contextAttrHydrationDetails>
+                    <contextAttribute>Promo_Discount_Total__c</contextAttribute>
+                    <contextInputAttributeName>Promo_Discount_Total__c</contextInputAttributeName>
+                </contextAttributeMappings>
                 <contextNode>SalesTransaction</contextNode>
                 <inheritedFrom>SalesTransactionContext__stdctx/version/OrderEntitiesMapping/SalesTransaction</inheritedFrom>
                 <object>Order</object>
@@ -18164,6 +18172,18 @@
                 <inheritedFrom>SalesTransactionContext__stdctx/version/SalesTransaction/AggregationStrategy__std</inheritedFrom>
                 <key>false</key>
                 <title>AggregationStrategy__std</title>
+                <transient>false</transient>
+                <value>false</value>
+            </contextAttributes>
+            <contextAttributes>
+                <contextTags>
+                    <title>Promo_Discount_Total__c</title>
+                </contextTags>
+                <customMappingAllowed>false</customMappingAllowed>
+                <dataType>currency</dataType>
+                <fieldType>inputoutput</fieldType>
+                <key>false</key>
+                <title>Promo_Discount_Total__c</title>
                 <transient>false</transient>
                 <value>false</value>
             </contextAttributes>
