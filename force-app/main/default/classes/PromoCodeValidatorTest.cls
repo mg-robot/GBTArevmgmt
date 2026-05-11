@@ -1,11 +1,15 @@
 /**
- * Tests for PromoCodeValidator covering all 10 ordered validation rules from
+ * Tests for PromoCodeValidator covering all 9 ordered validation rules from
  * checkout-apply-flow.md §4.4. Each error code gets at least one dedicated test that asserts
  * both errorCode and valid=false; the happy-path test confirms valid=true with no errorCode.
  *
  * To keep tests fast and decoupled from Order/Account DML, an OrderContext is built in-memory.
  * Promo_Code__c records ARE inserted so the validator's parent-record reads are exercised against
  * real org metadata. PCIs are inserted where rules 4 / 5 need pre-existing usage counts.
+ *
+ * Note: Member_Type_Scope__c is not a validator-level eligibility check in v1 — it's consumed by
+ * the allocation engine for product-name CONTAINS matching under Product_Scope_Type__c =
+ * 'Specific Membership Types'. See PromoCodeAllocationEngineTest for that coverage.
  */
 @IsTest
 private class PromoCodeValidatorTest {
@@ -209,33 +213,7 @@ private class PromoCodeValidatorTest {
     }
 
     // -----------------------------------------------------------
-    // Rule 6: MEMBER_TYPE_INELIGIBLE
-    // -----------------------------------------------------------
-
-    @IsTest
-    static void validate_memberTypeIneligible_returnsMemberTypeIneligible() {
-        Account a = ensureAccount();
-        Promo_Code__c pc = PromoCodeTestDataFactory.buildBase('TYPED', CURRENCY_ISO, 'Percent', 10);
-        pc.Member_Type_Scope__c = 'Student Membership;Educator Membership';
-        insert pc;
-        pc = [SELECT Id, Code__c, Status__c, Display_Name__c, Effective_Start_Date__c, Effective_End_Date__c,
-                     Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
-                     Member_Type_Scope__c, Region_Scope__c, Account__c, Product_Scope_Type__c,
-                     Specific_Products__c, Combinable__c, Combination_Group__c,
-                     Discount_Type__c, Discount_Value__c
-              FROM Promo_Code__c WHERE Id = :pc.Id];
-
-        // Cart member type is 'Direct Membership' — not in the scope.
-        PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, 'Direct Membership', 'NA');
-        PromoCodeApplyService.CodeResult cr =
-            PromoCodeValidator.validate('TYPED', pc, ctx, new List<Promo_Code__c>(), emptyUsage());
-
-        System.assertEquals(false, cr.valid);
-        System.assertEquals(PromoCodeApplyService.ERR_MEMBER_TYPE_INELIGIBLE, cr.errorCode);
-    }
-
-    // -----------------------------------------------------------
-    // Rule 7: REGION_INELIGIBLE
+    // Rule 6: REGION_INELIGIBLE
     // -----------------------------------------------------------
 
     @IsTest
@@ -260,7 +238,7 @@ private class PromoCodeValidatorTest {
     }
 
     // -----------------------------------------------------------
-    // Rule 8: ACCOUNT_INELIGIBLE
+    // Rule 7: ACCOUNT_INELIGIBLE
     // -----------------------------------------------------------
 
     @IsTest
@@ -288,7 +266,7 @@ private class PromoCodeValidatorTest {
     }
 
     // -----------------------------------------------------------
-    // Rule 9: NOT_APPLICABLE_TO_CART
+    // Rule 8: NOT_APPLICABLE_TO_CART
     // -----------------------------------------------------------
 
     @IsTest
@@ -296,7 +274,9 @@ private class PromoCodeValidatorTest {
         Account a = ensureAccount();
         Promo_Code__c pc = PromoCodeTestDataFactory.buildBase('SPECIFIC', CURRENCY_ISO, 'Percent', 10);
         pc.Product_Scope_Type__c = 'Specific Products';
-        pc.Specific_Products__c = 'Educator Membership';
+        // Specific_Products__c is a CSV of Product2.ProductCode values (per the new contract).
+        // The cart's in-memory product has no ProductCode, so no line matches.
+        pc.Specific_Products__c = 'EDU-PREMIUM-001';
         insert pc;
         pc = [SELECT Id, Code__c, Status__c, Display_Name__c, Effective_Start_Date__c, Effective_End_Date__c,
                      Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
@@ -315,7 +295,7 @@ private class PromoCodeValidatorTest {
     }
 
     // -----------------------------------------------------------
-    // Rule 10: NOT_COMBINABLE
+    // Rule 9: NOT_COMBINABLE
     // -----------------------------------------------------------
 
     @IsTest
@@ -434,7 +414,6 @@ private class PromoCodeValidatorTest {
             PromoCodeApplyService.ERR_OUT_OF_WINDOW,
             PromoCodeApplyService.ERR_USAGE_EXCEEDED,
             PromoCodeApplyService.ERR_MEMBER_LIMIT_EXCEEDED,
-            PromoCodeApplyService.ERR_MEMBER_TYPE_INELIGIBLE,
             PromoCodeApplyService.ERR_REGION_INELIGIBLE,
             PromoCodeApplyService.ERR_ACCOUNT_INELIGIBLE,
             PromoCodeApplyService.ERR_NOT_APPLICABLE_TO_CART,
