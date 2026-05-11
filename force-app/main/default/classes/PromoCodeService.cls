@@ -6,8 +6,9 @@
  * - checkCodeUniqueness(code): which currencies (if any) already use a given code; used by the
  *   wizard for real-time feedback as the user types.
  * - searchProducts(searchTerm): Product2 typeahead for the Specific Products picker (matches on
- *   Name or ProductCode; per data-model.md, the selected value stored on Specific_Products__c is
- *   Product2.Name).
+ *   Name or ProductCode). The picker persists Product2.ProductCode (CSV) onto
+ *   Specific_Products__c — aligned with PromoCodeAllocationEngine's case-insensitive ProductCode
+ *   match. See docs/promo-code/checkout-apply-flow.md §5.2.
  * - createBulk(input): single-transaction insert of N Promo_Code__c records (one per selected
  *   currency) sharing the same Code value. Status is Active when input.activateImmediately = true,
  *   else Draft. Composite uniqueness on (Code__c, CurrencyIsoCode) is pre-checked inside the

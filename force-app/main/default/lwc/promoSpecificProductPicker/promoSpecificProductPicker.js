@@ -7,14 +7,23 @@ import LBL_Searching from '@salesforce/label/c.PromoCodeWizard_PP_Searching';
 import LBL_SelectedTemplate from '@salesforce/label/c.PromoCodeWizard_PP_SelectedTemplate';
 
 /**
- * Multi-select picker for Specific Products scope.
+ * Multi-select picker for the Specific Products promo scope.
  *
- * Storage (current): CSV of Product Names in Specific_Products__c — matches the
- * PromoCodeAllocationEngine which matches against Product2.Name.
+ * Storage contract: persists a CSV of Product2.ProductCode values via the `change` event's
+ * `detail.csv`. This aligns with PromoCodeAllocationEngine, which matches eligible OrderItems
+ * by Product2.ProductCode (case-insensitive, trim) under
+ * Product_Scope_Type__c = 'Specific Products'.
  *
- * Display: search results show "Product Code — Product Name" so staff can disambiguate
- * by code. Switching the persisted CSV to codes is a follow-up (would require updating
- * the allocation engine too).
+ * Display:
+ *   - Search results render as "Product Code — Product Name" so staff can disambiguate while
+ *     selecting.
+ *   - Pills show "Product Code — Product Name" when added via search; pills loaded from
+ *     `initialCsv` (edit flow) show just the code, since we don't round-trip names for
+ *     pre-existing codes in v1.
+ *
+ * Pre-existing data with Product Names (from before the apply-flow contract switched to
+ * ProductCode) will not match cart lines at apply time — staff must re-pick those products via
+ * the wizard to convert them to codes.
  */
 export default class PromoSpecificProductPicker extends LightningElement {
     @api initialCsv = '';
@@ -32,11 +41,11 @@ export default class PromoSpecificProductPicker extends LightningElement {
 
     connectedCallback() {
         if (this.initialCsv) {
-            const names = this.initialCsv
+            const codes = this.initialCsv
                 .split(',')
                 .map((s) => s.trim())
                 .filter(Boolean);
-            this.selected = names.map((n) => ({ name: n, label: n }));
+            this.selected = codes.map((code) => ({ code, label: code }));
         }
     }
 
@@ -61,8 +70,8 @@ export default class PromoSpecificProductPicker extends LightningElement {
         this.loading = true;
         searchProducts({ searchTerm: this.searchTerm })
             .then((r) => {
-                const taken = new Set(this.selected.map((s) => s.name));
-                this.results = (r || []).filter((p) => !taken.has(p.name));
+                const taken = new Set(this.selected.map((s) => s.code));
+                this.results = (r || []).filter((p) => p.productCode && !taken.has(p.productCode));
             })
             .catch(() => {
                 this.results = [];
@@ -73,23 +82,25 @@ export default class PromoSpecificProductPicker extends LightningElement {
     }
 
     addProduct(e) {
+        const code = e.currentTarget.dataset.code;
         const name = e.currentTarget.dataset.name;
-        if (!name) return;
-        if (!this.selected.some((s) => s.name === name)) {
-            this.selected = [...this.selected, { name, label: name }];
+        if (!code) return;
+        if (!this.selected.some((s) => s.code === code)) {
+            const label = name ? `${code} — ${name}` : code;
+            this.selected = [...this.selected, { code, label }];
             this.fireChange();
         }
-        this.results = this.results.filter((r) => r.name !== name);
+        this.results = this.results.filter((r) => r.productCode !== code);
     }
 
     removeProduct(e) {
-        const name = e.target.name;
-        this.selected = this.selected.filter((s) => s.name !== name);
+        const code = e.target.name;
+        this.selected = this.selected.filter((s) => s.code !== code);
         this.fireChange();
     }
 
     fireChange() {
-        const csv = this.selected.map((s) => s.name).join(',');
+        const csv = this.selected.map((s) => s.code).join(',');
         this.dispatchEvent(
             new CustomEvent('change', { detail: { csv, count: this.selected.length } })
         );
