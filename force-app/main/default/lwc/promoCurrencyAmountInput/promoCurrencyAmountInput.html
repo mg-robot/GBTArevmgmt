@@ -36,6 +36,8 @@
                         value={row.amount}
                         data-idx={idx}
                         onchange={handleAmountChange}
+                        oninput={handleAmountChange}
+                        onblur={handleAmountChange}
                         required>
                     </lightning-input>
                 </div>
