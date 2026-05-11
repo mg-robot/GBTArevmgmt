@@ -1,7 +1,7 @@
 .section-heading {
-    border-bottom: 2px solid var(--gbta-accent-blue, #00A6E1);
+    border-bottom: 2px solid var(--gbta-section-underline, #f16206);
     padding-bottom: 0.25rem;
-    color: var(--gbta-primary-navy, #002F6C);
+    color: var(--gbta-section-text, #505157);
     font-weight: 600;
     font-size: 0.9375rem;
     margin-bottom: 0.5rem;

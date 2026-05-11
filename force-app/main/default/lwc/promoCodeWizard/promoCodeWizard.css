@@ -1,8 +1,28 @@
 :host {
+    /* GBTA core palette */
     --gbta-primary-navy: #002F6C;
     --gbta-accent-blue: #00A6E1;
     --gbta-action-orange: #E5841C;
     --gbta-action-orange-hover: #C46E15;
+
+    /* Section heading appearance */
+    --gbta-section-text: #505157;
+    --gbta-section-underline: #f16206;
+
+    /* Progress indicator state colors */
+    --gbta-progress-completed: #f28c15;
+    --gbta-progress-active: #f16206;
+
+    /* SLDS styling hooks — cascade into the lightning-progress-indicator shadow DOM */
+    --slds-c-progress-indicator-marker-color-background: var(--gbta-progress-active);
+    --slds-c-progress-indicator-marker-color-background-active: var(--gbta-progress-active);
+    --slds-c-progress-indicator-marker-color-background-completed: var(--gbta-progress-completed);
+    --slds-c-progress-indicator-marker-color-border: var(--gbta-progress-active);
+    --slds-c-progress-indicator-marker-color-border-active: var(--gbta-progress-active);
+    --slds-c-progress-indicator-marker-color-border-completed: var(--gbta-progress-completed);
+    --slds-c-progress-bar-color-background-fill: var(--gbta-progress-completed);
+
+    /* General */
     --gbta-text-primary: #1F2937;
     --gbta-text-muted: #6B7280;
     --gbta-surface: #F8FAFC;
@@ -12,16 +32,16 @@
 }
 
 .section-heading {
-    border-bottom: 2px solid var(--gbta-accent-blue);
+    border-bottom: 2px solid var(--gbta-section-underline, #f16206);
     padding-bottom: 0.25rem;
-    color: var(--gbta-primary-navy);
+    color: var(--gbta-section-text, #505157);
     font-weight: 600;
     font-size: 0.9375rem;
     margin-bottom: 0.5rem;
 }
 
 .helper-text {
-    color: var(--gbta-text-muted);
+    color: var(--gbta-text-muted, #6B7280);
     font-size: 0.8125rem;
     font-style: italic;
     margin-bottom: 0.75rem;
@@ -47,21 +67,30 @@
 
 .summary-section-title {
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
-    color: var(--gbta-primary-navy);
-    font-weight: 600;
     margin-bottom: 0.25rem;
+}
+
+.summary-section-name {
+    color: var(--gbta-section-text, #505157);
+    font-weight: 700;
+}
+
+.summary-section-edit {
+    margin-left: 0.75rem;
+    font-weight: 400;
+    text-decoration: underline;
+    font-size: 0.8125rem;
 }
 
 .activation-banner {
     background: var(--gbta-surface);
-    border-left: 4px solid var(--gbta-accent-blue);
+    border-left: 4px solid var(--gbta-section-underline, #f16206);
     padding: 0.75rem 1rem;
     margin-top: 1rem;
     margin-bottom: 1rem;
     font-size: 0.875rem;
-    color: var(--gbta-text-primary);
+    color: var(--gbta-text-primary, #1F2937);
 }
 
 .record-list {
