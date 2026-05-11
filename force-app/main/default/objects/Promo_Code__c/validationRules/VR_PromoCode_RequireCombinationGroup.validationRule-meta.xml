@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>VR_PromoCode_RequireCombinationGroup</fullName>
+    <active>true</active>
+    <description>When Combinable__c = true, Combination_Group__c must be set. Per data-model.md §Validation rules.</description>
+    <errorConditionFormula>AND(
+  Combinable__c,
+  ISBLANK(TEXT(Combination_Group__c))
+)</errorConditionFormula>
+    <errorDisplayField>Combination_Group__c</errorDisplayField>
+    <errorMessage>Combination Group is required when Combinable is true. Pick a group (codes in the same group can stack; cross-group codes cannot combine).</errorMessage>
+</ValidationRule>

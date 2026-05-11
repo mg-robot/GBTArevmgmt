@@ -2,17 +2,12 @@
 <ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>VR_PromoCode_Status_Transitions</fullName>
     <active>true</active>
-    <description>Restricts Status transitions to: Draft-&gt;Active, Active&lt;-&gt;Inactive, Active/Inactive-&gt;Expired.</description>
+    <description>v1 lifecycle: Draft is the default; Activate Now or the Activate Quick Action moves Draft -&gt; Active. This rule blocks the only invalid v1 transition: Active -&gt; Draft. See design-overview.md §8.3.</description>
     <errorConditionFormula>AND(
   NOT(ISNEW()),
   ISCHANGED(Status__c),
-  NOT(OR(
-    AND(ISPICKVAL(PRIORVALUE(Status__c), "Draft"),    ISPICKVAL(Status__c, "Active")),
-    AND(ISPICKVAL(PRIORVALUE(Status__c), "Active"),   ISPICKVAL(Status__c, "Inactive")),
-    AND(ISPICKVAL(PRIORVALUE(Status__c), "Inactive"), ISPICKVAL(Status__c, "Active")),
-    AND(ISPICKVAL(PRIORVALUE(Status__c), "Active"),   ISPICKVAL(Status__c, "Expired")),
-    AND(ISPICKVAL(PRIORVALUE(Status__c), "Inactive"), ISPICKVAL(Status__c, "Expired"))
-  ))
+  ISPICKVAL(PRIORVALUE(Status__c), "Active"),
+  ISPICKVAL(Status__c, "Draft")
 )</errorConditionFormula>
-    <errorMessage>Invalid status transition. Allowed: Draft-&gt;Active, Active&lt;-&gt;Inactive, Active/Inactive-&gt;Expired.</errorMessage>
+    <errorMessage>Cannot move an Active promo code back to Draft. To stop a code being used, deactivate via the bypass-permitted admin flow or let the effective window expire.</errorMessage>
 </ValidationRule>

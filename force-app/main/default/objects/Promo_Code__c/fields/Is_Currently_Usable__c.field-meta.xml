@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Currently_Usable__c</fullName>
+    <description>True when this code is Active AND the current time falls within its effective window. Null start/end dates are treated as "no bound on that side." Used by list views, reports, and convenience checks.</description>
+    <externalId>false</externalId>
+    <formula>AND(
+  ISPICKVAL(Status__c, "Active"),
+  OR(ISBLANK(Effective_Start_Date__c), NOW() &gt;= Effective_Start_Date__c),
+  OR(ISBLANK(Effective_End_Date__c), NOW() &lt;= Effective_End_Date__c)
+)</formula>
+    <label>Is Currently Usable</label>
+    <type>Checkbox</type>
+</CustomField>

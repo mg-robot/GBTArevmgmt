@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Tightly-scoped admin set granting the Bypass_Promo_Code_Lock custom permission. Allows the holder to edit core fields on an already-created Promo Code without disabling VR_PromoCode_Lock_After_Create. Keep membership small for audit clarity.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>PSG Promo Code Admin Bypass</label>
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Bypass_Promo_Code_Lock</name>
+    </customPermissions>
+</PermissionSet>
