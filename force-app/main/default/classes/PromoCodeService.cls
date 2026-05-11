@@ -28,31 +28,31 @@
 public with sharing class PromoCodeService {
 
     public class PromoCodeInput {
-        @AuraEnabled public String code;
-        @AuraEnabled public String displayName;
-        @AuraEnabled public String terms;
-        @AuraEnabled public String discountType;
-        @AuraEnabled public Decimal percentValue;
-        @AuraEnabled public List<String> percentCurrencies;
-        @AuraEnabled public List<CurrencyAmount> amounts;
-        @AuraEnabled public Datetime effectiveStart;
-        @AuraEnabled public Datetime effectiveEnd;
-        @AuraEnabled public Decimal totalLimit;
-        @AuraEnabled public Decimal perMemberLimit;
-        @AuraEnabled public List<String> memberTypeScope;
-        @AuraEnabled public List<String> regionScope;
-        @AuraEnabled public String productScopeType;
-        @AuraEnabled public String specificProducts;
-        @AuraEnabled public Id accountId;
-        @AuraEnabled public Boolean combinable;
-        @AuraEnabled public String combinationGroup;
-        @AuraEnabled public Boolean approvalRequired;
-        @AuraEnabled public Boolean activateImmediately;
+        @AuraEnabled public String code { get; set; }
+        @AuraEnabled public String displayName { get; set; }
+        @AuraEnabled public String terms { get; set; }
+        @AuraEnabled public String discountType { get; set; }
+        @AuraEnabled public Decimal percentValue { get; set; }
+        @AuraEnabled public List<String> percentCurrencies { get; set; }
+        @AuraEnabled public List<CurrencyAmount> amounts { get; set; }
+        @AuraEnabled public Datetime effectiveStart { get; set; }
+        @AuraEnabled public Datetime effectiveEnd { get; set; }
+        @AuraEnabled public Decimal totalLimit { get; set; }
+        @AuraEnabled public Decimal perMemberLimit { get; set; }
+        @AuraEnabled public List<String> memberTypeScope { get; set; }
+        @AuraEnabled public List<String> regionScope { get; set; }
+        @AuraEnabled public String productScopeType { get; set; }
+        @AuraEnabled public String specificProducts { get; set; }
+        @AuraEnabled public Id accountId { get; set; }
+        @AuraEnabled public Boolean combinable { get; set; }
+        @AuraEnabled public String combinationGroup { get; set; }
+        @AuraEnabled public Boolean approvalRequired { get; set; }
+        @AuraEnabled public Boolean activateImmediately { get; set; }
     }
 
     public class CurrencyAmount {
-        @AuraEnabled public String currencyIsoCode;
-        @AuraEnabled public Decimal amount;
+        @AuraEnabled public String currencyIsoCode { get; set; }
+        @AuraEnabled public Decimal amount { get; set; }
     }
 
     public class CreateResult {
