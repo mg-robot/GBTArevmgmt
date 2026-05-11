@@ -94,6 +94,7 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
       : (List<Object>) queryResult.get('SalesTransactionItem');
   }
 
+  @TestVisible
   private static void submitContextUpdates(
     Context.IndustriesContext industriesContext,
     String contextId,
@@ -203,6 +204,13 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
    * Builds the node-update payloads for `updateContextAttributes`. One entry per OrderItem in
    * orderItemIds — OrderItems without an entry in adjustmentByOrderItem get value=0, which is
    * the reset behavior that prevents ghost-applies of removed promo codes.
+   *
+   * nodePath construction follows the canonical Salesforce pattern: strip the leading contextId
+   * (index 0) from the queried dataPath and pass the remainder. This is robust to nested or
+   * extended paths (e.g., bundles) rather than hardcoding specific indices.
+   *
+   * attributeValue is passed as Decimal (not stringified) so the pricing engine doesn't
+   * re-parse on the receiving side.
    */
   @TestVisible
   private static List<Map<String, Object>> buildNodeUpdates(
@@ -217,12 +225,11 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
       List<Object> fullPath = orderItemToDataPath == null
         ? null
         : orderItemToDataPath.get(oiId);
-      if (fullPath == null || fullPath.size() < 3)
+      if (fullPath == null || fullPath.size() < 2)
         continue;
-      List<Object> nodePath = new List<Object>{
-        fullPath.get(1),
-        fullPath.get(2)
-      };
+      // Copy then strip the leading contextId — don't mutate the caller's list.
+      List<Object> nodePath = new List<Object>(fullPath);
+      nodePath.remove(0);
 
       Decimal adjustment = adjustmentByOrderItem != null &&
         adjustmentByOrderItem.containsKey(oiId)
@@ -235,7 +242,7 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
           'attributes' => new List<Object>{
             new Map<String, Object>{
               'attributeName' => 'Promotion_Value__c',
-              'attributeValue' => String.valueOf(adjustment)
+              'attributeValue' => adjustment
             }
           }
         }

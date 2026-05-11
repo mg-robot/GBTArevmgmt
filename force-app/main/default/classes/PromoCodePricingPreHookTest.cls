@@ -302,10 +302,19 @@ private class PromoCodePricingPreHookTest {
 
     System.assertEquals(1, result.size());
     Map<String, Object> entry = result[0];
+
+    // nodePath is the queried dataPath with the leading contextId stripped.
+    Map<String, Object> nodePath = (Map<String, Object>) entry.get('nodePath');
+    List<Object> emittedPath = (List<Object>) nodePath.get('dataPath');
+    System.assertEquals(2, emittedPath.size(), 'contextId should be stripped');
+    System.assertEquals('Item/x', emittedPath.get(0));
+    System.assertEquals('Line/0', emittedPath.get(1));
+
     List<Object> attrs = (List<Object>) entry.get('attributes');
     Map<String, Object> attr = (Map<String, Object>) attrs[0];
     System.assertEquals('Promotion_Value__c', attr.get('attributeName'));
-    System.assertEquals('42.50', attr.get('attributeValue'));
+    // attributeValue is passed as Decimal directly (not stringified).
+    System.assertEquals(42.50, (Decimal) attr.get('attributeValue'));
   }
 
   @IsTest
@@ -331,16 +340,86 @@ private class PromoCodePricingPreHookTest {
     List<Object> attrs = (List<Object>) entry.get('attributes');
     Map<String, Object> attr = (Map<String, Object>) attrs[0];
     System.assertEquals(
-      '0',
-      attr.get('attributeValue'),
-      'Reset value should be 0'
+      0,
+      (Decimal) attr.get('attributeValue'),
+      'Reset value should be 0 (Decimal)'
     );
+  }
+
+  @IsTest
+  static void buildNodeUpdates_doesNotMutateCallersDataPath() {
+    // The reference Salesforce pre-hook example mutates its dataPath via .remove(0). We
+    // explicitly copy first to avoid surprising the caller. This test pins the no-mutation
+    // contract so a future refactor doesn't regress.
+    Id oi = fakeId(OrderItem.SObjectType, 1);
+    List<Object> originalPath = new List<Object>{
+      'Order/abc',
+      'Item/x',
+      'Line/0'
+    };
+    Map<Id, List<Object>> pathMap = new Map<Id, List<Object>>{
+      oi => originalPath
+    };
+
+    PromoCodePricingPreHook.buildNodeUpdates(
+      new Set<Id>{ oi },
+      pathMap,
+      new Map<Id, Decimal>{ oi => 10 }
+    );
+
+    System.assertEquals(
+      3,
+      originalPath.size(),
+      'Caller path must be unchanged'
+    );
+    System.assertEquals('Order/abc', originalPath.get(0));
+  }
+
+  @IsTest
+  static void buildNodeUpdates_handlesExtendedDataPath() {
+    // Paths longer than 3 elements (e.g., nested bundles) should pass through as-is after the
+    // contextId is stripped.
+    Id oi = fakeId(OrderItem.SObjectType, 1);
+    List<Object> longPath = new List<Object>{
+      'ctx',
+      'Order/abc',
+      'Bundle/y',
+      'Item/x',
+      'Line/0'
+    };
+
+    List<Map<String, Object>> result = PromoCodePricingPreHook.buildNodeUpdates(
+      new Set<Id>{ oi },
+      new Map<Id, List<Object>>{ oi => longPath },
+      new Map<Id, Decimal>{ oi => 5 }
+    );
+
+    System.assertEquals(1, result.size());
+    Map<String, Object> nodePath = (Map<String, Object>) result[0]
+      .get('nodePath');
+    List<Object> emittedPath = (List<Object>) nodePath.get('dataPath');
+    System.assertEquals(4, emittedPath.size());
+    System.assertEquals('Order/abc', emittedPath.get(0));
+    System.assertEquals('Line/0', emittedPath.get(3));
+  }
+
+  @IsTest
+  static void submitContextUpdates_emptyOrNullList_isNoOp() {
+    // Early-return guard — passing an empty/null list should NOT call into the platform
+    // (we pass null for industriesContext to prove it isn't touched).
+    PromoCodePricingPreHook.submitContextUpdates(null, 'any-ctx', null);
+    PromoCodePricingPreHook.submitContextUpdates(
+      null,
+      'any-ctx',
+      new List<Map<String, Object>>()
+    );
+    System.assert(true, 'Both calls should return without error or NPE');
   }
 
   @IsTest
   static void buildNodeUpdates_skipsShortDataPaths() {
     Id oi = fakeId(OrderItem.SObjectType, 1);
-    List<Object> shortPath = new List<Object>{ 'Order/abc' }; // only 1 element
+    List<Object> shortPath = new List<Object>{ 'OnlyContextId' }; // 1 element
 
     List<Map<String, Object>> result = PromoCodePricingPreHook.buildNodeUpdates(
       new Set<Id>{ oi },
@@ -351,7 +430,7 @@ private class PromoCodePricingPreHookTest {
     System.assertEquals(
       0,
       result.size(),
-      'Malformed dataPath should be skipped rather than throwing'
+      'Path with only contextId is malformed; skip rather than emit empty nodePath'
     );
   }
 
