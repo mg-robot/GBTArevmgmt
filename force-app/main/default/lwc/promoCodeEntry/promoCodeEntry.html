@@ -1,0 +1,119 @@
+<template>
+    <div class="entry">
+        <header class="entry-header">
+            <h3 class="entry-title">Promo Codes</h3>
+            <template if:false={showInput}>
+                <lightning-button
+                    label="Add Promo Code"
+                    icon-name="utility:add"
+                    variant="brand-outline"
+                    onclick={handleShowInput}
+                    disabled={controlsDisabled}>
+                </lightning-button>
+            </template>
+        </header>
+
+        <template if:true={showInput}>
+            <div class="input-row">
+                <lightning-input
+                    type="text"
+                    label="Promo code"
+                    variant="label-hidden"
+                    placeholder="Enter a code"
+                    value={inputValue}
+                    onchange={handleInputChange}
+                    onkeydown={handleInputKeydown}
+                    disabled={controlsDisabled}
+                    class="code-input">
+                </lightning-input>
+                <lightning-button
+                    label="Apply"
+                    variant="brand"
+                    onclick={handleApply}
+                    disabled={applyDisabled}>
+                </lightning-button>
+                <lightning-button
+                    label="Cancel"
+                    variant="neutral"
+                    onclick={handleCancelInput}
+                    disabled={controlsDisabled}>
+                </lightning-button>
+            </div>
+        </template>
+
+        <template if:true={isLoading}>
+            <div class="state-row">
+                <lightning-spinner size="small" alternative-text="Working"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={hasAppliedCodes}>
+            <ul class="codes-list" role="list">
+                <template for:each={appliedCodes} for:item="c">
+                    <li key={c.code} class="code-row code-row--applied">
+                        <div class="code-row-main">
+                            <div class="code-info">
+                                <span class="code-value">{c.code}</span>
+                                <template if:true={c.displayName}>
+                                    <span class="code-name">{c.displayName}</span>
+                                </template>
+                            </div>
+                            <div class="code-amount">
+                                <lightning-formatted-number
+                                    value={c.appliedAmount}
+                                    format-style="currency"
+                                    currency-code={c.currencyIsoCode}>
+                                </lightning-formatted-number>
+                            </div>
+                            <lightning-button-icon
+                                icon-name="utility:close"
+                                alternative-text="Remove code"
+                                title="Remove code"
+                                data-code={c.code}
+                                onclick={handleRemove}
+                                disabled={controlsDisabled}
+                                size="small">
+                            </lightning-button-icon>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </template>
+
+        <template if:true={hasFailedCodes}>
+            <ul class="codes-list" role="list">
+                <template for:each={failedCodes} for:item="c">
+                    <li key={c.code} class="code-row code-row--failed">
+                        <div class="code-row-main">
+                            <div class="code-info">
+                                <span class="code-value">{c.code}</span>
+                            </div>
+                            <lightning-button-icon
+                                icon-name="utility:close"
+                                alternative-text="Dismiss failed code"
+                                title="Dismiss"
+                                data-code={c.code}
+                                onclick={handleDismissFailed}
+                                disabled={controlsDisabled}
+                                size="small">
+                            </lightning-button-icon>
+                        </div>
+                        <div class="error-banner">{c.errorMessage}</div>
+                    </li>
+                </template>
+            </ul>
+        </template>
+
+        <template if:true={hasAppliedCodes}>
+            <div class="savings-summary">
+                <span class="savings-label">Total savings</span>
+                <lightning-formatted-number
+                    value={totalAdjustment}
+                    format-style="currency"
+                    currency-code={summaryCurrency}
+                    class="savings-amount">
+                </lightning-formatted-number>
+            </div>
+        </template>
+    </div>
+</template>

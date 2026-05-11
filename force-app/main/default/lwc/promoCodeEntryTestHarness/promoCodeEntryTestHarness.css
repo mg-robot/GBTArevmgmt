@@ -1,0 +1,112 @@
+:host {
+    --gbta-card-border: #d8dde6;
+    --gbta-card-title: #0176d3;
+    --gbta-text-muted: #444444;
+    --gbta-danger: #ba0517;
+    --gbta-danger-bg: #fdecec;
+
+    display: block;
+}
+
+.harness-body {
+    padding: 0.5rem 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.control-panel {
+    padding: 0.75rem;
+    border: 1px solid var(--gbta-card-border);
+    border-radius: 0.25rem;
+    background: #fbfbfb;
+}
+
+.section-title {
+    color: var(--gbta-card-title);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.section-helper {
+    color: var(--gbta-text-muted);
+    font-size: 0.8125rem;
+    margin: 0.25rem 0 0.5rem 0;
+    line-height: 1.25rem;
+}
+
+.section-helper code {
+    background: #eef2f6;
+    padding: 0.0625rem 0.25rem;
+    border-radius: 0.125rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.order-input {
+    max-width: 30rem;
+}
+
+.action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.event-log {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 24rem;
+    overflow-y: auto;
+}
+
+.event-row {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--gbta-card-border);
+}
+
+.event-row--error {
+    background: var(--gbta-danger-bg);
+    border-left: 3px solid var(--gbta-danger);
+}
+
+.event-meta {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    margin-bottom: 0.25rem;
+}
+
+.event-time {
+    color: var(--gbta-text-muted);
+    font-size: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.event-label {
+    font-weight: 600;
+    color: #181818;
+    font-size: 0.8125rem;
+}
+
+.event-body {
+    margin: 0;
+    background: #f5f7fa;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.125rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 12rem;
+    overflow-y: auto;
+}

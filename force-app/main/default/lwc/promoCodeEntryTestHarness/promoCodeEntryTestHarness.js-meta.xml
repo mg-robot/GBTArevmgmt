@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Promo Code Entry — Dev Test Harness</masterLabel>
+    <description>Dev / QA wrapper around promoCodeEntry. Lets a tester drop in any Order Id, exercise the apply / remove flow, and run the three test-harness utility actions. Not for production use.</description>
+    <targets>
+        <target>lightning__AppPage</target>
+    </targets>
+</LightningComponentBundle>

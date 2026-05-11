@@ -1,0 +1,90 @@
+<template>
+    <lightning-card title="Promo Code Entry — Dev Test" icon-name="utility:test">
+        <div class="harness-body">
+            <section class="control-panel">
+                <h3 class="section-title">1. Set Order Id</h3>
+                <p class="section-helper">Paste any Order Id from this sandbox. The Order needs at least one OrderItem on a Membership product for the apply flow to allocate.</p>
+                <lightning-input
+                    type="text"
+                    label="Order Id"
+                    value={orderId}
+                    onchange={handleOrderIdChange}
+                    class="order-input">
+                </lightning-input>
+            </section>
+
+            <template if:true={hasOrderId}>
+                <section class="control-panel">
+                    <h3 class="section-title">2. Apply / remove codes</h3>
+                    <c-promo-code-entry
+                        order-id={orderId}
+                        oncodesapplied={handleCodesApplied}
+                        oncodesremoved={handleCodesRemoved}
+                        onvalidationerror={handleValidationError}>
+                    </c-promo-code-entry>
+                </section>
+
+                <section class="control-panel">
+                    <h3 class="section-title">3. Utility actions</h3>
+                    <div class="action-row">
+                        <lightning-button
+                            label="Trigger Re-price"
+                            variant="brand"
+                            onclick={handleReprice}
+                            disabled={isLoading}>
+                        </lightning-button>
+                        <lightning-button
+                            label="Simulate Place-Order Pre-Validation"
+                            variant="neutral"
+                            onclick={handlePrePlace}
+                            disabled={isLoading}>
+                        </lightning-button>
+                        <lightning-button
+                            label="Reset Test Data"
+                            variant="destructive-text"
+                            onclick={handleReset}
+                            disabled={isLoading}>
+                        </lightning-button>
+                    </div>
+                    <p class="section-helper">
+                        <strong>Trigger Re-price</strong> snapshots all PCIs on the order (placeholder until Phase A4 wires Headless Pricing).
+                        <strong>Simulate Pre-Validation</strong> calls <code>PromoCodeApplyService.revalidateAll</code>.
+                        <strong>Reset</strong> deletes all PCIs and clears the Order's entered-codes CSV.
+                    </p>
+                </section>
+
+                <section class="control-panel">
+                    <div class="output-header">
+                        <h3 class="section-title">Output</h3>
+                        <lightning-button-icon
+                            icon-name="utility:clear"
+                            alternative-text="Clear output"
+                            title="Clear output"
+                            onclick={handleClearOutput}
+                            size="small">
+                        </lightning-button-icon>
+                    </div>
+                    <template if:true={isLoading}>
+                        <lightning-spinner size="small" alternative-text="Working"></lightning-spinner>
+                    </template>
+                    <template if:true={hasOutput}>
+                        <ul class="event-log">
+                            <template for:each={events} for:item="e">
+                                <li key={e.id} class={e.rowClass}>
+                                    <div class="event-meta">
+                                        <span class="event-time">{e.timestamp}</span>
+                                        <span class="event-label">{e.label}</span>
+                                    </div>
+                                    <pre class="event-body">{e.body}</pre>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template if:false={hasOutput}>
+                        <p class="section-helper">No events yet — apply a code or click a utility action.</p>
+                    </template>
+                </section>
+            </template>
+        </div>
+    </lightning-card>
+</template>

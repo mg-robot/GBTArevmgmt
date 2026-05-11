@@ -1,0 +1,127 @@
+:host {
+    --gbta-action-orange: #f28c15;
+    --gbta-card-border: #d8dde6;
+    --gbta-card-title: #0176d3;
+    --gbta-text-muted: #444444;
+    --gbta-success: #2e844a;
+    --gbta-danger: #ba0517;
+    --gbta-danger-bg: #fdecec;
+
+    display: block;
+    background: #ffffff;
+    padding: 1rem;
+    border: 1px solid var(--gbta-card-border);
+    border-radius: 0.25rem;
+}
+
+.entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.entry-title {
+    color: var(--gbta-card-title);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.input-row {
+    display: flex;
+    align-items: end;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.code-input {
+    flex: 1 1 auto;
+}
+
+.state-row {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+.codes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.5rem 0;
+}
+
+.code-row {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gbta-card-border);
+}
+
+.code-row:last-child {
+    border-bottom: none;
+}
+
+.code-row-main {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.code-info {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.code-value {
+    font-weight: 600;
+    color: #181818;
+}
+
+.code-name {
+    color: var(--gbta-text-muted);
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.code-amount {
+    color: var(--gbta-success);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.code-row--failed .code-value {
+    color: var(--gbta-danger);
+}
+
+.error-banner {
+    background: var(--gbta-danger-bg);
+    color: var(--gbta-danger);
+    border-left: 3px solid var(--gbta-danger);
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.125rem;
+    font-size: 0.8125rem;
+    margin-top: 0.25rem;
+}
+
+.savings-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 2px solid var(--gbta-card-border);
+}
+
+.savings-label {
+    color: var(--gbta-text-muted);
+    font-weight: 600;
+}
+
+.savings-amount {
+    color: var(--gbta-success);
+    font-weight: 700;
+    font-size: 1.125rem;
+}

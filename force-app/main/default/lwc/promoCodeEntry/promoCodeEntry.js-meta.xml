@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Promo Code Entry</masterLabel>
+    <description>Member-facing inline panel for entering promo codes at checkout. Validates per code, renders error banners, surfaces total savings. Embedded in the parent Checkout LWC.</description>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__FlowScreen</target>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage,lightning__RecordPage">
+            <property name="orderId" type="String" label="Order Id" description="The Order the entered codes apply to."/>
+            <property name="disabled" type="Boolean" label="Disabled" default="false" description="When true, all inputs and buttons are disabled."/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
