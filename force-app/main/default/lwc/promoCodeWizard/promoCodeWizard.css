@@ -2,8 +2,8 @@
     /* GBTA core palette */
     --gbta-primary-navy: #002F6C;
     --gbta-accent-blue: #00A6E1;
-    --gbta-action-orange: #E5841C;
-    --gbta-action-orange-hover: #C46E15;
+    --gbta-action-orange: #f28c15;
+    --gbta-action-orange-hover: #f16206;
 
     /* Section heading appearance */
     --gbta-section-text: #505157;
@@ -51,6 +51,80 @@
     padding: 0.5rem 0 1rem 0;
     border-bottom: 1px solid var(--gbta-border);
     margin-bottom: 1rem;
+}
+
+/* Custom progress indicator — circles with labels below, connected by lines. */
+.pcw-progress {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.pcw-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding-top: 0.5rem;
+    cursor: default;
+}
+
+.pcw-step--completed {
+    cursor: pointer;
+}
+
+.pcw-step__marker {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: #c9c9c9;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    border: 2px solid transparent;
+    box-sizing: border-box;
+    transition: background-color 120ms ease;
+}
+
+.pcw-step__label {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--gbta-section-text, #505157);
+    font-weight: 500;
+}
+
+/* Connector line between this step and the next. Drawn from the center of this step's
+   marker rightward to the next step's marker. */
+.pcw-step::after {
+    content: "";
+    position: absolute;
+    top: calc(0.5rem + 0.625rem - 1px);
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #c9c9c9;
+    z-index: 0;
+}
+
+.pcw-step--last::after {
+    display: none;
+}
+
+/* Completed steps: orange circle + orange connector reaching to the next step. */
+.pcw-step--completed .pcw-step__marker {
+    background: var(--gbta-progress-completed, #f28c15);
+}
+
+.pcw-step--completed::after {
+    background: var(--gbta-progress-completed, #f28c15);
+}
+
+/* Active step: deeper orange circle, connector forward stays grey (it goes to upcoming). */
+.pcw-step--active .pcw-step__marker {
+    background: var(--gbta-progress-active, #f16206);
+}
+
+.pcw-step--active .pcw-step__label {
+    font-weight: 600;
 }
 
 .wizard-error {

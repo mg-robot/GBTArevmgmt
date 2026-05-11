@@ -105,6 +105,7 @@ export default class PromoCodeWizardStepScope extends LightningElement {
     fireValidate() {
         const d = this.wizardData;
         let valid = true;
+        if (!d?.effectiveStart) valid = false;
         if (d?.effectiveStart && d?.effectiveEnd) {
             if (new Date(d.effectiveEnd) <= new Date(d.effectiveStart)) valid = false;
         }

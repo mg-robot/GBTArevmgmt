@@ -30,7 +30,9 @@ export default class PromoCodeWizard extends LightningModal {
     errorMessage = '';
     availableCurrencies = [];
 
-    label = {
+    // NOTE: must NOT be named `label` — LightningModal already exposes a `label` property
+    // (set via .open({ label: ... })) which would shadow our labels object.
+    labels = {
         modalTitle: LBL_ModalTitle,
         btnCancel: LBL_BtnCancel,
         btnBack: LBL_BtnBack,
@@ -85,8 +87,40 @@ export default class PromoCodeWizard extends LightningModal {
     get isStep4() { return this.currentStep === 4; }
     get isFirstStep() { return this.currentStep === 1; }
     get isReviewStep() { return this.currentStep === 4; }
-    get progressValue() { return `step${this.currentStep}`; }
     get nextDisabled() { return !this.stepValidationStatus[this.currentStep]; }
+
+    get progressSteps() {
+        const defs = [
+            { step: 1, label: this.labels.stepDefinition },
+            { step: 2, label: this.labels.stepScopeEligibility },
+            { step: 3, label: this.labels.stepLimitsBehavior },
+            { step: 4, label: this.labels.stepReviewActivate }
+        ];
+        return defs.map((d, idx) => {
+            const isCompleted = d.step < this.currentStep;
+            const isActive = d.step === this.currentStep;
+            const isLast = idx === defs.length - 1;
+            let cls = 'pcw-step';
+            if (isCompleted) cls += ' pcw-step--completed';
+            else if (isActive) cls += ' pcw-step--active';
+            else cls += ' pcw-step--upcoming';
+            if (isLast) cls += ' pcw-step--last';
+            return {
+                step: d.step,
+                label: d.label,
+                containerClass: cls,
+                ariaCurrent: isActive ? 'step' : null
+            };
+        });
+    }
+
+    handleStepClick(event) {
+        const stepNum = parseInt(event.currentTarget.dataset.step, 10);
+        if (!isNaN(stepNum) && stepNum < this.currentStep) {
+            this.currentStep = stepNum;
+            this.errorMessage = '';
+        }
+    }
 
     handleFieldChange(event) {
         const { field, value } = event.detail;

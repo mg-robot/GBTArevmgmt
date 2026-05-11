@@ -3,7 +3,7 @@
     <fullName>Effective_Start_Date__c</fullName>
     <description>Apply-time validation requires NOW() &gt;= start.</description>
     <label>Effective Start</label>
-    <required>false</required>
+    <required>true</required>
     <trackHistory>true</trackHistory>
     <trackTrending>false</trackTrending>
     <type>DateTime</type>

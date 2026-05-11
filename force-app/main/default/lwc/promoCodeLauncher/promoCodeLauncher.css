@@ -1,0 +1,12 @@
+:host {
+    --gbta-action-orange: #f16206;
+    --gbta-action-orange-hover: #d35305;
+
+    /* SLDS styling hooks — cascade into the lightning-button brand variant shadow DOM */
+    --slds-c-button-brand-color-background: var(--gbta-action-orange);
+    --slds-c-button-brand-color-background-hover: var(--gbta-action-orange-hover);
+    --slds-c-button-brand-color-background-active: var(--gbta-action-orange-hover);
+    --slds-c-button-brand-color-border: var(--gbta-action-orange);
+    --slds-c-button-brand-color-border-hover: var(--gbta-action-orange-hover);
+    --slds-c-button-brand-color-border-active: var(--gbta-action-orange-hover);
+}
