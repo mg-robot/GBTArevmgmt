@@ -300,6 +300,82 @@ private class PromoCodeServiceTest {
     }
 
     @IsTest
+    static void createBulk_defaultsApplicationLevelToPerOrder() {
+        PromoCodeService.PromoCodeInput inp = baseInput();
+        inp.code = 'DEFAULTLEVEL';
+        inp.applicationLevel = null;
+
+        Test.startTest();
+        PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
+        Test.stopTest();
+
+        System.assertEquals(true, r.success, 'errorMessage: ' + r.errorMessage);
+        Promo_Code__c saved = [SELECT Application_Level__c FROM Promo_Code__c WHERE Id = :r.createdRecordIds[0]];
+        System.assertEquals('Per Order', saved.Application_Level__c, 'Service should default Application_Level__c to Per Order when input is blank');
+    }
+
+    @IsTest
+    static void createBulk_perLineLevel_persists() {
+        PromoCodeService.PromoCodeInput inp = baseInput();
+        inp.code = 'PERLINECODE';
+        inp.applicationLevel = 'Per Line';
+        inp.productScopeType = 'Product Family';
+        inp.productFamilyScope = new List<String>{ 'Membership', 'Chapter' };
+
+        Test.startTest();
+        PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
+        Test.stopTest();
+
+        System.assertEquals(true, r.success, 'errorMessage: ' + r.errorMessage);
+        Promo_Code__c saved = [
+            SELECT Application_Level__c, Product_Scope_Type__c, Product_Family_Scope__c
+            FROM Promo_Code__c WHERE Id = :r.createdRecordIds[0]
+        ];
+        System.assertEquals('Per Line', saved.Application_Level__c);
+        System.assertEquals('Product Family', saved.Product_Scope_Type__c);
+        System.assert(saved.Product_Family_Scope__c.contains('Membership'));
+        System.assert(saved.Product_Family_Scope__c.contains('Chapter'));
+    }
+
+    @IsTest
+    static void createBulk_bulkSafe_handles200CodesInSequence() {
+        // Seed 200 distinct codes directly via DML, then exercise the service queries against them
+        // to confirm bulk-safety of checkCodeUniqueness and the createBulk pre-insert duplicate scan.
+        String iso = UserInfo.getDefaultCurrency();
+        List<Promo_Code__c> seed = new List<Promo_Code__c>();
+        for (Integer i = 0; i < 200; i++) {
+            Promo_Code__c pc = new Promo_Code__c(
+                Code__c = 'BULK' + i,
+                Discount_Type__c = 'Percent',
+                Discount_Value__c = 5,
+                Status__c = 'Draft',
+                Application_Level__c = 'Per Order',
+                Product_Scope_Type__c = 'All Items',
+                Combinable__c = true,
+                Combination_Group__c = 'General',
+                Display_Name__c = 'Bulk ' + i
+            );
+            if (Schema.SObjectType.Promo_Code__c.fields.getMap().containsKey('currencyisocode')) {
+                pc.put('CurrencyIsoCode', iso);
+            }
+            seed.add(pc);
+        }
+
+        Test.startTest();
+        insert seed;
+        // Confirm the conflict-check query handles bulk
+        List<String> conflicts = PromoCodeService.checkCodeUniqueness('BULK100');
+        // Service createBulk for a fresh non-conflicting code still succeeds after 200 records
+        PromoCodeService.PromoCodeInput inp = baseInput();
+        inp.code = 'POSTBULK';
+        PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
+        Test.stopTest();
+
+        System.assert(!conflicts.isEmpty(), 'Expected conflict for seeded BULK100');
+        System.assertEquals(true, r.success, 'createBulk after 200 seeded codes failed: ' + r.errorMessage);
+    }
+
+    @IsTest
     static void createBulk_runAsManagerUser_canCreate() {
         User u = createManagerUser();
 

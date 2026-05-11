@@ -41,7 +41,9 @@ public with sharing class PromoCodeService {
         @AuraEnabled public Decimal perMemberLimit { get; set; }
         @AuraEnabled public List<String> memberTypeScope { get; set; }
         @AuraEnabled public List<String> regionScope { get; set; }
+        @AuraEnabled public String applicationLevel { get; set; }
         @AuraEnabled public String productScopeType { get; set; }
+        @AuraEnabled public List<String> productFamilyScope { get; set; }
         @AuraEnabled public String specificProducts { get; set; }
         @AuraEnabled public Id accountId { get; set; }
         @AuraEnabled public Boolean combinable { get; set; }
@@ -215,7 +217,10 @@ public with sharing class PromoCodeService {
                     ? null : String.join(input.memberTypeScope, ';'),
                 Region_Scope__c = (input.regionScope == null || input.regionScope.isEmpty())
                     ? null : String.join(input.regionScope, ';'),
-                Product_Scope_Type__c = input.productScopeType,
+                Application_Level__c = String.isBlank(input.applicationLevel) ? 'Per Order' : input.applicationLevel,
+                Product_Scope_Type__c = String.isBlank(input.productScopeType) ? 'All Items' : input.productScopeType,
+                Product_Family_Scope__c = (input.productFamilyScope == null || input.productFamilyScope.isEmpty())
+                    ? null : String.join(input.productFamilyScope, ';'),
                 Specific_Products__c = input.specificProducts,
                 Account__c = input.accountId,
                 Combinable__c = input.combinable == true,
