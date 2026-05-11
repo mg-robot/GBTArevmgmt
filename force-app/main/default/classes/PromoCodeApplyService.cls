@@ -339,7 +339,6 @@ public with sharing class PromoCodeApplyService {
         Effective_End_Date__c,
         Total_Usage_Limit__c,
         Per_Member_Usage_Limit__c,
-        Confirmed_Usage_Count__c,
         Member_Type_Scope__c,
         Region_Scope__c,
         Account__c,
@@ -456,7 +455,7 @@ public with sharing class PromoCodeApplyService {
       (isMultiCurrency ? 'CurrencyIsoCode, ' : '') +
       'Status__c, Display_Name__c, ' +
       'Effective_Start_Date__c, Effective_End_Date__c, ' +
-      'Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c, ' +
+      'Total_Usage_Limit__c, Per_Member_Usage_Limit__c, ' +
       'Member_Type_Scope__c, Region_Scope__c, Account__c, ' +
       'Product_Scope_Type__c, Product_Family_Scope__c, Specific_Products__c, ' +
       'Application_Level__c, ' +
