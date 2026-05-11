@@ -31,6 +31,29 @@ private class PromoCodePricingPreHookTest {
     }
 
     @IsTest
+    static void summarizeResult_formatsCorrectly() {
+        String s = PromoCodePricingPreHook.summarizeResult(3, 10);
+        System.assert(s.contains('3 adjustment'), 'Expected 3 adjustments; got: ' + s);
+        System.assert(s.contains('7 OrderItem(s) reset'), 'Expected 7 resets; got: ' + s);
+    }
+
+    @IsTest
+    static void summarizeResult_handlesNulls() {
+        String s = PromoCodePricingPreHook.summarizeResult(null, null);
+        System.assert(s.contains('0 adjustment'));
+        System.assert(s.contains('0 OrderItem(s) reset'));
+    }
+
+    @IsTest
+    static void buildResponse_setsFields() {
+        RevSignaling.TransactionResponse r = PromoCodePricingPreHook.buildResponse(
+            RevSignaling.TransactionStatus.SUCCESS, 'ok'
+        );
+        System.assertEquals(RevSignaling.TransactionStatus.SUCCESS, r.status);
+        System.assertEquals('ok', r.message);
+    }
+
+    @IsTest
     static void execute_bogusContextId_routesThroughCatch() {
         // RevSignaling.TransactionRequest has no public no-arg constructor — use
         // JSON.deserialize to build one for coverage of the try-block + catch-block paths.

@@ -29,59 +29,73 @@
 global with sharing class PromoCodePricingPreHook implements RevSignaling.SignalingApexProcessor {
 
     global RevSignaling.TransactionResponse execute(RevSignaling.TransactionRequest request) {
-        RevSignaling.TransactionResponse response = new RevSignaling.TransactionResponse();
         String contextId = request == null ? null : request.ctxInstanceId;
-
         if (String.isBlank(contextId)) {
-            response.status = RevSignaling.TransactionStatus.FAILED;
-            response.message = 'PromoCodePricingPreHook: missing context instance Id.';
-            return response;
+            return buildResponse(RevSignaling.TransactionStatus.FAILED,
+                'PromoCodePricingPreHook: missing context instance Id.');
         }
 
         Context.IndustriesContext industriesContext = new Context.IndustriesContext();
-
         try {
-            // 1. Query SalesTransactionItem nodes from the in-memory pricing context.
-            Map<String, Object> queryInput = new Map<String, Object>{
-                'contextId' => contextId,
-                'tags' => new List<String>{ 'SalesTransactionItem' }
-            };
-            Map<String, Object> queryResult = (Map<String, Object>)
-                industriesContext.queryTags(queryInput).get('queryResult');
-            List<Object> itemDataList = queryResult == null
-                ? null
-                : (List<Object>) queryResult.get('SalesTransactionItem');
-
+            List<Object> itemDataList = queryTransactionItems(industriesContext, contextId);
             Map<Id, List<Object>> orderItemToDataPath = extractOrderItemPaths(itemDataList);
             Set<Id> orderItemIds = orderItemToDataPath.keySet();
 
             if (orderItemIds.isEmpty()) {
-                response.status = RevSignaling.TransactionStatus.SUCCESS;
-                response.message = 'PromoCodePricingPreHook: no OrderItems in pricing context.';
-                return response;
+                return buildResponse(RevSignaling.TransactionStatus.SUCCESS,
+                    'PromoCodePricingPreHook: no OrderItems in pricing context.');
             }
 
             Map<Id, Decimal> adjustmentByOrderItem = aggregateAdjustments(orderItemIds);
             List<Map<String, Object>> nodeUpdates =
                 buildNodeUpdates(orderItemIds, orderItemToDataPath, adjustmentByOrderItem);
+            submitContextUpdates(industriesContext, contextId, nodeUpdates);
 
-            if (!nodeUpdates.isEmpty()) {
-                industriesContext.updateContextAttributes(new Map<String, Object>{
-                    'contextId' => contextId,
-                    'nodePathAndAttributes' => nodeUpdates
-                });
-            }
-
-            Integer applied = adjustmentByOrderItem.size();
-            Integer reset = nodeUpdates.size() - applied;
-            response.status = RevSignaling.TransactionStatus.SUCCESS;
-            response.message = 'PromoCodePricingPreHook: ' + applied + ' adjustment(s) applied, '
-                + reset + ' OrderItem(s) reset.';
-
+            return buildResponse(RevSignaling.TransactionStatus.SUCCESS,
+                summarizeResult(adjustmentByOrderItem.size(), nodeUpdates.size()));
         } catch (Exception e) {
-            response.status = RevSignaling.TransactionStatus.FAILED;
-            response.message = 'PromoCodePricingPreHook error: ' + e.getMessage();
+            return buildResponse(RevSignaling.TransactionStatus.FAILED,
+                'PromoCodePricingPreHook error: ' + e.getMessage());
         }
+    }
+
+    private static List<Object> queryTransactionItems(
+        Context.IndustriesContext industriesContext, String contextId
+    ) {
+        Map<String, Object> queryResult = (Map<String, Object>)
+            industriesContext.queryTags(new Map<String, Object>{
+                'contextId' => contextId,
+                'tags' => new List<String>{ 'SalesTransactionItem' }
+            }).get('queryResult');
+        return queryResult == null ? null : (List<Object>) queryResult.get('SalesTransactionItem');
+    }
+
+    private static void submitContextUpdates(
+        Context.IndustriesContext industriesContext, String contextId,
+        List<Map<String, Object>> nodeUpdates
+    ) {
+        if (nodeUpdates == null || nodeUpdates.isEmpty()) return;
+        industriesContext.updateContextAttributes(new Map<String, Object>{
+            'contextId' => contextId,
+            'nodePathAndAttributes' => nodeUpdates
+        });
+    }
+
+    @TestVisible
+    private static String summarizeResult(Integer adjustmentCount, Integer totalUpdates) {
+        Integer applied = adjustmentCount == null ? 0 : adjustmentCount;
+        Integer reset = (totalUpdates == null ? 0 : totalUpdates) - applied;
+        return 'PromoCodePricingPreHook: ' + applied + ' adjustment(s) applied, '
+            + reset + ' OrderItem(s) reset.';
+    }
+
+    @TestVisible
+    private static RevSignaling.TransactionResponse buildResponse(
+        RevSignaling.TransactionStatus status, String message
+    ) {
+        RevSignaling.TransactionResponse response = new RevSignaling.TransactionResponse();
+        response.status = status;
+        response.message = message;
         return response;
     }
 
