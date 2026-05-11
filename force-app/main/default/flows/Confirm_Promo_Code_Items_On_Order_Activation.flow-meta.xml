@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description
+    >Stamps Status = Confirmed and Confirmed_Date on the current PCI, and adds it to the collection that will be DML'd after the loop completes.</description>
+        <name>AssignConfirmedFields</name>
+        <label>Confirm PCI Fields</label>
+        <locationX>176</locationX>
+        <locationY>647</locationY>
+        <assignmentItems>
+            <assignToReference>LoopOverPCIs.Status__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Confirmed</stringValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference
+      >LoopOverPCIs.Confirmed_Date__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.CurrentDateTime</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>PCIsToConfirm</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>LoopOverPCIs</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>LoopOverPCIs</targetReference>
+        </connector>
+    </assignments>
+    <customErrors>
+        <description
+    >Raised when an Order activation is blocked because at least one promo code on the order is no longer valid (status flipped to Inactive, expired, or not yet effective between Apply and Activation).</description>
+        <name>CustomErrorInvalidCode</name>
+        <label>Block Activation - Invalid Promo Code</label>
+        <locationX>440</locationX>
+        <locationY>755</locationY>
+        <customErrorMessages>
+            <errorMessage>{!ErrorMessage}</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <decisions>
+        <description
+    >Routes to Confirm path if the re-validation formula returned no failure reason; otherwise routes to Custom Error to roll back the activation.</description>
+        <name>IsCodeStillValid</name>
+        <label>Is Code Still Valid?</label>
+        <locationX>308</locationX>
+        <locationY>539</locationY>
+        <defaultConnector>
+            <targetReference>CustomErrorInvalidCode</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No (Default)</defaultConnectorLabel>
+        <rules>
+            <name>Valid</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>FailureReason</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue />
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>AssignConfirmedFields</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <description
+    >Renders the parent code as "Display Name (CODE)" when a Display Name is set, otherwise just "CODE". Matches the displayLabel logic in the retired PromoCodeOrderActivationHandler.</description>
+        <name>DisplayLabel</name>
+        <dataType>String</dataType>
+        <expression
+    >IF(NOT(ISBLANK({!LoopOverPCIs.Promo_Code__r.Display_Name__c})), {!LoopOverPCIs.Promo_Code__r.Display_Name__c} &amp; &apos; (&apos; &amp; {!LoopOverPCIs.Promo_Code__r.Code__c} &amp; &apos;)&apos;, {!LoopOverPCIs.Promo_Code__r.Code__c})</expression>
+    </formulas>
+    <formulas>
+        <description
+    >Returns the human-readable reason a parent Promo_Code__c fails re-validation at activation time, or empty string if the code is still valid. Matches the validationFailureReason method in the retired PromoCodeOrderActivationHandler.</description>
+        <name>FailureReason</name>
+        <dataType>String</dataType>
+        <expression
+    >IF(TEXT({!LoopOverPCIs.Promo_Code__r.Status__c}) &lt;&gt; &apos;Active&apos;, &apos;code is no longer Active&apos;, IF(AND(NOT(ISBLANK({!LoopOverPCIs.Promo_Code__r.Effective_Start_Date__c})), {!$Flow.CurrentDateTime} &lt; {!LoopOverPCIs.Promo_Code__r.Effective_Start_Date__c}), &apos;code is not yet effective&apos;, IF(AND(NOT(ISBLANK({!LoopOverPCIs.Promo_Code__r.Effective_End_Date__c})), {!$Flow.CurrentDateTime} &gt; {!LoopOverPCIs.Promo_Code__r.Effective_End_Date__c}), &apos;code has expired&apos;, &apos;&apos;)))</expression>
+    </formulas>
+    <formulas>
+        <description
+    >Full user-facing error message shown when activation is blocked. Format matches the retired PromoCodeOrderActivationHandler verbatim.</description>
+        <name>ErrorMessage</name>
+        <dataType>String</dataType>
+        <expression
+    >&apos;Promo code &quot;&apos; &amp; {!DisplayLabel} &amp; &apos;&quot; is no longer valid: &apos; &amp; {!FailureReason} &amp; &apos;. Remove the code and retry activation.&apos;</expression>
+    </formulas>
+    <interviewLabel
+  >Confirm Promo Code Items On Order Activation {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Confirm Promo Code Items On Order Activation</label>
+    <loops>
+        <description
+    >Iterates over the Pending PCIs returned by GetPendingPCIs. Each iteration re-validates the parent code; valid codes get added to PCIsToConfirm for a single bulk DML after the loop ends.</description>
+        <name>LoopOverPCIs</name>
+        <label>Loop Over Pending PCIs</label>
+        <locationX>176</locationX>
+        <locationY>431</locationY>
+        <collectionReference>GetPendingPCIs</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>IsCodeStillValid</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>UpdateConfirmedPCIs</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description
+    >Loads all Pending Promo_Code_Item__c records attached to this Order via the PCI.Order__c formula text. Parent Promo_Code__c fields used downstream (Status, dates, Code, Display Name) are auto-loaded by Flow via the cross-object references in the formula resources.</description>
+        <name>GetPendingPCIs</name>
+        <label>Get Pending Promo Code Items</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>LoopOverPCIs</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Order__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Pending</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Promo_Code_Item__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description
+    >Single bulk DML at the end of the loop. Updating the Pending PCIs to Confirmed triggers the Confirmed_Usage_Count__c rollup summary on the parent Promo_Code__c automatically.</description>
+        <name>UpdateConfirmedPCIs</name>
+        <label>Update Confirmed PCIs</label>
+        <locationX>176</locationX>
+        <locationY>755</locationY>
+        <inputReference>PCIsToConfirm</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>GetPendingPCIs</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria
+    >true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Activated</stringValue>
+            </value>
+        </filters>
+        <object>Order</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <description
+    >Builder collection for the PCIs that pass re-validation. Populated inside LoopOverPCIs; consumed once by UpdateConfirmedPCIs after the loop ends.</description>
+        <name>PCIsToConfirm</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Promo_Code_Item__c</objectType>
+    </variables>
+</Flow>
