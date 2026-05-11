@@ -183,6 +183,42 @@ private class PromoCodePricingPreHookTest {
     System.assert(!result.containsKey(deletedOi));
   }
 
+  @IsTest
+  static void extractOrderItemPaths_skipsRefPrefixedLineItem() {
+    // In-flight pricing context can carry LineItem.tagValue as a reference string
+    // (e.g., 'refChapterItem0') before items are committed to OrderItem records.
+    // Casting that to Id throws — the extractor must skip these and rely on the
+    // post-commit pricing pass to apply discounts.
+    Id liveOi = fakeId(OrderItem.SObjectType, 1);
+
+    List<Object> nodes = new List<Object>{
+      new Map<String, Object>{
+        'tagValue' => new Map<String, Object>{
+          'LineItem' => new Map<String, Object>{ 'tagValue' => liveOi }
+        },
+        'dataPath' => new List<Object>{ 'ctx', 'Order/abc', 'Line/0' }
+      },
+      new Map<String, Object>{
+        'tagValue' => new Map<String, Object>{
+          'LineItem' => new Map<String, Object>{
+            'tagValue' => 'refChapterItem0'
+          }
+        },
+        'dataPath' => new List<Object>{ 'ctx', 'Order/abc', 'Line/1' }
+      }
+    };
+
+    Map<Id, List<Object>> result = PromoCodePricingPreHook.extractOrderItemPaths(
+      nodes
+    );
+    System.assertEquals(
+      1,
+      result.size(),
+      'ref-prefixed node should be skipped'
+    );
+    System.assert(result.containsKey(liveOi));
+  }
+
   // -----------------------------------------------------------------------
   // aggregateAdjustments
   // -----------------------------------------------------------------------
