@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
     <customObject>true</customObject>
-    <motif>Custom45: Wallet</motif>
+    <icon>Concordnow__Logos/promo_svg.png</icon>
+    <motif>Custom270: TV Widescreen</motif>
 </CustomTab>

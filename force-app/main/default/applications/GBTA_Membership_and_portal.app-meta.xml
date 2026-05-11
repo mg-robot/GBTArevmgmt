@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <brand>
+        <headerColor>#0070D2</headerColor>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
+    <formFactors>Small</formFactors>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
+    <label>GBTA Membership and portal</label>
+    <navType>Standard</navType>
+    <tabs>standard-Account</tabs>
+    <tabs>standard-Quote</tabs>
+    <tabs>ChargentOrders__ChargentOrder__c</tabs>
+    <tabs>standard-Order</tabs>
+    <tabs>standard-Opportunity</tabs>
+    <tabs>CountryTaxRate__c</tabs>
+    <tabs>Promo_Code_Home</tabs>
+    <uiType>Lightning</uiType>
+    <utilityBar>GBTA_Membership_and_portal_UtilityBar</utilityBar>
+</CustomApplication>

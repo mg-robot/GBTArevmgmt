@@ -7,6 +7,7 @@ import LBL_ModalTitle from '@salesforce/label/c.PromoCodeWizard_Modal_Title';
 
 /**
  * Launcher card on the Promotions Home FlexiPage. Opens the PromoCodeWizard modal.
+ * Renders as a clickable setup-card row matching the Revenue Cloud Setup home style.
  * All user-facing text is sourced from Custom Labels.
  */
 export default class PromoCodeLauncher extends LightningElement {
@@ -23,6 +24,13 @@ export default class PromoCodeLauncher extends LightningElement {
             });
         } catch (e) {
             // swallow
+        }
+    }
+
+    handleKeydown(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.handleOpen();
         }
     }
 }

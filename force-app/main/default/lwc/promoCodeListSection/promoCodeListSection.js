@@ -1,13 +1,9 @@
 import { LightningElement, wire } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
-import { getListRecordsByName } from 'lightning/uiListApi';
+import { getListRecordsByName } from 'lightning/uiListsApi';
 import { refreshApex } from '@salesforce/apex';
-import PromoCodeWizard from 'c/promoCodeWizard';
 
 import getPromoCodeListViews from '@salesforce/apex/PromoCodeListViewService.getPromoCodeListViews';
-
-import LBL_BtnNew from '@salesforce/label/c.PromoCodeWizard_Launcher_Btn_New';
-import LBL_ModalTitle from '@salesforce/label/c.PromoCodeWizard_Modal_Title';
 
 const OBJECT_API_NAME = 'Promo_Code__c';
 const PAGE_SIZE = 25;
@@ -52,10 +48,6 @@ export default class PromoCodeListSection extends NavigationMixin(LightningEleme
     records = [];
     isLoading = true;
     _wiredRecordsResult;
-
-    label = {
-        btnNew: LBL_BtnNew
-    };
 
     @wire(getPromoCodeListViews)
     wiredViews({ data, error }) {
@@ -121,21 +113,6 @@ export default class PromoCodeListSection extends NavigationMixin(LightningEleme
     handleViewChange(e) {
         this.selectedView = e.detail.value;
         this.isLoading = true;
-    }
-
-    async handleNew() {
-        try {
-            await PromoCodeWizard.open({ size: 'medium', label: LBL_ModalTitle });
-            if (this._wiredRecordsResult) {
-                try {
-                    await refreshApex(this._wiredRecordsResult);
-                } catch (e) {
-                    // refresh failed silently — user can reload
-                }
-            }
-        } catch (e) {
-            // wizard closed without result
-        }
     }
 
     handleManageViews() {

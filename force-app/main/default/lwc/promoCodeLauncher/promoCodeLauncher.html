@@ -1,13 +1,16 @@
 <template>
-    <lightning-card>
-        <div class="slds-p-around_medium">
-            <lightning-button
-                label={label.btnNew}
-                variant="brand"
-                icon-name="utility:add"
-                onclick={handleOpen}>
-            </lightning-button>
-            <p class="slds-m-top_x-small slds-text-color_weak slds-text-body_small">{label.helper}</p>
+    <div class="section">
+        <h2 class="section-heading">Promo Code Setup</h2>
+        <div class="cards-grid">
+            <a class="setup-card" onclick={handleOpen} role="button" tabindex="0" onkeydown={handleKeydown}>
+                <div class="card-icon">
+                    <lightning-icon icon-name="standard:promotions" size="medium"></lightning-icon>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">{label.btnNew}</div>
+                    <div class="card-description">{label.helper}</div>
+                </div>
+            </a>
         </div>
-    </lightning-card>
+    </div>
 </template>

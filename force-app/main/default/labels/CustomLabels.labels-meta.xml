@@ -806,7 +806,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Launcher card New Promo Code button</shortDescription>
-        <value>New Promo Code</value>
+        <value>Promo Code Setup</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_Launcher_Helper</fullName>
