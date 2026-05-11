@@ -1,3 +1,30 @@
+/**
+ * Apex service backing the Promo Code creation wizard (Membership Ops staff path).
+ *
+ * Responsibilities:
+ * - getActiveCurrencies(): active CurrencyType ISO codes for the wizard currency picker.
+ * - checkCodeUniqueness(code): which currencies (if any) already use a given code; used by the
+ *   wizard for real-time feedback as the user types.
+ * - searchProducts(searchTerm): Product2 typeahead for the Specific Products picker (matches on
+ *   Name or ProductCode; per data-model.md, the selected value stored on Specific_Products__c is
+ *   Product2.Name).
+ * - createBulk(input): single-transaction insert of N Promo_Code__c records (one per selected
+ *   currency) sharing the same Code value. Status is Active when input.activateImmediately = true,
+ *   else Draft. Composite uniqueness on (Code__c, CurrencyIsoCode) is pre-checked inside the
+ *   transaction so duplicate creates fail with a clean conflictCurrencies list (not a DML error).
+ *
+ * Notes:
+ * - Approval_Required__c is captured on the record as a TRANSACTION-RUNTIME flag, consumed by the
+ *   apply flow when an order uses this code. It is NOT a record-level approval workflow on the
+ *   Promo_Code__c itself. See design-overview.md §8.4.
+ * - Composite uniqueness is enforced here for the wizard path; non-wizard insert paths
+ *   (Data Loader, direct API) currently bypass this check. See data-model.md §Composite uniqueness
+ *   for the alternative Before-Save Flow safety net (future enhancement).
+ *
+ * Related docs:
+ * - docs/promo-code/creation-wizard.md §5 (Apex contract), §6 (Save sequence)
+ * - docs/promo-code/design-overview.md §7.3 (technical implementation)
+ */
 public with sharing class PromoCodeService {
 
     public class PromoCodeInput {
@@ -20,6 +47,7 @@ public with sharing class PromoCodeService {
         @AuraEnabled public Boolean combinable;
         @AuraEnabled public String combinationGroup;
         @AuraEnabled public Boolean approvalRequired;
+        @AuraEnabled public Boolean activateImmediately;
     }
 
     public class CurrencyAmount {
@@ -30,6 +58,7 @@ public with sharing class PromoCodeService {
     public class CreateResult {
         @AuraEnabled public Boolean success;
         @AuraEnabled public List<Id> createdRecordIds;
+        @AuraEnabled public String status;
         @AuraEnabled public String errorMessage;
         @AuraEnabled public List<String> conflictCurrencies;
     }
@@ -160,13 +189,15 @@ public with sharing class PromoCodeService {
             }
         }
 
+        String statusOnInsert = input.activateImmediately == true ? 'Active' : 'Draft';
+
         List<Promo_Code__c> toInsert = new List<Promo_Code__c>();
         for (String iso : targetCurrencies) {
             Promo_Code__c rec = new Promo_Code__c(
                 Code__c = trimmedCode,
                 Discount_Type__c = input.discountType,
                 Discount_Value__c = currencyAmountMap.get(iso),
-                Status__c = 'Draft',
+                Status__c = statusOnInsert,
                 Effective_Start_Date__c = input.effectiveStart,
                 Effective_End_Date__c = input.effectiveEnd,
                 Total_Usage_Limit__c = input.totalLimit,
@@ -194,12 +225,11 @@ public with sharing class PromoCodeService {
         try {
             insert toInsert;
             result.success = true;
+            result.status = statusOnInsert;
             result.createdRecordIds = new List<Id>();
             for (Promo_Code__c r : toInsert) {
                 result.createdRecordIds.add(r.Id);
             }
-            // TODO(GBTAP1-239): if input.approvalRequired == true, submit each record via Approval.process(...)
-            //                   once the Promo Code Approval Process metadata is built.
         } catch (DmlException e) {
             Database.rollback(sp);
             result.success = false;
