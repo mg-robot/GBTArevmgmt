@@ -48,11 +48,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Promo_Code__c.Application_Level__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
         <field>Promo_Code__c.Product_Family_Scope__c</field>
         <readable>true</readable>
     </fieldPermissions>
