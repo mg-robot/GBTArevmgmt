@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>GBTA Footer</masterLabel>
+    <description>Global site footer with GBTA branding, three configurable navigation columns, social links, and language selector</description>
+    <targets>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Default">
+            <property
+                name="column1MenuName"
+                type="String"
+                datasource="apex://NavigationLinkSetPickList"
+                label="Column 1: Navigation Menu"
+                description="Navigation menu for the first footer column (e.g. Our Company)"
+            />
+            <property
+                name="column1Title"
+                type="String"
+                default="Our Company"
+                label="Column 1: Title"
+            />
+            <property
+                name="column2MenuName"
+                type="String"
+                datasource="apex://NavigationLinkSetPickList"
+                label="Column 2: Navigation Menu"
+                description="Navigation menu for the second footer column (e.g. Get Help)"
+            />
+            <property
+                name="column2Title"
+                type="String"
+                default="Get Help"
+                label="Column 2: Title"
+            />
+            <property
+                name="column3MenuName"
+                type="String"
+                datasource="apex://NavigationLinkSetPickList"
+                label="Column 3: Navigation Menu"
+                description="Navigation menu for the third footer column (e.g. Account)"
+            />
+            <property
+                name="column3Title"
+                type="String"
+                default="Account"
+                label="Column 3: Title"
+            />
+            <property
+                name="helpButtonLabel"
+                type="String"
+                default="Get Help &amp; Support"
+                label="Help Button Label"
+            />
+            <property
+                name="helpButtonPageApiName"
+                type="String"
+                label="Help Button Page API Name"
+                description="Experience Cloud page API name the help button navigates to"
+            />
+            <property
+                name="languageLabel"
+                type="String"
+                default="United States | EN"
+                label="Language / Region Label"
+                description="Text for the language selector button (e.g. 'United States | EN'). Leave blank to hide."
+            />
+            <property
+                name="languagePageApiName"
+                type="String"
+                label="Language Page API Name"
+                description="Experience Cloud page API name for the language selector"
+            />
+            <property
+                name="twitterUrl"
+                type="String"
+                label="X (Twitter) URL"
+                description="Full URL for the X/Twitter profile. Leave blank to hide the icon."
+            />
+            <property
+                name="facebookUrl"
+                type="String"
+                label="Facebook URL"
+                description="Full URL for the Facebook page. Leave blank to hide the icon."
+            />
+            <property
+                name="youtubeUrl"
+                type="String"
+                label="YouTube URL"
+                description="Full URL for the YouTube channel. Leave blank to hide the icon."
+            />
+            <property
+                name="instagramUrl"
+                type="String"
+                label="Instagram URL"
+                description="Full URL for the Instagram profile. Leave blank to hide the icon."
+            />
+            <property
+                name="footerLogoUrl"
+                type="String"
+                label="Footer Logo URL"
+                description="URL of the logo image shown in the footer bottom bar. Leave blank to show GBTA text fallback."
+            />
+            <property
+                name="logoAlt"
+                type="String"
+                default="GBTA - Global Business Travel Association"
+                label="Footer Logo Alt Text"
+            />
+            <property
+                name="copyrightText"
+                type="String"
+                label="Copyright / Tagline Text"
+                description="Optional tagline or copyright text shown next to the footer logo (e.g. 'Global Business Travel Association')"
+            />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

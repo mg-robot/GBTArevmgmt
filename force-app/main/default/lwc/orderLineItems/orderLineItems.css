@@ -1,0 +1,159 @@
+.checkout-container {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: #fafaf9;
+    flex-wrap: wrap;
+}
+
+.items-section {
+    flex: 2;
+    min-width: 300px;
+}
+
+.line-item {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease;
+}
+
+.line-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.item-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #080707;
+    margin: 0;
+    flex: 1;
+}
+
+.item-price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0176d3;
+    white-space: nowrap;
+    margin-left: 1rem;
+}
+
+.item-description {
+    color: #706e6b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0.5rem 0 1rem 0;
+}
+
+.item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e5e5;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.813rem;
+    color: #706e6b;
+}
+
+.summary-section {
+    flex: 1;
+    min-width: 280px;
+    max-width: 400px;
+}
+
+.summary-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 1rem;
+}
+
+.summary-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #080707;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e5e5;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.summary-label {
+    font-size: 0.938rem;
+    color: #706e6b;
+    font-weight: 500;
+}
+
+.summary-value {
+    font-size: 0.938rem;
+    color: #080707;
+    font-weight: 600;
+}
+
+.summary-divider {
+    height: 1px;
+    background: #e5e5e5;
+    margin: 1.5rem 0;
+}
+
+.total-row {
+    margin-bottom: 0;
+}
+
+.total-label {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #080707;
+}
+
+.total-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0176d3;
+}
+
+.item-count {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e5e5;
+    font-size: 0.875rem;
+    color: #706e6b;
+}
+
+@media (max-width: 768px) {
+    .checkout-container {
+        flex-direction: column;
+    }
+
+    .summary-section {
+        max-width: 100%;
+    }
+
+    .summary-card {
+        position: static;
+    }
+}

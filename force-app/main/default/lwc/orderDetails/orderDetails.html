@@ -1,0 +1,55 @@
+<template>
+    <lightning-card title="Order Details" icon-name="standard:orders">
+        <template if:true={isLoading}>
+            <div class="slds-p-around_medium slds-text-align_center">
+                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={order}>
+            <div class="slds-p-around_medium">
+                <div class="order-summary">
+                    <div class="order-header">
+                        <h2 class="order-number">Order #{order.OrderNumber}</h2>
+                        <lightning-badge label={order.Status} class="status-badge"></lightning-badge>
+                    </div>
+
+                    <div class="order-grid">
+                        <div class="order-field">
+                            <span class="field-label">Total Amount</span>
+                            <span class="field-value amount">{formattedAmount}</span>
+                        </div>
+
+                        <div class="order-field">
+                            <span class="field-label">Start Date</span>
+                            <span class="field-value">{formattedStartDate}</span>
+                        </div>
+
+                        <div class="order-field">
+                            <span class="field-label">End Date</span>
+                            <span class="field-value">{formattedEndDate}</span>
+                        </div>
+
+                        <div class="order-field">
+                            <span class="field-label">Account</span>
+                            <span class="field-value">{order.Account.Name}</span>
+                        </div>
+
+                        <template if:true={billingAddress}>
+                            <div class="order-field full-width">
+                                <span class="field-label">Billing Address</span>
+                                <span class="field-value">{billingAddress}</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template if:true={error}>
+            <div class="slds-p-around_medium">
+                <p class="slds-text-color_error">Error loading order details</p>
+            </div>
+        </template>
+    </lightning-card>
+</template>

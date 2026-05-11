@@ -1,0 +1,166 @@
+<template>
+    <!-- Trigger button -->
+    <lightning-button
+        label="Edit Order"
+        variant="brand"
+        icon-name="utility:edit"
+        onclick={handleOpenModal}
+        class="action-button">
+    </lightning-button>
+
+    <!-- Edit Order modal -->
+    <template if:true={showModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container modal-wide">
+
+                <header class="slds-modal__header">
+                    <h2 class="slds-modal__title slds-hyphenate">Edit Order</h2>
+                    <template if:true={showBadge}>
+                        <lightning-badge label={badgeCount} class="slds-m-left_small selected-badge"></lightning-badge>
+                    </template>
+                </header>
+
+                <div class="slds-modal__content modal-body">
+
+                    <!-- Tab bar -->
+                    <div class="tab-bar">
+                        <button class={addTabClass}    data-tab="add"    onclick={handleTabChange}>Add Products</button>
+                        <button class={removeTabClass} data-tab="remove" onclick={handleTabChange}>Remove Items</button>
+                    </div>
+
+                    <div class="slds-p-around_medium">
+                        <template if:true={isLoading}>
+                            <div class="slds-p-around_large slds-text-align_center">
+                                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+                            </div>
+                        </template>
+
+                        <!-- ── ADD PRODUCTS TAB ── -->
+                        <template if:true={isAddTab}>
+                            <template if:false={isLoading}>
+                                <template if:true={hasProducts}>
+                                    <div class="products-grid">
+                                        <template for:each={products} for:item="product">
+                                            <div key={product.id} class="product-tile">
+                                                <div class="tile-header">
+                                                    <lightning-badge label={product.categoryName} class="category-badge"></lightning-badge>
+                                                    <lightning-input
+                                                        type="checkbox"
+                                                        data-product-id={product.id}
+                                                        checked={product.isSelected}
+                                                        onchange={handleCheckboxChange}
+                                                        variant="label-hidden">
+                                                    </lightning-input>
+                                                </div>
+                                                <div class="tile-body">
+                                                    <h3 class="product-name">{product.name}</h3>
+                                                    <template if:true={product.description}>
+                                                        <p class="product-description">{product.description}</p>
+                                                    </template>
+                                                </div>
+                                                <template if:true={product.sellingModelOptions.length}>
+                                                    <div class="selling-models">
+                                                        <p class="selling-model-label">Selling Model</p>
+                                                        <template for:each={product.sellingModelOptions} for:item="option">
+                                                            <label key={option.optionId} class="selling-model-option">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={product.id}
+                                                                    value={option.radioValue}
+                                                                    checked={option.isDefault}
+                                                                    data-product-id={product.id}
+                                                                    onchange={handleSellingModelChange}
+                                                                    class="slds-m-right_x-small" />
+                                                                {option.radioLabel}
+                                                            </label>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <div class="tile-footer">
+                                                    <span class="price-label">Price</span>
+                                                    <span class="price-value">{product.formattedPrice}</span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={hasProducts}>
+                                    <div class="slds-text-align_center empty-state">
+                                        <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                                        <p class="slds-m-top_small">No products found in this catalog</p>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+
+                        <!-- ── REMOVE ITEMS TAB ── -->
+                        <template if:true={isRemoveTab}>
+                            <template if:false={isLoading}>
+                                <template if:true={hasLineItems}>
+                                    <div class="line-items-list">
+                                        <template for:each={lineItems} for:item="item">
+                                            <div key={item.id} class="line-item-row">
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    data-item-id={item.id}
+                                                    checked={item.isSelected}
+                                                    onchange={handleLineItemCheckboxChange}
+                                                    variant="label-hidden">
+                                                </lightning-input>
+                                                <div class="line-item-info">
+                                                    <p class="line-item-name">{item.productName}</p>
+                                                    <p class="line-item-meta">
+                                                        Qty: {item.quantity}
+                                                        <template if:true={item.serviceDate}>
+                                                            &nbsp;·&nbsp; Start: {item.serviceDate}
+                                                        </template>
+                                                        <template if:true={item.endDate}>
+                                                            &nbsp;·&nbsp; End: {item.endDate}
+                                                        </template>
+                                                    </p>
+                                                </div>
+                                                <span class="line-item-price">{item.formattedTotalPrice}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={hasLineItems}>
+                                    <div class="slds-text-align_center empty-state">
+                                        <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                                        <p class="slds-m-top_small">No line items on this order</p>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+
+                        <template if:true={error}>
+                            <p class="slds-text-color_error">Error loading order data</p>
+                        </template>
+                    </div>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCancel}></lightning-button>
+                    <template if:true={isAddTab}>
+                        <lightning-button
+                            label="Add to Order"
+                            variant="brand"
+                            onclick={handleAddToOrder}
+                            disabled={isLoading}>
+                        </lightning-button>
+                    </template>
+                    <template if:true={isRemoveTab}>
+                        <lightning-button
+                            label="Remove Selected"
+                            variant="destructive"
+                            onclick={handleRemoveItems}
+                            disabled={isLoading}>
+                        </lightning-button>
+                    </template>
+                </footer>
+
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

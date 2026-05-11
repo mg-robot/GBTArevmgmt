@@ -1,0 +1,159 @@
+.summary-card {
+  background: #fff;
+  border: 1px solid #e4e2de;
+  border-radius: 10px;
+  overflow: hidden;
+  position: sticky;
+  top: 80px;
+}
+
+.card-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #f0eee8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1917;
+  margin: 0;
+}
+
+.item-count-badge {
+  background: #fff3eb;
+  color: #e8641a;
+  border: 1px solid #f0c098;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+}
+
+.items-list {
+  padding: 16px 24px 0;
+}
+
+.line-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f3f0;
+}
+
+.line-item:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  font-size: 14px;
+  color: #1a1917;
+  flex: 1;
+  padding-right: 12px;
+  line-height: 1.4;
+}
+
+.item-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1917;
+  white-space: nowrap;
+}
+
+.pricing-section {
+  padding: 16px 24px;
+}
+
+.pricing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pricing-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.pricing-value {
+  font-size: 14px;
+  color: #1a1917;
+}
+
+.tax-toggle {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tax-breakdown {
+  background: #fafaf8;
+  border-radius: 5px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.breakdown-row {
+  margin-bottom: 0;
+}
+
+.breakdown-row .pricing-label {
+  font-size: 13px;
+  padding-left: 8px;
+}
+
+.pricing-divider {
+  height: 1px;
+  background: #e4e2de;
+  margin: 12px 0;
+}
+
+.total-row {
+  margin-bottom: 0;
+}
+
+.total-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1917;
+}
+
+.total-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8641a;
+}
+
+.error-text,
+.empty-text {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+.back-link-container {
+  margin-bottom: 12px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #e8641a;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}

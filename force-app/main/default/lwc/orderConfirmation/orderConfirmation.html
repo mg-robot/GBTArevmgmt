@@ -1,0 +1,99 @@
+<template>
+    <div class="confirmation-wrapper">
+
+        <template lwc:if={isLoading}>
+            <div class="slds-text-align_center slds-p-around_large">
+                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:if={order}>
+
+            <!-- Order Header -->
+            <div class="section header-section">
+                <div class="header-row">
+                    <h2 class="order-number">Order #{order.OrderNumber}</h2>
+                    <lightning-badge label={order.Status}></lightning-badge>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-field">
+                        <span class="field-label">Order Date</span>
+                        <span class="field-value">{formattedDate}</span>
+                    </div>
+                    <div class="meta-field">
+                        <span class="field-label">Account</span>
+                        <span class="field-value">{order.Account.Name}</span>
+                    </div>
+                    <template lwc:if={billingAddress}>
+                        <div class="meta-field meta-field_full">
+                            <span class="field-label">Billing Address</span>
+                            <span class="field-value">{billingAddress}</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Line Items -->
+            <template lwc:if={hasLineItems}>
+                <div class="section">
+                    <h3 class="section-title">Products</h3>
+                    <div class="table-scroll">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-product">Product</th>
+                                    <th class="col-num">Qty</th>
+                                    <th class="col-num">Unit Price</th>
+                                    <th class="col-num">Total</th>
+                                    <th class="col-date">Service Date</th>
+                                    <th class="col-date">End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={lineItems} for:item="item">
+                                    <tr key={item.Id}>
+                                        <td>
+                                            <div class="product-name">{item.Product2.Name}</div>
+                                            <template lwc:if={item.Product2.Description}>
+                                                <div class="product-desc">{item.Product2.Description}</div>
+                                            </template>
+                                        </td>
+                                        <td class="col-num">{item.Quantity}</td>
+                                        <td class="col-num">{item.formattedUnitPrice}</td>
+                                        <td class="col-num">{item.formattedTotalPrice}</td>
+                                        <td class="col-date">{item.formattedServiceDate}</td>
+                                        <td class="col-date">{item.formattedEndDate}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Totals -->
+            <div class="section totals-section">
+                <div class="totals-row">
+                    <span class="totals-label">Subtotal</span>
+                    <span class="totals-value">{formattedSubtotal}</span>
+                </div>
+                <div class="totals-row">
+                    <span class="totals-label">Tax</span>
+                    <span class="totals-value">{formattedTax}</span>
+                </div>
+                <div class="totals-row grand-total">
+                    <span class="totals-label">Grand Total</span>
+                    <span class="totals-value">{formattedGrandTotal}</span>
+                </div>
+            </div>
+
+        </template>
+
+        <template lwc:if={error}>
+            <div class="section">
+                <p class="slds-text-color_error">Error loading order confirmation.</p>
+            </div>
+        </template>
+
+    </div>
+</template>

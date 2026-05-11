@@ -1,0 +1,30 @@
+<template>
+  <template if:true={isLoading}>
+    <div class="slds-p-around_medium slds-text-align_center">
+      <lightning-spinner
+        alternative-text={labels.loadingText}
+        size="medium"
+      ></lightning-spinner>
+    </div>
+  </template>
+
+  <template if:false={isLoading}>
+    <template if:true={error}>
+      <div class="slds-p-around_medium">
+        <p class="error-text">{error}</p>
+      </div>
+    </template>
+
+    <template if:true={chargentOrderId}>
+      <chargentbase-chargent-take-payment
+        record-id={chargentOrderId}
+        the-gateway-id={gatewayId}
+        amount-field-name="ChargentOrders__Credit_Amount__c"
+        is-country-displayed
+        is-email-displayed
+        show-save-for-future-use
+        onpaymentcompletion={handlePaymentComplete}
+      ></chargentbase-chargent-take-payment>
+    </template>
+  </template>
+</template>

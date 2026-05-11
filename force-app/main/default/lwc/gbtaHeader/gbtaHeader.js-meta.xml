@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>GBTA Header</masterLabel>
+    <description>Global site header with GBTA branding, configurable navigation menu, cart, wishlist, search, and language selector</description>
+    <targets>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Default">
+            <property
+                name="menuName"
+                type="String"
+                datasource="apex://NavigationLinkSetPickList"
+                label="Navigation Menu"
+                description="Select the navigation menu to display in the header (configured in Settings > Navigation)"
+            />
+            <property
+                name="logoUrl"
+                type="String"
+                label="Logo URL"
+                description="URL of the header logo image (displayed at 36px height). Leave blank to show GBTA text fallback."
+            />
+            <property
+                name="logoAlt"
+                type="String"
+                default="GBTA"
+                label="Logo Alt Text"
+                description="Accessible alt text for the logo image"
+            />
+            <property
+                name="searchPageApiName"
+                type="String"
+                label="Search Page API Name"
+                description="Experience Cloud page API name to navigate to when the search icon is clicked"
+            />
+            <property
+                name="cartPageApiName"
+                type="String"
+                label="Cart Page API Name"
+                description="Experience Cloud page API name to navigate to when the cart icon is clicked"
+            />
+            <property
+                name="wishlistPageApiName"
+                type="String"
+                label="Wishlist Page API Name"
+                description="Experience Cloud page API name to navigate to when the wishlist icon is clicked"
+            />
+            <property
+                name="languageLabel"
+                type="String"
+                default="United States | EN"
+                label="Language / Region Label"
+                description="Text displayed next to the globe icon (e.g. 'United States | EN'). Leave blank to hide."
+            />
+            <property
+                name="languagePageApiName"
+                type="String"
+                label="Language Page API Name"
+                description="Experience Cloud page API name for the language/region selector"
+            />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

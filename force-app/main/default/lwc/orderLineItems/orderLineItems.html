@@ -1,0 +1,97 @@
+<template>
+    <lightning-card title="Order Items" icon-name="standard:product">
+        <template if:true={isLoading}>
+            <div class="slds-p-around_medium slds-text-align_center">
+                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={hasLineItems}>
+            <div class="checkout-container">
+                <!-- Line Items List -->
+                <div class="items-section">
+                    <template for:each={lineItems} for:item="item">
+                        <div key={item.Id} class="line-item">
+                            <div class="item-details">
+                                <div class="item-header">
+                                    <h3 class="item-name">{item.Product2.Name}</h3>
+                                    <span class="item-price">{item.TotalPrice}</span>
+                                </div>
+
+                                <template if:true={item.Product2.Description}>
+                                    <p class="item-description">{item.Product2.Description}</p>
+                                </template>
+
+                                <div class="item-meta">
+                                    <span class="meta-item">
+                                        <lightning-icon icon-name="utility:bundle_config" size="xx-small"></lightning-icon>
+                                        Qty: {item.Quantity}
+                                    </span>
+                                    <span class="meta-item">
+                                        <lightning-icon icon-name="utility:currency" size="xx-small"></lightning-icon>
+                                        Unit Price: {item.UnitPrice}
+                                    </span>
+                                    <template if:true={item.ServiceDate}>
+                                        <span class="meta-item">
+                                            <lightning-icon icon-name="utility:date_input" size="xx-small"></lightning-icon>
+                                            Start: {item.ServiceDate}
+                                        </span>
+                                    </template>
+                                    <template if:true={item.EndDate}>
+                                        <span class="meta-item">
+                                            <lightning-icon icon-name="utility:end_date" size="xx-small"></lightning-icon>
+                                            End: {item.EndDate}
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="summary-section">
+                    <div class="summary-card">
+                        <h3 class="summary-title">Order Summary</h3>
+
+                        <div class="summary-row">
+                            <span class="summary-label">Subtotal</span>
+                            <span class="summary-value">{formattedSubtotal}</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span class="summary-label">Tax</span>
+                            <span class="summary-value">{formattedTax}</span>
+                        </div>
+
+                        <div class="summary-divider"></div>
+
+                        <div class="summary-row total-row">
+                            <span class="summary-label total-label">Total</span>
+                            <span class="summary-value total-value">{formattedTotal}</span>
+                        </div>
+
+                        <div class="item-count">
+                            {lineItems.length} {lineItems.length} item(s)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template if:true={error}>
+            <div class="slds-p-around_medium">
+                <p class="slds-text-color_error">Error loading order line items</p>
+            </div>
+        </template>
+
+        <template if:false={hasLineItems}>
+            <template if:false={isLoading}>
+                <div class="slds-p-around_medium slds-text-align_center">
+                    <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                    <p class="slds-m-top_small">No items found for this order</p>
+                </div>
+            </template>
+        </template>
+    </lightning-card>
+</template>

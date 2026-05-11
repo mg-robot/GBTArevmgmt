@@ -1,0 +1,87 @@
+<template>
+    <!-- Mobile Hamburger Overlay -->
+    <template if:true={showHamburgerMenu}>
+        <div class="gbta-overlay">
+            <div class="gbta-overlay__backdrop" onclick={handleHamburgerClose}></div>
+            <div class="gbta-overlay__panel">
+                <div class="gbta-overlay__top">
+                    <a href={basePath} class="gbta-logo" aria-label={logoAlt}>
+                        <template if:true={logoUrl}>
+                            <img src={logoUrl} alt={logoAlt} class="gbta-logo__img" />
+                        </template>
+                        <template if:false={logoUrl}>
+                            <span class="gbta-logo__text">GBTA</span>
+                        </template>
+                    </a>
+                    <button class="gbta-icon-btn" onclick={handleHamburgerClose} aria-label="Close navigation">
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                </div>
+                <nav role="navigation" aria-label="Main navigation">
+                    <ul class="gbta-mobile-nav">
+                        <template for:each={menuItems} for:item="item">
+                            <li key={item.id} class="gbta-mobile-nav__item">
+                                <a href={item.computedHref} class="gbta-mobile-nav__link" onclick={handleHamburgerClose}>{item.label}</a>
+                            </li>
+                        </template>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </template>
+
+    <!-- Header Bar -->
+    <header class="gbta-header" role="banner">
+        <div class="gbta-header__inner">
+            <!-- Left: Hamburger + Logo -->
+            <div class="gbta-header__left">
+                <button class="gbta-hamburger" onclick={handleHamburgerOpen} aria-label="Open navigation" aria-expanded={showHamburgerMenu}>
+                    <span class="gbta-hamburger__line"></span>
+                    <span class="gbta-hamburger__line"></span>
+                    <span class="gbta-hamburger__line"></span>
+                </button>
+                <a href={basePath} class="gbta-logo" aria-label={logoAlt}>
+                    <template if:true={logoUrl}>
+                        <img src={logoUrl} alt={logoAlt} class="gbta-logo__img" />
+                    </template>
+                    <template if:false={logoUrl}>
+                        <span class="gbta-logo__text">GBTA</span>
+                    </template>
+                </a>
+            </div>
+
+            <!-- Center: Desktop Navigation -->
+            <nav class="gbta-desktop-nav" role="navigation" aria-label="Main navigation">
+                <ul class="gbta-desktop-nav__list">
+                    <template for:each={menuItems} for:item="item">
+                        <li key={item.id} class="gbta-desktop-nav__item">
+                            <a href={item.computedHref} class="gbta-desktop-nav__link">{item.label}</a>
+                        </li>
+                    </template>
+                </ul>
+            </nav>
+
+            <!-- Right: Action Icons -->
+            <div class="gbta-header__actions">
+                <button class="gbta-icon-btn" onclick={handleSearchClick} aria-label="Search">
+                    <lightning-icon icon-name="utility:search" size="small"></lightning-icon>
+                </button>
+                <button class="gbta-icon-btn" onclick={handleWishlistClick} aria-label="Wishlist">
+                    <lightning-icon icon-name="utility:heart" size="small"></lightning-icon>
+                </button>
+                <button class="gbta-icon-btn gbta-cart-btn" onclick={handleCartClick} aria-label={cartAriaLabel}>
+                    <lightning-icon icon-name="utility:cart" size="small"></lightning-icon>
+                    <template if:true={hasCartItems}>
+                        <span class="gbta-cart-badge" aria-hidden="true">{cartItemCount}</span>
+                    </template>
+                </button>
+                <template if:true={languageLabel}>
+                    <button class="gbta-lang-btn" onclick={handleLanguageClick}>
+                        <lightning-icon icon-name="utility:world" size="x-small"></lightning-icon>
+                        <span class="gbta-lang-btn__text">{languageLabel}</span>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </header>
+</template>

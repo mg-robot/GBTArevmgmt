@@ -1,0 +1,625 @@
+<template>
+    <!-- ── Launch Button ─────────────────────────────────────── -->
+    <div class="jf-launcher">
+        <button class={launcherBtnClass} onclick={handleOpen}>{buttonLabel}</button>
+    </div>
+
+    <!-- ── Modal Overlay ─────────────────────────────────────── -->
+    <template lwc:if={isOpen}>
+        <div class="jf-overlay" role="dialog" aria-modal="true" aria-label="GBTA Membership Application">
+            <div class="jf-backdrop" onclick={handleClose}></div>
+
+            <div class="jf-modal">
+
+                <!-- Modal Header -->
+                <div class="jf-modal-header">
+                    <div class="jf-logo" aria-label="GBTA">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle cx="16" cy="16" r="4" fill="#e8641a"/>
+                            <rect x="14.5" y="2" width="3" height="6" rx="1.5" fill="#e8641a"/>
+                            <rect x="14.5" y="24" width="3" height="6" rx="1.5" fill="#e8641a"/>
+                            <rect x="2" y="14.5" width="6" height="3" rx="1.5" fill="#e8641a"/>
+                            <rect x="24" y="14.5" width="6" height="3" rx="1.5" fill="#e8641a"/>
+                            <rect x="5.636" y="5.636" width="3" height="6" rx="1.5" transform="rotate(-45 5.636 5.636)" fill="#e8641a"/>
+                            <rect x="21.254" y="21.254" width="3" height="6" rx="1.5" transform="rotate(-45 21.254 21.254)" fill="#e8641a"/>
+                            <rect x="26.364" y="5.636" width="3" height="6" rx="1.5" transform="rotate(45 26.364 5.636)" fill="#e8641a"/>
+                            <rect x="10.746" y="21.254" width="3" height="6" rx="1.5" transform="rotate(45 10.746 21.254)" fill="#e8641a"/>
+                        </svg>
+                        <span class="jf-logo-text">GBTA</span>
+                    </div>
+                    <div class="jf-header-right">
+                        <button class="jf-close-btn" onclick={handleClose} aria-label="Close membership application">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step Indicator -->
+                <template lwc:if={noActiveMembership}>
+                <div class="jf-step-indicator">
+                    <div class="jf-step-bar">
+                        <template for:each={stepBarItems} for:item="item">
+                            <div key={item.key} class={item.wrapClass}>
+                                <template lwc:if={item.isCircle}>
+                                    <div class={item.circleClass}>
+                                        <template lwc:if={item.isCompleted}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </template>
+                                        <template lwc:else>
+                                            <span>{item.number}</span>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="jf-step-labels">
+                        <template for:each={stepNodes} for:item="step">
+                            <div key={step.key} class={step.cellClass}>{step.label}</div>
+                        </template>
+                    </div>
+                </div>
+                </template>
+
+                <!-- ── Scrollable Body ────────────────────────── -->
+                <div class="jf-modal-body">
+
+                    <!-- ── MEMBERSHIP GATE ───────────────────────── -->
+                    <template lwc:if={showMembershipGate}>
+                        <div class="jf-gate">
+                            <template lwc:if={isEnterpriseMember}>
+                                <p class="jf-gate-title">You&#39;re part of a corporate membership</p>
+                                <p class="jf-gate-body">Your membership is managed by your organization. Please contact your administrator for changes.</p>
+                                <button class="jf-btn jf-btn--ghost" onclick={handleClose}>Close</button>
+                            </template>
+                            <template lwc:elseif={isGlobalPartnerMember}>
+                                <p class="jf-gate-title">Membership managed by your partner organization</p>
+                                <p class="jf-gate-body">Your membership is provided through a GBTA Global Partner. Please contact your partner organization for assistance.</p>
+                                <button class="jf-btn jf-btn--ghost" onclick={handleClose}>Close</button>
+                            </template>
+                            <template lwc:elseif={isRenewableMember}>
+                                <p class="jf-gate-title">You&#39;re already a member!</p>
+                                <p class="jf-gate-body">Your membership is active. Would you like to renew it?</p>
+                                <div class="jf-gate-actions">
+                                    <button class="jf-btn jf-btn--primary">Renew Membership</button>
+                                    <button class="jf-btn jf-btn--ghost" onclick={handleClose}>Cancel</button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- ── STEP FLOW ─────────────────────────────── -->
+                    <template lwc:if={noActiveMembership}>
+
+                    <!-- ── SCREEN 0: Your Information ─────────── -->
+                    <template lwc:if={isStep0}>
+                        <h2 class="jf-screen-title">Your Information</h2>
+
+                        <template lwc:if={step0SaveError}>
+                            <div class="jf-save-error" role="alert">{step0SaveError}</div>
+                        </template>
+
+                        <div class="jf-form-row">
+                            <div class="jf-field">
+                                <label class="jf-label" for="jf-firstName">*First Name</label>
+                                <input id="jf-firstName" type="text" class={step0FieldClasses.firstName} data-field="firstName"
+                                       value={firstName} onchange={handleInputChange} placeholder="Jane" />
+                                <template lwc:if={step0Errors.firstName}>
+                                    <span class="jf-field-error">{step0Errors.firstName}</span>
+                                </template>
+                            </div>
+                            <div class="jf-field">
+                                <label class="jf-label" for="jf-lastName">*Last Name</label>
+                                <input id="jf-lastName" type="text" class={step0FieldClasses.lastName} data-field="lastName"
+                                       value={lastName} onchange={handleInputChange} placeholder="Doe" />
+                                <template lwc:if={step0Errors.lastName}>
+                                    <span class="jf-field-error">{step0Errors.lastName}</span>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="jf-field">
+                            <label class="jf-label" for="jf-email">*Email</label>
+                            <input id="jf-email" type="email" class={step0FieldClasses.email} data-field="email"
+                                   value={email} onchange={handleInputChange} placeholder="name@company.com" />
+                            <template lwc:if={step0Errors.email}>
+                                <span class="jf-field-error">{step0Errors.email}</span>
+                            </template>
+                        </div>
+
+                        <div class="jf-field">
+                            <label class="jf-label" for="jf-title">*Title</label>
+                            <input id="jf-title" type="text" class={step0FieldClasses.title} data-field="title"
+                                   value={title} onchange={handleInputChange} />
+                            <template lwc:if={step0Errors.title}>
+                                <span class="jf-field-error">{step0Errors.title}</span>
+                            </template>
+                        </div>
+
+                        <div class="jf-field">
+                            <label class="jf-label" for="jf-phone">*Home Phone</label>
+                            <input id="jf-phone" type="tel" class={step0FieldClasses.phone} data-field="phone"
+                                   value={phone} onchange={handleInputChange} placeholder="(123) 456-7890" />
+                            <template lwc:if={step0Errors.phone}>
+                                <span class="jf-field-error">{step0Errors.phone}</span>
+                            </template>
+                        </div>
+
+                        <h3 class="jf-section-title">Billing Address</h3>
+                        <c-gbta-address-input
+                            data-id="billingAddress"
+                            street={billingStreet}
+                            city={billingCity}
+                            province={billingState}
+                            postal-code={billingZip}
+                            country={billingCountry}
+                            required
+                            onaddresschange={handleBillingAddressChange}
+                        ></c-gbta-address-input>
+
+                        <!-- Shipping Address -->
+                        <h3 class="jf-section-title">Shipping Address</h3>
+                        <label class="jf-same-as-billing-label">
+                            <input type="checkbox" checked={shippingSameAsBilling}
+                                   onchange={handleShippingSameAsBillingChange} />
+                            <span>Shipping is the same as Billing</span>
+                        </label>
+
+                        <template lwc:if={showShippingFields}>
+                            <c-gbta-address-input
+                                data-id="shippingAddress"
+                                street={shippingStreet}
+                                city={shippingCity}
+                                province={shippingState}
+                                postal-code={shippingZip}
+                                country={shippingCountry}
+                                required
+                                onaddresschange={handleShippingAddressChange}
+                            ></c-gbta-address-input>
+                        </template>
+
+                        <!-- Verify Company -->
+                        <div class="jf-section jf-section--company">
+                            <h3 class="jf-section-title">Verify Company</h3>
+
+                            <!-- Search mode -->
+                            <template lwc:if={isSearchMode}>
+                                <div class="jf-field jf-company-search-field" onfocusout={handleCompanySearchFocusOut}>
+                                    <label class="jf-label" for="jf-companySearch">Search Company Name</label>
+                                    <div class="jf-company-search-wrap">
+                                        <input
+                                            id="jf-companySearch"
+                                            type="text"
+                                            class="jf-input"
+                                            value={companySearchTerm}
+                                            oninput={handleCompanySearchInput}
+                                            placeholder="Type to search…"
+                                            autocomplete="off"
+                                        />
+                                        <template lwc:if={companySearchTerm}>
+                                            <button class="jf-company-clear-btn" type="button" onclick={handleClearCompany} aria-label="Clear">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                            </button>
+                                        </template>
+                                    </div>
+                                    <template lwc:if={companyDropdownVisible}>
+                                        <ul class="jf-company-dropdown" role="listbox">
+                                            <template for:each={companySearchResults} for:item="result">
+                                                <li key={result.id}
+                                                    class="jf-company-dropdown-item"
+                                                    role="option"
+                                                    data-id={result.id}
+                                                    data-name={result.name}
+                                                    onclick={handleCompanyResultSelect}
+                                                >{result.name}</li>
+                                            </template>
+                                        </ul>
+                                    </template>
+                                    <template lwc:if={companySearchError}>
+                                        <span class="jf-field-error">{companySearchError}</span>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Create mode -->
+                            <template lwc:if={isCreateMode}>
+                                <div class="jf-create-company-form">
+                                    <div class="jf-field">
+                                        <label class="jf-label" for="jf-newCompanyName"><span class="jf-required">*</span>Company Name</label>
+                                        <input
+                                            id="jf-newCompanyName"
+                                            type="text"
+                                            class="jf-input"
+                                            value={newCompanyName}
+                                            onchange={handleNewCompanyNameChange}
+                                            placeholder="Enter company name"
+                                        />
+                                    </div>
+                                    <c-gbta-address-input
+                                        street={newCompanyStreet}
+                                        city={newCompanyCity}
+                                        province={newCompanyState}
+                                        postal-code={newCompanyZip}
+                                        country={newCompanyCountry}
+                                        onaddresschange={handleNewCompanyAddressChange}
+                                    ></c-gbta-address-input>
+                                    <template lwc:if={companySearchError}>
+                                        <span class="jf-field-error">{companySearchError}</span>
+                                    </template>
+                                    <div class="jf-company-form-actions">
+                                        <button class="jf-company-btn jf-company-btn--selected" type="button" onclick={handleCreateCompanySubmit} disabled={isCreatingCompany}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                                            {createCompanyBtnLabel}
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Mode toggle -->
+                            <div class="jf-company-btns">
+                                <button class="jf-company-btn" type="button" onclick={handleToggleCompanyMode}>
+                                    <template lwc:if={isSearchMode}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    </template>
+                                    <template lwc:else>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    </template>
+                                    {modeToggleBtnLabel}
+                                </button>
+                            </div>
+
+                            <!-- Selected Company -->
+                            <template lwc:if={showSelectedSection}>
+                                <div class="jf-company-selected-section">
+                                    <p class="jf-company-selected-label">Selected Company</p>
+                                    <div class="jf-company-selected-row">
+                                        <div class="jf-company-selected-chip">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <span>{selectedCompanyName}</span>
+                                        </div>
+                                        <button class="jf-company-clear-btn" type="button" onclick={handleClearCompany} aria-label="Remove company">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- ── SCREEN 1: Membership Qualification ──── -->
+                    <template lwc:if={isStep1}>
+                        <h2 class="jf-screen-title">Membership Qualification</h2>
+
+                        <!-- Section A: YOUR ROLE -->
+                        <div class="jf-q-card">
+                            <div class="jf-q-card-header">
+                                <div class="jf-q-card-bar"></div>
+                                <span class="jf-q-card-title">YOUR ROLE</span>
+                            </div>
+                            <div class="jf-q-card-divider"></div>
+                            <div class="jf-q-card-body">
+
+                                <p class="jf-q-label"><span class="jf-required">*</span>Select the option most closely aligned to your daily job function:</p>
+                                <template for:each={jobFunctionOptions} for:item="opt">
+                                    <label key={opt.value} class={opt.rowClass}>
+                                        <input type="radio" name="jobFunction" value={opt.value} checked={opt.checked}
+                                               onchange={handleJobFunctionChange} class="jf-q-input" />
+                                        <span class="jf-q-option-text">{opt.label}</span>
+                                    </label>
+                                </template>
+
+                                <template lwc:if={step1Errors.jobFunction}>
+                                    <span class="jf-field-error">{step1Errors.jobFunction}</span>
+                                </template>
+
+                                <template lwc:if={showOrgType}>
+                                    <div class="jf-q-inset">
+                                        <p class="jf-q-label"><span class="jf-required">*</span>Which of the following best describes your organization?</p>
+                                        <template for:each={orgTypeOptions} for:item="opt">
+                                            <label key={opt.value} class={opt.rowClass}>
+                                                <input type="radio" name="orgType" value={opt.value} checked={opt.checked}
+                                                       onchange={handleOrgTypeChange} class="jf-q-input" />
+                                                <span class="jf-q-option-text">{opt.label}</span>
+                                            </label>
+                                        </template>
+                                        <template lwc:if={step1Errors.orgType}>
+                                            <span class="jf-field-error">{step1Errors.orgType}</span>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <template lwc:if={showYearsInIndustry}>
+                                    <p class="jf-q-label jf-q-label--mt"><span class="jf-required">*</span>How many years have you worked in the Business Travel Industry?</p>
+                                    <div class="jf-pill-group">
+                                        <template for:each={yearsOptions} for:item="opt">
+                                            <label key={opt.value} class={opt.pillClass}>
+                                                <input type="radio" name="yearsInIndustry" value={opt.value} checked={opt.checked}
+                                                       onchange={handleYearsChange} class="jf-pill-input" />
+                                                {opt.label}
+                                            </label>
+                                        </template>
+                                    </div>
+                                    <template lwc:if={step1Errors.yearsInIndustry}>
+                                        <span class="jf-field-error">{step1Errors.yearsInIndustry}</span>
+                                    </template>
+                                </template>
+
+                            </div>
+                        </div>
+
+                        <!-- Section B: AREAS OF INTEREST -->
+                        <div class="jf-q-card">
+                            <div class="jf-q-card-header">
+                                <div class="jf-q-card-bar"></div>
+                                <span class="jf-q-card-title">AREAS OF INTEREST</span>
+                            </div>
+                            <div class="jf-q-card-divider"></div>
+                            <div class="jf-q-card-body">
+
+                                <p class="jf-q-label">Select your primary areas of interest:</p>
+                                <div class="jf-two-col">
+                                    <template for:each={primaryInterestOptions} for:item="opt">
+                                        <label key={opt.value} class={opt.rowClass}>
+                                            <input type="checkbox" data-value={opt.value} checked={opt.checked}
+                                                   onchange={handlePrimaryInterestToggle} class="jf-q-input" />
+                                            <span class="jf-q-option-text">{opt.label}</span>
+                                        </label>
+                                    </template>
+                                </div>
+                                <label class={primarySelectAllClass}>
+                                    <input type="checkbox" checked={allPrimarySelected}
+                                           onchange={handlePrimarySelectAll} class="jf-q-input" />
+                                    <span class="jf-q-option-text">Select All</span>
+                                </label>
+
+                                <p class="jf-q-label jf-q-label--mt">Which GBTA programs are you interested in receiving regular updates on:</p>
+                                <div class="jf-two-col">
+                                    <template for:each={programInterestOptions} for:item="opt">
+                                        <label key={opt.value} class={opt.rowClass}>
+                                            <input type="checkbox" data-value={opt.value} checked={opt.checked}
+                                                   onchange={handleProgramInterestToggle} class="jf-q-input" />
+                                            <span class="jf-q-option-text">{opt.label}</span>
+                                        </label>
+                                    </template>
+                                </div>
+                                <label class={programSelectAllClass}>
+                                    <input type="checkbox" checked={allProgramsSelected}
+                                           onchange={handleProgramSelectAll} class="jf-q-input" />
+                                    <span class="jf-q-option-text">Select All</span>
+                                </label>
+
+                            </div>
+                        </div>
+
+                        <!-- Section C: YOUR COMPANY (conditional) -->
+                        <template lwc:if={showCompanySection}>
+                            <div class="jf-q-card">
+                                <div class="jf-q-card-header">
+                                    <div class="jf-q-card-bar"></div>
+                                    <span class="jf-q-card-title">YOUR COMPANY</span>
+                                </div>
+                                <div class="jf-q-card-divider"></div>
+                                <div class="jf-q-card-body">
+
+                                    <template lwc:if={showCompanyRole}>
+                                        <p class="jf-q-label">My role is:</p>
+                                        <template for:each={companyRoleOptions} for:item="opt">
+                                            <label key={opt.value} class={opt.rowClass}>
+                                                <input type="radio" name="companyRole" value={opt.value} checked={opt.checked}
+                                                       onchange={handleCompanyRoleChange} class="jf-q-input" />
+                                                <span class="jf-q-option-text">{opt.label}</span>
+                                            </label>
+                                        </template>
+                                    </template>
+
+                                    <p class="jf-q-label jf-q-label--mt">Which of the following best describes the company you work for?</p>
+                                    <div class="jf-two-col">
+                                        <template for:each={industrySectorOptions} for:item="opt">
+                                            <label key={opt.value} class={opt.rowClass}>
+                                                <input type="radio" name="industrySector" value={opt.value} checked={opt.checked}
+                                                       onchange={handleIndustrySectorChange} class="jf-q-input" />
+                                                <span class="jf-q-option-text">{opt.label}</span>
+                                            </label>
+                                        </template>
+                                    </div>
+                                    <template lwc:if={showOtherSectorInput}>
+                                        <div class="jf-q-other-wrap">
+                                            <input type="text" class="jf-input jf-q-other-input"
+                                                   value={industrySectorOther}
+                                                   onchange={handleOtherSectorChange}
+                                                   placeholder="Please specify…" />
+                                        </div>
+                                    </template>
+
+                                    <template lwc:if={showAnnualSpend}>
+                                        <p class="jf-q-label jf-q-label--mt">Organization annual travel spend USD:</p>
+                                        <template for:each={annualSpendOptions} for:item="opt">
+                                            <label key={opt.value} class={opt.rowClass}>
+                                                <input type="radio" name="annualSpend" value={opt.value} checked={opt.checked}
+                                                       onchange={handleAnnualSpendChange} class="jf-q-input" />
+                                                <span class="jf-q-option-text">{opt.label}</span>
+                                            </label>
+                                        </template>
+                                    </template>
+
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Section D: Student fields (conditional) -->
+                        <template lwc:if={isStudentRole}>
+                            <div class="jf-q-card">
+                                <div class="jf-q-card-header">
+                                    <div class="jf-q-card-bar"></div>
+                                    <span class="jf-q-card-title">YOUR INSTITUTION</span>
+                                </div>
+                                <div class="jf-q-card-divider"></div>
+                                <div class="jf-q-card-body">
+                                    <div class="jf-field">
+                                        <label class="jf-q-label" for="jf-institution"><span class="jf-required">*</span>At which institution of higher learning are you enrolled?</label>
+                                        <input id="jf-institution" type="text" class="jf-input"
+                                               value={institution} onchange={handleInstitutionChange} />
+                                        <template lwc:if={step1Errors.institution}>
+                                            <span class="jf-field-error">{step1Errors.institution}</span>
+                                        </template>
+                                    </div>
+                                    <div class="jf-field jf-field--mt">
+                                        <label class="jf-q-label" for="jf-gradDate"><span class="jf-required">*</span>Anticipated Graduation Date</label>
+                                        <input id="jf-gradDate" type="date" class="jf-input"
+                                               value={graduationDate} onchange={handleGraduationDateChange} />
+                                        <template lwc:if={step1Errors.graduationDate}>
+                                            <span class="jf-field-error">{step1Errors.graduationDate}</span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Section E: Academic field (conditional) -->
+                        <template lwc:if={isAcademicRole}>
+                            <div class="jf-q-card">
+                                <div class="jf-q-card-header">
+                                    <div class="jf-q-card-bar"></div>
+                                    <span class="jf-q-card-title">YOUR INSTITUTION</span>
+                                </div>
+                                <div class="jf-q-card-divider"></div>
+                                <div class="jf-q-card-body">
+                                    <div class="jf-field">
+                                        <label class="jf-q-label" for="jf-academicInst">At which institution of higher learning are you currently employed?</label>
+                                        <input id="jf-academicInst" type="text" class="jf-input"
+                                               value={academicInstitution} onchange={handleAcademicInstitutionChange} />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template lwc:if={step1SaveError}>
+                            <div class="jf-save-error" role="alert">{step1SaveError}</div>
+                        </template>
+
+                    </template>
+
+                    <!-- ── SCREEN 2: Membership Result ─────────── -->
+                    <template lwc:if={isStep2}>
+                        <div class="jf-result-screen">
+                            <p class="jf-result-line">Based on your responses, your membership type is <strong>{membershipType}</strong>.</p>
+                            <p class="jf-result-line">The cost of a first-year <strong>{membershipType}</strong> for a resident of {region} is <strong>{formattedMembershipPrice}</strong>.</p>
+                        </div>
+                    </template>
+
+                    <!-- ── SCREEN 3: Chapter Opt-Out ───────────── -->
+                    <template lwc:if={isStep3}>
+                        <div class="jf-optout-screen">
+                            <h2 class="jf-screen-title">Chapter Opt-Out</h2>
+                            <p class="jf-body-text">You now have the option to add Chapters to your GBTA membership. Chapter membership is optional and you can opt-out using the button below.</p>
+                        </div>
+                    </template>
+
+                    <!-- ── SCREEN 4: Chapter Selection ─────────── -->
+                    <template lwc:if={isStep4}>
+                        <h2 class="jf-screen-title">Chapter Selection</h2>
+                        <div class="jf-chapter-info-box">
+                            Your primary chapter membership costs <strong>$125</strong>. Each additional chapter membership costs <strong>$175</strong>.
+                        </div>
+                        <div class="jf-chapter-search-wrap">
+                            <svg class="jf-chapter-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <input type="text" class="jf-chapter-search-input"
+                                   placeholder="Search chapters…"
+                                   value={chapterSearchTerm}
+                                   oninput={handleChapterSearch} />
+                        </div>
+                        <template for:each={visibleChapters} for:item="chapter">
+                            <div key={chapter.id} class={chapter.cardClass}>
+                                <label class="jf-chapter-select-wrap">
+                                    <input type="checkbox" checked={chapter.isSelected} data-id={chapter.id}
+                                           onchange={handleChapterToggle} class="jf-chapter-input" />
+                                </label>
+                                <div class="jf-chapter-card-content">
+                                    <div class="jf-chapter-name">{chapter.name}</div>
+                                    <div class="jf-chapter-location">{chapter.location}</div>
+                                    <p class="jf-chapter-desc">Each local chapter provides unique perspectives and compelling benefits through education, networking and volunteer opportunities. Additionally, each chapter offers their members all the resources, benefits and opportunities of GBTA's global reach.</p>
+                                </div>
+                                <label class={chapter.primaryWrapClass}>
+                                    <input type="checkbox" checked={chapter.isPrimary} data-id={chapter.id}
+                                           onchange={handlePrimaryChapterChange} class="jf-chapter-primary-input" />
+                                    <span class="jf-chapter-primary-label">Primary</span>
+                                </label>
+                            </div>
+                        </template>
+                        <template lwc:if={noChapterResults}>
+                            <p class="jf-chapter-no-results">No chapters match your search.</p>
+                        </template>
+                        <div class="jf-pagination">
+                            <span class="jf-page-info">{paginationText}</span>
+                            <div class="jf-page-btns">
+                                <template for:each={chapterPageButtons} for:item="pg">
+                                    <button key={pg.key} class={pg.btnClass}
+                                            data-page={pg.key} onclick={handlePageChange}
+                                            aria-label={pg.label}>{pg.label}</button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ── SCREEN 5: Review & Checkout ─────────── -->
+                    <template lwc:if={isStep5}>
+                        <div class="jf-review-screen">
+                            <template lwc:if={orderError}>
+                                <div class="jf-save-error" role="alert">{orderError}</div>
+                            </template>
+
+                            <p class="jf-review-intro">You are purchasing a membership package of type <strong>{membershipType}</strong>.</p>
+                            <p class="jf-review-sub">If you wish to change your subscription plan or add or remove chapters from your cart, select "Modify Cart" below, otherwise "Proceed to Checkout".</p>
+                            <p class="jf-review-note">*Any discounts will be shown at checkout.</p>
+
+                            <template lwc:if={hasChapters}>
+                                <h3 class="jf-section-title">Current Chapter Additions</h3>
+                            </template>
+
+                            <div class="jf-cart">
+                                <template for:each={cartItems} for:item="item">
+                                    <div key={item.id} class="jf-cart-row">
+                                        <span class="jf-cart-label">{item.label}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    </template>
+                    <!-- end jf-step-flow -->
+
+                </div>
+                <!-- end jf-modal-body -->
+
+                <!-- ── Navigation Footer ─────────────────────── -->
+                <template lwc:if={noActiveMembership}>
+                <div class="jf-modal-footer">
+                    <button class={prevBtnClass} onclick={handlePrev} disabled={isPrevDisabled}>
+                        ← Previous
+                    </button>
+                    <div class="jf-footer-right">
+                        <template lwc:if={showOptOut}>
+                            <button class="jf-btn jf-btn--secondary" onclick={handleOptOut}>Opt Out</button>
+                        </template>
+                        <template lwc:if={isLastStep}>
+                            <button class="jf-btn jf-btn--primary" onclick={handleProceedToCheckout}
+                                    disabled={isCheckoutDisabled}>{checkoutButtonLabel}</button>
+                        </template>
+                        <template lwc:else>
+                            <button class="jf-btn jf-btn--primary" onclick={handleNext} disabled={isNextDisabled}>{nextButtonLabel}</button>
+                        </template>
+                    </div>
+                </div>
+                </template>
+
+            </div>
+            <!-- end jf-modal -->
+        </div>
+        <!-- end jf-overlay -->
+    </template>
+</template>

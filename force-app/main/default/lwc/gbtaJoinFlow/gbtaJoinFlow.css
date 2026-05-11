@@ -1,0 +1,1172 @@
+/* ── Design Tokens ──────────────────────────────────────────── */
+:host {
+    --jf-accent:        #e8641a;
+    --jf-accent-dark:   #c8530f;
+    --jf-accent-light:  #fff3eb;
+    --jf-accent-border: #f0c098;
+    --jf-text-dark:     #1a1a1a;
+    --jf-text-med:      #444444;
+    --jf-text-soft:     #666666;
+    --jf-text-muted:    #888888;
+    --jf-border:        #e8e8e4;
+    --jf-border-input:  #d0d0d0;
+    --jf-bg:            #f8f8f6;
+    --jf-card:          #ffffff;
+    --jf-radius:        8px;
+    --jf-radius-sm:     4px;
+    --jf-shadow:        0 1px 4px rgba(0,0,0,0.06);
+    --jf-font:          'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: block;
+}
+
+/* ── Launch Button ──────────────────────────────────────────── */
+.jf-launcher { display: inline-block; }
+
+.jf-launch-btn {
+    font-family: var(--jf-font);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 2rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.jf-launch-btn--primary {
+    background: var(--jf-accent);
+    color: #ffffff;
+    border-color: var(--jf-accent);
+}
+.jf-launch-btn--primary:hover { background: var(--jf-accent-dark); border-color: var(--jf-accent-dark); }
+
+.jf-launch-btn--secondary {
+    background: #ffffff;
+    color: var(--jf-accent);
+    border-color: var(--jf-accent);
+}
+.jf-launch-btn--secondary:hover { background: var(--jf-accent-light); }
+
+.jf-launch-btn--ghost {
+    background: transparent;
+    color: var(--jf-text-dark);
+    border-color: var(--jf-border-input);
+}
+.jf-launch-btn--ghost:hover { border-color: var(--jf-accent); color: var(--jf-accent); }
+
+/* ── Modal Overlay ──────────────────────────────────────────── */
+.jf-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.jf-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: -1;
+}
+
+.jf-modal {
+    position: relative;
+    background: var(--jf-card);
+    width: 90vw;
+    max-width: 1080px;
+    height: 90vh;
+    border-radius: var(--jf-radius);
+    box-shadow: 0 12px 60px rgba(0, 0, 0, 0.22);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: jf-fade-in 0.2s ease;
+}
+
+@keyframes jf-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Modal Header ───────────────────────────────────────────── */
+.jf-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--jf-border);
+    background: var(--jf-card);
+}
+
+.jf-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.jf-logo-text {
+    font-size: 1.375rem;
+    font-weight: 800;
+    color: var(--jf-accent);
+    letter-spacing: 0.06em;
+    font-family: var(--jf-font);
+}
+
+.jf-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.jf-locale {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.875rem;
+    color: var(--jf-text-med);
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: var(--jf-font);
+}
+
+.jf-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--jf-text-soft);
+    transition: background-color 0.15s ease;
+}
+.jf-close-btn:hover { background: #f5f5f5; color: var(--jf-text-dark); }
+
+/* ── Step Indicator ─────────────────────────────────────────── */
+.jf-step-indicator {
+    padding: 1.125rem 2rem 0.875rem;
+    border-bottom: 1px solid var(--jf-border);
+    background: var(--jf-card);
+    flex-shrink: 0;
+}
+
+/* Interleaved bar: [circle][line][circle][line]...[circle]
+   No :last-child needed — each item type has its own class. */
+.jf-step-bar {
+    display: flex;
+    align-items: center;
+}
+
+/* Circle wrapper — fixed, does not grow */
+.jf-sn-node {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Line wrapper — fills the space between circles */
+.jf-sn-line-wrap {
+    flex: 1;
+    height: 2px;
+    background: #e0e0e0;
+    align-self: center;
+    transition: background-color 0.25s ease;
+    min-width: 0;
+}
+.jf-sn-line-wrap--filled { background: var(--jf-accent); }
+
+.jf-sn-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: var(--jf-font);
+}
+.jf-sn-circle--done   { background: var(--jf-accent); color: #fff; }
+.jf-sn-circle--active { background: var(--jf-accent); color: #fff; box-shadow: 0 0 0 4px var(--jf-accent-light); }
+.jf-sn-circle--future { background: #e8e8e8; color: #aaaaaa; }
+
+/* Labels row — mirrors bar structure: 30px label cells + flex-1 spacers */
+.jf-step-labels {
+    display: flex;
+    margin-top: 0.5rem;
+}
+.jf-sn-label-cell {
+    width: 30px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.6875rem;
+    font-family: var(--jf-font);
+    line-height: 1.3;
+    overflow: visible;
+    white-space: nowrap;
+}
+.jf-sn-label-spacer {
+    flex: 1;
+    min-width: 0;
+}
+
+.jf-sn-label        { color: #aaaaaa; }
+.jf-sn-label--done  { color: var(--jf-text-soft); }
+.jf-sn-label--active { color: var(--jf-accent); font-weight: 600; }
+
+/* ── Modal Body ─────────────────────────────────────────────── */
+.jf-modal-body {
+    flex: 1;          /* fills all height between header+indicator and footer */
+    overflow-y: auto;
+    padding: 2rem 2.5rem;
+    background: var(--jf-bg);
+    min-height: 0;    /* required for flex children to scroll properly */
+}
+
+/* ── Shared Typography ──────────────────────────────────────── */
+.jf-screen-title {
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: var(--jf-text-dark);
+    margin: 0 0 1.5rem;
+    font-family: var(--jf-font);
+}
+
+.jf-subtitle {
+    font-size: 0.9375rem;
+    color: var(--jf-text-soft);
+    margin: -1rem 0 1.5rem;
+    font-family: var(--jf-font);
+}
+
+.jf-section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--jf-text-dark);
+    margin: 1.75rem 0 0.75rem;
+    font-family: var(--jf-font);
+}
+
+.jf-same-as-billing-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--jf-font);
+    font-size: 0.9375rem;
+    color: var(--jf-text-med);
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.jf-body-text {
+    font-size: 0.9375rem;
+    color: var(--jf-text-med);
+    line-height: 1.6;
+    margin: 0 0 0.75rem;
+    font-family: var(--jf-font);
+}
+
+/* ── Form Fields ────────────────────────────────────────────── */
+.jf-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.jf-field {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.jf-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--jf-text-soft);
+    margin-bottom: 0.375rem;
+    font-family: var(--jf-font);
+}
+
+.jf-input,
+.jf-select {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--jf-border-input);
+    border-radius: var(--jf-radius-sm);
+    font-size: 0.9375rem;
+    color: var(--jf-text-dark);
+    background: var(--jf-card);
+    box-sizing: border-box;
+    font-family: var(--jf-font);
+    transition: border-color 0.15s ease;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.jf-input:focus,
+.jf-select:focus {
+    outline: none;
+    border-color: var(--jf-accent);
+    box-shadow: 0 0 0 2px var(--jf-accent-light);
+}
+
+.jf-select-wrap {
+    position: relative;
+}
+.jf-select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--jf-text-soft);
+    pointer-events: none;
+}
+.jf-select-wrap .jf-select { padding-right: 2.5rem; }
+
+.jf-field--city .jf-input { padding-right: 4rem; }
+
+.jf-char-counter {
+    position: absolute;
+    right: 0.625rem;
+    top: 2.25rem;
+    font-size: 0.75rem;
+    color: var(--jf-text-muted);
+    font-family: var(--jf-font);
+}
+
+/* ── Verify Company ─────────────────────────────────────────── */
+.jf-section--company {
+    background: var(--jf-card);
+    border: 1px solid var(--jf-border);
+    border-radius: var(--jf-radius);
+    padding: 1.25rem 1.5rem;
+    margin-top: 1.75rem;
+}
+
+.jf-company-btns {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.jf-company-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5625rem 1.25rem;
+    border-radius: 2rem;
+    border: 2px solid #cccccc;
+    background: var(--jf-card);
+    color: var(--jf-text-med);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--jf-font);
+}
+.jf-company-btn:hover { border-color: var(--jf-accent); color: var(--jf-accent); }
+
+.jf-company-btn--selected {
+    border-color: var(--jf-accent);
+    background: var(--jf-accent-light);
+    color: var(--jf-accent);
+}
+
+/* ── Company Search-Ahead ────────────────────────────────────── */
+.jf-company-search-field {
+    margin-bottom: 0.25rem;
+}
+
+.jf-company-search-wrap {
+    position: relative;
+}
+
+.jf-company-search-wrap .jf-input {
+    padding-right: 2.25rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.jf-company-clear-btn {
+    position: absolute;
+    right: 0.625rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    color: var(--jf-text-muted);
+    border-radius: 50%;
+    transition: color 0.12s, background-color 0.12s;
+}
+.jf-company-clear-btn:hover {
+    color: var(--jf-text-dark);
+    background: #f0f0f0;
+}
+
+.jf-company-dropdown {
+    background: var(--jf-card);
+    border: 1px solid var(--jf-border-input);
+    border-radius: var(--jf-radius-sm);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    list-style: none;
+    margin: 4px 0 0 0;
+    padding: 0.25rem 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.jf-company-dropdown-item {
+    padding: 0.5625rem 0.875rem;
+    font-size: 0.9375rem;
+    color: var(--jf-text-med);
+    cursor: pointer;
+    font-family: var(--jf-font);
+    transition: background-color 0.1s;
+}
+.jf-company-dropdown-item:hover {
+    background: var(--jf-accent-light);
+    color: var(--jf-accent-dark);
+}
+
+.jf-company-selected-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    background: var(--jf-accent-light);
+    border: 1px solid var(--jf-accent-border);
+    border-radius: 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--jf-accent-dark);
+    margin-top: 0.5rem;
+    font-family: var(--jf-font);
+}
+
+/* ── Selected Company Section ───────────────────────────────── */
+.jf-company-selected-section {
+    margin-top: 1rem;
+    padding: 0.875rem 1rem;
+    background: var(--jf-accent-light);
+    border: 1px solid var(--jf-accent-border);
+    border-radius: var(--jf-radius-sm);
+}
+
+.jf-company-selected-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--jf-text-soft);
+    margin: 0 0 0.5rem 0;
+    font-family: var(--jf-font);
+}
+
+.jf-company-selected-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.jf-company-selected-row .jf-company-selected-chip {
+    flex: 1;
+    margin: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--jf-accent-dark);
+    font-size: 1rem;
+}
+
+/* ── Inline Create Company Form ──────────────────────────────── */
+.jf-create-company-form {
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    background: #fafaf8;
+    border: 1px solid var(--jf-border);
+    border-left: 3px solid var(--jf-accent);
+    border-radius: var(--jf-radius-sm);
+}
+
+.jf-company-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+}
+
+/* ── Qualifier Questions ────────────────────────────────────── */
+.jf-question {
+    background: var(--jf-card);
+    border: 1px solid var(--jf-border);
+    border-radius: var(--jf-radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.jf-question-text {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--jf-text-dark);
+    margin: 0 0 1rem;
+    line-height: 1.5;
+    font-family: var(--jf-font);
+}
+
+.jf-option-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: var(--jf-radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.1s ease, border-color 0.1s ease;
+    margin-bottom: 0.375rem;
+    font-family: var(--jf-font);
+}
+.jf-option-label:last-child { margin-bottom: 0; }
+.jf-option-label:hover { background: #fafaf8; }
+
+.jf-option-label--selected {
+    background: var(--jf-accent-light);
+    border-color: var(--jf-accent-border);
+}
+
+.jf-option-input {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+    accent-color: var(--jf-accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.jf-option-text {
+    font-size: 0.9375rem;
+    color: var(--jf-text-med);
+    line-height: 1.5;
+}
+.jf-option-label--selected .jf-option-text { color: var(--jf-text-dark); }
+
+.jf-option-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 0.5rem;
+}
+
+/* ── Membership Result Screen ───────────────────────────────── */
+.jf-result-screen {
+    background: var(--jf-card);
+    border: 1px solid var(--jf-border);
+    border-radius: var(--jf-radius);
+    padding: 2rem;
+}
+
+.jf-result-line {
+    font-size: 1rem;
+    color: var(--jf-text-med);
+    line-height: 1.7;
+    margin: 0 0 0.75rem;
+    font-family: var(--jf-font);
+}
+.jf-result-line:last-child { margin-bottom: 0; }
+.jf-result-line strong { color: var(--jf-text-dark); font-weight: 700; }
+
+/* ── Chapter Opt-Out Screen ─────────────────────────────────── */
+.jf-optout-screen {
+    background: var(--jf-card);
+    border: 1px solid var(--jf-border);
+    border-radius: var(--jf-radius);
+    padding: 2rem;
+}
+
+/* ── Chapter Selection Screen ───────────────────────────────── */
+.jf-chapter-info-box {
+    background: var(--jf-accent-light);
+    border: 1px solid var(--jf-accent-border);
+    border-radius: var(--jf-radius);
+    padding: 0.875rem 1.25rem;
+    font-size: 0.875rem;
+    color: #6b3a1f;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    font-family: var(--jf-font);
+}
+.jf-chapter-info-box strong { font-weight: 700; }
+
+.jf-chapter-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    background: var(--jf-card);
+    border: 1.5px solid var(--jf-border);
+    border-radius: var(--jf-radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.jf-chapter-card:hover { border-color: var(--jf-accent-border); }
+
+.jf-chapter-card--selected {
+    border-color: var(--jf-accent);
+    background: var(--jf-accent-light);
+}
+
+.jf-chapter-input {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    accent-color: var(--jf-accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.jf-chapter-card-content { flex: 1; }
+
+.jf-chapter-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--jf-text-dark);
+    margin-bottom: 0.2rem;
+    font-family: var(--jf-font);
+}
+.jf-chapter-card--selected .jf-chapter-name { color: var(--jf-accent-dark); }
+
+.jf-chapter-location {
+    font-size: 0.75rem;
+    color: var(--jf-accent);
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+    font-family: var(--jf-font);
+}
+
+.jf-chapter-desc {
+    font-size: 0.8125rem;
+    color: var(--jf-text-soft);
+    line-height: 1.5;
+    margin: 0;
+    font-family: var(--jf-font);
+}
+
+/* ── Chapter Search ─────────────────────────────────────────── */
+.jf-chapter-search-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+}
+
+.jf-chapter-search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--jf-text-muted);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+.jf-chapter-search-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem 0.625rem 2.25rem;
+    border: 1px solid var(--jf-border-input);
+    border-radius: var(--jf-radius-sm);
+    font-size: 0.9375rem;
+    color: var(--jf-text-dark);
+    background: var(--jf-card);
+    box-sizing: border-box;
+    font-family: var(--jf-font);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.jf-chapter-search-input:focus {
+    outline: none;
+    border-color: var(--jf-accent);
+    box-shadow: 0 0 0 2px var(--jf-accent-light);
+}
+.jf-chapter-search-input::placeholder { color: var(--jf-text-muted); }
+
+.jf-chapter-no-results {
+    font-size: 0.9375rem;
+    color: var(--jf-text-muted);
+    text-align: center;
+    padding: 2rem 0;
+    font-family: var(--jf-font);
+    margin: 0;
+}
+
+/* ── Chapter card: selection checkbox ───────────────────────── */
+.jf-chapter-select-wrap {
+    display: flex;
+    align-items: flex-start;
+    flex-shrink: 0;
+    padding-top: 0.15rem;
+    cursor: pointer;
+}
+
+/* ── Chapter card: Primary pill ─────────────────────────────── */
+.jf-chapter-primary-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 1.25rem;
+    border: 1.5px solid var(--jf-border-input);
+    background: var(--jf-card);
+    cursor: pointer;
+    font-family: var(--jf-font);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--jf-text-soft);
+    white-space: nowrap;
+    flex-shrink: 0;
+    align-self: center;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.jf-chapter-primary-wrap:hover {
+    border-color: var(--jf-accent-border);
+    color: var(--jf-accent-dark);
+}
+.jf-chapter-primary-wrap--active {
+    border-color: var(--jf-accent);
+    background: var(--jf-accent-light);
+    color: var(--jf-accent-dark);
+}
+
+.jf-chapter-primary-input {
+    accent-color: var(--jf-accent);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ── Pagination ─────────────────────────────────────────────── */
+.jf-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0 0.25rem;
+}
+
+.jf-page-info {
+    font-size: 0.8125rem;
+    color: var(--jf-text-muted);
+    font-family: var(--jf-font);
+}
+
+.jf-page-btns { display: flex; gap: 0.5rem; }
+
+.jf-page-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid #dddddd;
+    background: var(--jf-card);
+    color: var(--jf-text-med);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    font-family: var(--jf-font);
+}
+.jf-page-btn:hover { border-color: var(--jf-accent); color: var(--jf-accent); }
+.jf-page-btn--active { background: var(--jf-accent); border-color: var(--jf-accent); color: #ffffff; }
+
+/* ── Review & Cart ──────────────────────────────────────────── */
+.jf-review-screen {
+    background: var(--jf-card);
+    border: 1px solid var(--jf-border);
+    border-radius: var(--jf-radius);
+    padding: 1.75rem;
+}
+
+.jf-review-intro {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--jf-text-dark);
+    line-height: 1.6;
+    margin: 0 0 0.75rem;
+    font-family: var(--jf-font);
+}
+.jf-review-intro strong { color: var(--jf-text-dark); }
+
+.jf-review-sub {
+    font-size: 0.9375rem;
+    color: var(--jf-text-soft);
+    line-height: 1.6;
+    margin: 0 0 0.5rem;
+    font-family: var(--jf-font);
+}
+
+.jf-review-note {
+    font-size: 0.8125rem;
+    color: var(--jf-text-muted);
+    margin: 0 0 1.5rem;
+    font-family: var(--jf-font);
+}
+
+.jf-cart {
+    border-top: 1px solid var(--jf-border);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.jf-cart-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid #f0efed;
+    font-family: var(--jf-font);
+}
+
+.jf-cart-label {
+    font-size: 0.9375rem;
+    color: var(--jf-text-med);
+    flex: 1;
+    padding-right: 1rem;
+}
+
+.jf-cart-price {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--jf-text-dark);
+    white-space: nowrap;
+}
+
+.jf-cart-total-row {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    font-family: var(--jf-font);
+}
+
+.jf-cart-total-label {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--jf-text-dark);
+}
+
+.jf-total-amount {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--jf-accent);
+    margin-left: 0.5rem;
+}
+
+.jf-total-asterisk {
+    color: #cc0000;
+    font-size: 1rem;
+}
+
+/* ── Modal Footer Navigation ────────────────────────────────── */
+.jf-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    border-top: 1px solid var(--jf-border);
+    background: var(--jf-card);
+    gap: 0.75rem;
+}
+
+.jf-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* ── Shared Buttons ─────────────────────────────────────────── */
+.jf-btn {
+    font-family: var(--jf-font);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    padding: 0.625rem 1.75rem;
+    border-radius: 2rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.jf-btn--primary {
+    background: var(--jf-accent);
+    color: #ffffff;
+    border-color: var(--jf-accent);
+}
+.jf-btn--primary:hover { background: var(--jf-accent-dark); border-color: var(--jf-accent-dark); }
+
+.jf-btn--secondary {
+    background: #ffffff;
+    color: var(--jf-accent);
+    border-color: var(--jf-accent);
+}
+.jf-btn--secondary:hover { background: var(--jf-accent-light); }
+
+.jf-btn--dimmed {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* ── Qualification Screen Cards ────────────────────────────── */
+
+.jf-q-card {
+    background: var(--jf-card);
+    border: 1px solid #eeeeee;
+    border-radius: var(--jf-radius);
+    box-shadow: var(--jf-shadow);
+    margin-bottom: 1.75rem;
+    overflow: hidden;
+}
+
+.jf-q-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1.25rem 0.625rem;
+}
+
+.jf-q-card-bar {
+    width: 4px;
+    height: 20px;
+    background: var(--jf-accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.jf-q-card-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--jf-text-dark);
+    letter-spacing: 0.04em;
+    font-family: var(--jf-font);
+}
+
+.jf-q-card-divider {
+    height: 3px;
+    background: var(--jf-accent);
+    margin: 0 1.25rem 0;
+}
+
+.jf-q-card-body {
+    padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.jf-q-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--jf-text-med);
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+    display: block;
+    font-family: var(--jf-font);
+}
+.jf-q-label--mt { margin-top: 1.25rem; }
+
+.jf-required { color: var(--jf-accent); }
+
+/* ── Q option rows (radio & checkbox) ───────────────────────── */
+
+.jf-q-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--jf-radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    font-family: var(--jf-font);
+}
+.jf-q-row:hover { background: var(--jf-accent-light); }
+.jf-q-row--selected {
+    background: var(--jf-accent-light);
+    border-color: var(--jf-accent-border);
+}
+
+.jf-q-input { accent-color: var(--jf-accent); margin-top: 0.2rem; flex-shrink: 0; }
+
+.jf-q-option-text {
+    font-size: 0.875rem;
+    color: #333333;
+    line-height: 1.4;
+}
+
+/* ── Conditional inset block (org type) ─────────────────────── */
+
+.jf-q-inset {
+    margin: 0.75rem 0 0 1.5rem;
+    padding: 1rem 1.125rem;
+    border-radius: var(--jf-radius-sm);
+    background: #fafaf8;
+    border: 1px solid #eeeeee;
+    border-left: 3px solid var(--jf-accent);
+}
+
+/* ── Pill chips (years in industry) ─────────────────────────── */
+
+.jf-pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.jf-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    border-radius: 1.25rem;
+    border: 1.5px solid var(--jf-border-input);
+    background: var(--jf-card);
+    color: #333333;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    cursor: pointer;
+    font-family: var(--jf-font);
+    transition: all 0.12s ease;
+}
+.jf-pill:hover { border-color: var(--jf-accent); color: var(--jf-accent); }
+.jf-pill--selected {
+    border-color: var(--jf-accent);
+    background: var(--jf-accent-light);
+    color: var(--jf-accent-dark);
+    font-weight: 600;
+}
+
+.jf-pill-input { display: none; }
+
+/* ── 2-column grid (interests & industry sector) ────────────── */
+
+.jf-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1.5rem;
+}
+
+/* ── "Other" text input ─────────────────────────────────────── */
+
+.jf-q-other-wrap { margin-top: 0.75rem; }
+
+.jf-q-other-input {
+    border-color: var(--jf-accent) !important;
+}
+
+/* ── Institution fields spacing ─────────────────────────────── */
+
+.jf-field--mt { margin-top: 1rem; }
+
+/* ── Validation Errors ──────────────────────────────────────── */
+
+.jf-field-error {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #d92d20;
+}
+
+.jf-input--error,
+.jf-select--error {
+    border-color: #d92d20 !important;
+    outline-color: #d92d20;
+}
+
+.jf-input--error:focus,
+.jf-select--error:focus {
+    box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.15);
+    border-color: #d92d20 !important;
+}
+
+.jf-save-error {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--jf-radius);
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    color: #d92d20;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .jf-overlay { padding: 0; align-items: flex-end; }
+
+    .jf-modal {
+        width: 100vw;
+        height: 96vh;
+        border-radius: var(--jf-radius) var(--jf-radius) 0 0;
+    }
+
+    .jf-modal-body { padding: 1.25rem; }
+
+    .jf-modal-header { padding: 0.875rem 1.25rem; }
+
+    .jf-step-indicator { padding: 0.75rem 1rem 0.5rem; }
+
+    .jf-sn-label { display: none; }
+
+    .jf-form-row { grid-template-columns: 1fr; }
+
+    .jf-option-grid { grid-template-columns: 1fr; }
+
+    .jf-modal-footer { padding: 0.875rem 1.25rem; }
+
+    .jf-btn { padding: 0.5625rem 1.25rem; font-size: 0.875rem; }
+}
+
+/* ── Membership Gate ──────────────────────────────────────── */
+
+.jf-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 2rem;
+    gap: 1rem;
+}
+
+.jf-gate-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--jf-text-dark, #1a1a2e);
+    margin: 0;
+}
+
+.jf-gate-body {
+    font-size: 1rem;
+    color: var(--jf-text-medium, #4a4a6a);
+    max-width: 440px;
+    margin: 0;
+}
+
+.jf-gate-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}

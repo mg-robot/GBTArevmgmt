@@ -1,0 +1,91 @@
+<template>
+  <div class="back-link-container">
+    <a href="/join" class="back-link">
+      <lightning-icon
+        icon-name="utility:chevronleft"
+        size="xx-small"
+      ></lightning-icon>
+      {labels.backLink}
+    </a>
+  </div>
+
+  <div class="summary-card">
+    <div class="card-header">
+      <div class="header-left">
+        <h2 class="card-title">{labels.title}</h2>
+      </div>
+      <template if:true={hasItems}>
+        <span class="item-count-badge">{itemCountLabel}</span>
+      </template>
+    </div>
+
+    <template if:true={isLoading}>
+      <div class="slds-p-around_medium slds-text-align_center">
+        <lightning-spinner
+          alternative-text="Loading"
+          size="small"
+        ></lightning-spinner>
+      </div>
+    </template>
+
+    <template if:false={isLoading}>
+      <template if:true={error}>
+        <div class="slds-p-around_medium">
+          <p class="error-text">{labels.loadError}</p>
+        </div>
+      </template>
+
+      <template if:true={hasItems}>
+        <div class="items-list">
+          <template for:each={lineItems} for:item="item">
+            <div key={item.Id} class="line-item">
+              <div class="item-name">{item.ProductName}</div>
+              <div class="item-price">{item.formattedPrice}</div>
+            </div>
+          </template>
+        </div>
+
+        <div class="pricing-section">
+          <div class="pricing-row">
+            <span class="pricing-label">{labels.subtotalLabel}</span>
+            <span class="pricing-value">{formattedSubtotal}</span>
+          </div>
+
+          <template if:true={hasTax}>
+            <div class="pricing-row">
+              <button class="tax-toggle" onclick={handleTaxToggle}>
+                {labels.taxLabel}
+                <lightning-icon
+                  icon-name={taxBreakdownIcon}
+                  size="xx-small"
+                ></lightning-icon>
+              </button>
+              <span class="pricing-value">{formattedTax}</span>
+            </div>
+            <template if:true={isTaxBreakdownOpen}>
+              <div class="tax-breakdown">
+                <div class="pricing-row breakdown-row">
+                  <span class="pricing-label">{labels.taxLabel}</span>
+                  <span class="pricing-value">{formattedTax}</span>
+                </div>
+              </div>
+            </template>
+          </template>
+
+          <div class="pricing-divider"></div>
+
+          <div class="pricing-row total-row">
+            <span class="pricing-label total-label">{labels.totalLabel}</span>
+            <span class="pricing-value total-value">{formattedTotal}</span>
+          </div>
+        </div>
+      </template>
+
+      <template if:false={hasItems}>
+        <div class="slds-p-around_medium slds-text-align_center">
+          <p class="empty-text">{labels.emptyMessage}</p>
+        </div>
+      </template>
+    </template>
+  </div>
+</template>

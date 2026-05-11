@@ -1,0 +1,62 @@
+<template>
+  <!-- Success Screen -->
+  <template if:true={isOrderComplete}>
+    <div class="success-screen">
+      <div class="success-icon-wrap">
+        <lightning-icon
+          icon-name="utility:check"
+          size="large"
+          variant="inverse"
+        ></lightning-icon>
+      </div>
+      <h2 class="success-heading">{successHeading}</h2>
+      <p class="success-message">{successMessage}</p>
+      <div class="order-number-badge">{orderNumber}</div>
+    </div>
+  </template>
+
+  <!-- Checkout Layout -->
+  <template if:false={isOrderComplete}>
+    <template if:true={isLoading}>
+      <div class="slds-p-around_medium slds-text-align_center">
+        <lightning-spinner
+          alternative-text="Loading"
+          size="medium"
+        ></lightning-spinner>
+      </div>
+    </template>
+
+    <template if:false={isLoading}>
+      <template if:true={_wiredError}>
+        <div class="slds-p-around_medium">
+          <p class="error-text">{labels.loadError}</p>
+        </div>
+      </template>
+      <template if:false={_wiredError}>
+        <div class="checkout-header">
+          <h1 class="page-title">{labels.pageTitle}</h1>
+        </div>
+
+        <div class="checkout-layout">
+          <div class="checkout-left">
+            <c-gbta-vat-exemption
+              order-id={resolvedOrderId}
+              onvatapplied={handleVatApplied}
+            ></c-gbta-vat-exemption>
+
+            <c-gbta-payment
+              order-id={resolvedOrderId}
+              onpaymentsuccess={handlePaymentSuccess}
+            ></c-gbta-payment>
+          </div>
+
+          <div class="checkout-right">
+            <c-gbta-order-summary
+              order-id={resolvedOrderId}
+            ></c-gbta-order-summary>
+          </div>
+        </div>
+      </template>
+    </template>
+  </template>
+</template>

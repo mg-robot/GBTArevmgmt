@@ -1,0 +1,205 @@
+/* ─── Host ───────────────────────────────────────────────────── */
+:host {
+    display: block;
+    font-family: var(--dxp-g-root-font-family, sans-serif);
+}
+
+/* ─── Footer Wrapper ─────────────────────────────────────────── */
+.gbta-footer {
+    background: #ffffff;
+    border-top: 1px solid #e8e8e8;
+    color: #333333;
+}
+
+/* ─── Help Button ────────────────────────────────────────────── */
+.gbta-footer__help {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1.5rem 1.5rem;
+}
+
+.gbta-footer__help-btn {
+    background: none;
+    border: 1.5px solid #333333;
+    border-radius: 2rem;
+    padding: 0.625rem 1.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #333333;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+    font-family: inherit;
+}
+
+.gbta-footer__help-btn:hover {
+    border-color: #f26430;
+    color: #f26430;
+}
+
+.gbta-footer__help-btn:focus {
+    outline: 2px solid #f26430;
+    outline-offset: 2px;
+}
+
+/* ─── Footer Grid ────────────────────────────────────────────── */
+.gbta-footer__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 1.5rem 1.5rem 2rem;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* ─── Navigation Columns ─────────────────────────────────────── */
+.gbta-footer__col-heading {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 0.875rem;
+    font-family: inherit;
+}
+
+.gbta-footer__col-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.gbta-footer__link {
+    text-decoration: none;
+    color: #555555;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    transition: color 0.15s ease;
+    font-family: inherit;
+}
+
+.gbta-footer__link:hover {
+    color: #f26430;
+}
+
+.gbta-footer__link:focus {
+    outline: 2px solid #f26430;
+    outline-offset: 1px;
+    border-radius: 2px;
+}
+
+/* ─── Right Section: Social + Language ──────────────────────── */
+.gbta-footer__right {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.gbta-footer__social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.gbta-footer__social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: #f0f0f0;
+    border-radius: 50%;
+    color: #333333;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.gbta-footer__social-link:hover {
+    background-color: #f26430;
+    color: #ffffff;
+}
+
+.gbta-footer__social-link:focus {
+    outline: 2px solid #f26430;
+    outline-offset: 2px;
+}
+
+.gbta-footer__social-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    display: block;
+}
+
+.gbta-footer__lang-btn {
+    align-self: flex-start;
+    background: none;
+    border: 1.5px solid #333333;
+    border-radius: 2rem;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: border-color 0.15s ease, color 0.15s ease;
+    font-family: inherit;
+}
+
+.gbta-footer__lang-btn:hover {
+    border-color: #f26430;
+    color: #f26430;
+}
+
+.gbta-footer__lang-btn:focus {
+    outline: 2px solid #f26430;
+    outline-offset: 2px;
+}
+
+/* ─── Bottom Bar ─────────────────────────────────────────────── */
+.gbta-footer__bottom {
+    border-top: 1px solid #e8e8e8;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.gbta-footer__brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.gbta-footer__brand-img {
+    height: 1.875rem;
+    width: auto;
+    display: block;
+}
+
+.gbta-footer__brand-text {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: 0.04em;
+    font-family: inherit;
+}
+
+.gbta-footer__copyright {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #888888;
+    font-family: inherit;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (min-width: 768px) {
+    .gbta-footer__grid {
+        grid-template-columns: repeat(4, 1fr);
+        align-items: start;
+    }
+}

@@ -1,0 +1,11 @@
+<template>
+    <lightning-button
+        label="Download Receipt"
+        icon-name="utility:download"
+        onclick={handleDownload}
+        disabled={isLoading}>
+    </lightning-button>
+    <template lwc:if={isLoading}>
+        <lightning-spinner alternative-text="Generating receipt..." size="small"></lightning-spinner>
+    </template>
+</template>
