@@ -19,14 +19,20 @@
     height: 100%;
     box-sizing: border-box;
     cursor: pointer;
-    transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
-.tile:hover,
-.tile:focus {
+.tile:hover {
     border-color: #b0b8c4;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.tile:focus {
     outline: none;
+}
+
+.tile:focus-visible {
+    outline: 2px solid var(--gbta-card-title);
+    outline-offset: 2px;
 }
 
 .tile-header {
@@ -35,11 +41,20 @@
     gap: 0.5rem;
 }
 
+.tile-icon-slot {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .tile-icon {
     width: 28px;
     height: 28px;
     object-fit: contain;
-    flex-shrink: 0;
+    display: block;
 }
 
 .tile-icon-fallback {

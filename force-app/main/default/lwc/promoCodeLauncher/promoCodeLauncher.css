@@ -8,6 +8,9 @@
     display: block;
     padding: 1rem 1.25rem 0.5rem 1.25rem;
     background: #ffffff;
+    /* Reserve scrollbar space so the viewport width doesn't oscillate when the async-loading
+       related list below makes the page taller. Prevents the 2-col → 1-col grid bounce. */
+    scrollbar-gutter: stable;
 }
 
 .section {
@@ -15,19 +18,14 @@
 }
 
 /*
- * 2×2 grid for the Promotions Home top section. Each cell is a tile. Falls back to a single
- * column under ~700px so each tile keeps a comfortable minimum width.
+ * 2×2 grid for the Promotions Home top section. Each cell is a tile. Uses auto-fit instead of a
+ * media-query breakpoint to dodge the scrollbar-flicker bouncing that the breakpoint-based layout
+ * caused.
  */
 .tiles-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1rem;
-}
-
-@media (max-width: 700px) {
-    .tiles-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* The Setup tile is rendered inline; the other three are LWCs that provide their own card chrome. */

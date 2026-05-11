@@ -1,12 +1,14 @@
 <template>
     <article class="tile" onclick={handleOpen} onkeydown={handleKeydown} tabindex="0" role="button" aria-label="Open High Usage list view">
         <header class="tile-header">
-            <template if:true={iconUrl}>
-                <img src={iconUrl} alt="" class="tile-icon" />
-            </template>
-            <template if:false={iconUrl}>
-                <lightning-icon icon-name="utility:trending" size="small" variant="inverse" class="tile-icon-fallback"></lightning-icon>
-            </template>
+            <div class="tile-icon-slot">
+                <template if:true={iconUrl}>
+                    <img src={iconUrl} alt="" class="tile-icon" onerror={handleIconError} />
+                </template>
+                <template if:false={iconUrl}>
+                    <lightning-icon icon-name="utility:trending" size="small" variant="inverse" class="tile-icon-fallback"></lightning-icon>
+                </template>
+            </div>
             <h2 class="tile-title">High Usage Promos</h2>
         </header>
 

@@ -1,12 +1,14 @@
 <template>
     <article class="tile" onclick={handleOpen} onkeydown={handleKeydown} tabindex="0" role="button" aria-label="Open Pending Activation list view">
         <header class="tile-header">
-            <template if:true={iconUrl}>
-                <img src={iconUrl} alt="" class="tile-icon" />
-            </template>
-            <template if:false={iconUrl}>
-                <lightning-icon icon-name="utility:edit" size="small" variant="inverse" class="tile-icon-fallback"></lightning-icon>
-            </template>
+            <div class="tile-icon-slot">
+                <template if:true={iconUrl}>
+                    <img src={iconUrl} alt="" class="tile-icon" onerror={handleIconError} />
+                </template>
+                <template if:false={iconUrl}>
+                    <lightning-icon icon-name="utility:edit" size="small" variant="inverse" class="tile-icon-fallback"></lightning-icon>
+                </template>
+            </div>
             <h2 class="tile-title">Promos Pending Activation</h2>
         </header>
 

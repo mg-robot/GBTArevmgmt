@@ -15,6 +15,10 @@ export default class PromoCodePendingActivation extends NavigationMixin(Lightnin
         this.iconUrl = data || null;
     }
 
+    handleIconError() {
+        this.iconUrl = null;
+    }
+
     handleOpen() {
         this[NavigationMixin.Navigate]({
             type: 'standard__objectPage',

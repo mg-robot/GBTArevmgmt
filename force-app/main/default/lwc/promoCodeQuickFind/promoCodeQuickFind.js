@@ -38,6 +38,10 @@ export default class PromoCodeQuickFind extends NavigationMixin(LightningElement
         return this.isLoading || (!this.searchTerm && !this.hasSearched);
     }
 
+    handleIconError() {
+        this.iconUrl = null;
+    }
+
     handleInput(event) {
         this.searchTerm = event.target.value;
     }

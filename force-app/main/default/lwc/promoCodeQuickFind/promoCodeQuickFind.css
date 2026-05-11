@@ -29,11 +29,20 @@
     gap: 0.5rem;
 }
 
+.tile-icon-slot {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .tile-icon {
     width: 28px;
     height: 28px;
     object-fit: contain;
-    flex-shrink: 0;
+    display: block;
 }
 
 .tile-icon-fallback {
