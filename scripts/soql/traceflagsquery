@@ -1,0 +1,17 @@
+/*
+sf data query --use-tooling-api \
+  --query "SELECT Id, StartTime, Operation, Status, DurationMilliseconds, LogLength, Request, Application FROM ApexLog WHERE LogUserId = '005Nq00000drk4fIAA' AND StartTime = TODAY ORDER BY StartTime DESC LIMIT 20"
+*/
+Then fetch the log body for the relevant ID:
+
+
+sf apex get log -i <LOG_ID> --target-org gbtaStaging > place-order-debug.log
+AND Status != 'Success'
+
+// Useful filters — swap into the WHERE clause as needed:
+
+/* Goal	Add to WHERE
+Only failed transactions	AND Status != 'Success'
+Just the last hour	AND StartTime = LAST_N_HOURS:1
+Only place order callouts	AND Operation LIKE '%PlaceOrder%'
+Skip tiny logs (heartbeats/visits)	AND LogLength > 50000
