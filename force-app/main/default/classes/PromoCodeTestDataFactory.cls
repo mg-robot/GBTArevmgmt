@@ -299,6 +299,7 @@ public class PromoCodeTestDataFactory {
             Status__c = 'Active',
             Effective_Start_Date__c = Datetime.now().addMinutes(-5),
             Effective_End_Date__c = Datetime.now().addDays(30),
+            Application_Level__c = 'Per Order',
             Product_Scope_Type__c = 'All Items',
             Combinable__c = true,
             Combination_Group__c = 'General',

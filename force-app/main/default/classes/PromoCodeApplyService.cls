@@ -294,7 +294,8 @@ public with sharing class PromoCodeApplyService {
                    Effective_Start_Date__c, Effective_End_Date__c,
                    Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
                    Member_Type_Scope__c, Region_Scope__c, Account__c,
-                   Product_Scope_Type__c, Specific_Products__c,
+                   Product_Scope_Type__c, Product_Family_Scope__c, Specific_Products__c,
+                   Application_Level__c,
                    Combinable__c, Combination_Group__c, Discount_Type__c, Discount_Value__c
             FROM Promo_Code__c
             WHERE Id IN :parentIds
@@ -428,6 +429,8 @@ public with sharing class PromoCodeApplyService {
                     Applied_Discount_Amount__c = a.adjustmentAmount,
                     Discount_Type_Snapshot__c = a.discountTypeSnapshot,
                     Discount_Value_Snapshot__c = a.discountValueSnapshot,
+                    Application_Level_Snapshot__c = a.applicationLevelSnapshot,
+                    Product_Scope_Type_Snapshot__c = a.productScopeTypeSnapshot,
                     Application_Group_Id__c = applicationGroupId,
                     Applied_Date__c = appliedDate,
                     Status__c = 'Pending'
