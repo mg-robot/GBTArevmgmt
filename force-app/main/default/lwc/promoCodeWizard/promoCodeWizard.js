@@ -1,6 +1,7 @@
 import LightningModal from 'lightning/modal';
 import createBulk from '@salesforce/apex/PromoCodeService.createBulk';
 import getActiveCurrencies from '@salesforce/apex/PromoCodeService.getActiveCurrencies';
+import getDocumentImageUrl from '@salesforce/apex/PromoDocumentIconHelper.getDocumentImageUrl';
 
 import LBL_ModalTitle from '@salesforce/label/c.PromoCodeWizard_Modal_Title';
 import LBL_BtnCancel from '@salesforce/label/c.PromoCodeWizard_Btn_Cancel';
@@ -29,6 +30,7 @@ export default class PromoCodeWizard extends LightningModal {
     isSubmitting = false;
     errorMessage = '';
     availableCurrencies = [];
+    iconUrl;
 
     // NOTE: must NOT be named `label` — LightningModal already exposes a `label` property
     // (set via .open({ label: ... })) which would shadow our labels object.
@@ -81,7 +83,15 @@ export default class PromoCodeWizard extends LightningModal {
                 }
             })
             .catch(() => {});
+        // Same Document-sourced icon used by the Promo_Code__c tab style.
+        getDocumentImageUrl({ documentName: 'promo_svg' })
+            .then((url) => { this.iconUrl = url || null; })
+            .catch(() => { this.iconUrl = null; });
     }
+
+    handleIconError() { this.iconUrl = null; }
+
+    get hasIconUrl() { return !!this.iconUrl; }
 
     get isStep1() { return this.currentStep === 1; }
     get isStep2() { return this.currentStep === 2; }

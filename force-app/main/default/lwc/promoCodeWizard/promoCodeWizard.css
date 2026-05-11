@@ -175,3 +175,11 @@
     margin: 0.5rem 0;
     font-size: 0.875rem;
 }
+
+.pcw-header-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+}

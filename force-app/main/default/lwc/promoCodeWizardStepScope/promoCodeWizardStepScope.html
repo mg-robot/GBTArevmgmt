@@ -23,19 +23,11 @@
         </div>
     </div>
 
-    <!-- Section 2: Region & Application Level -->
+    <!-- Section 2: Application Level (left) | Region Scope (right) -->
     <div class="slds-m-bottom_medium">
         <h3 class="section-heading">{label.regionAppLevelHeading}</h3>
         <p class="helper-text">{label.regionAppLevelHelper}</p>
         <div class="slds-grid slds-gutters slds-wrap">
-            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-                <lightning-checkbox-group
-                    label={label.regionScope}
-                    options={regionOptions}
-                    value={wizardData.regionScope}
-                    onchange={handleRegionScopeChange}>
-                </lightning-checkbox-group>
-            </div>
             <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
                 <lightning-radio-group
                     label={label.applicationLevelLabel}
@@ -45,6 +37,14 @@
                     required
                     onchange={handleApplicationLevelChange}>
                 </lightning-radio-group>
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+                <lightning-checkbox-group
+                    label={label.regionScope}
+                    options={regionOptions}
+                    value={wizardData.regionScope}
+                    onchange={handleRegionScopeChange}>
+                </lightning-checkbox-group>
             </div>
         </div>
     </div>

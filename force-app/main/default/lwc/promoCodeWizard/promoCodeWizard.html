@@ -1,5 +1,23 @@
 <template>
-    <lightning-modal-header label={labels.modalTitle}></lightning-modal-header>
+    <lightning-modal-header>
+        <div class="slds-grid slds-grid_vertical-align-center">
+            <template if:true={hasIconUrl}>
+                <img
+                    src={iconUrl}
+                    alt=""
+                    class="pcw-header-icon slds-m-right_x-small"
+                    onerror={handleIconError}>
+            </template>
+            <template if:false={hasIconUrl}>
+                <lightning-icon
+                    icon-name="standard:promotions"
+                    size="small"
+                    class="slds-m-right_x-small">
+                </lightning-icon>
+            </template>
+            <span class="slds-text-heading_medium">{labels.modalTitle}</span>
+        </div>
+    </lightning-modal-header>
 
     <lightning-modal-body>
         <div class="progress-wrap">

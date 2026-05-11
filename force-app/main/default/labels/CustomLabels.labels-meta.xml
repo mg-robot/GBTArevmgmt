@@ -6,7 +6,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Title of the Promo Code creation modal</shortDescription>
-        <value>New Promo Code</value>
+        <value>Promo Code Setup</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_Btn_Cancel</fullName>

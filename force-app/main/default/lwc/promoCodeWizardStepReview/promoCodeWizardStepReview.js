@@ -50,7 +50,7 @@ export default class PromoCodeWizardStepReview extends LightningElement {
         discType: LBL_DiscType,
         discValue: LBL_DiscValue,
         effective: LBL_Effective,
-        memberTypes: LBL_MemberTypes,
+        applicationLevel: 'Application Level',
         regions: LBL_Regions,
         products: LBL_Products,
         account: LBL_Account,
@@ -109,20 +109,28 @@ export default class PromoCodeWizardStepReview extends LightningElement {
         const e = this.wizardData?.effectiveEnd || LBL_NoEnd;
         return `${s} → ${e}`;
     }
-    get memberTypeDisplay() {
-        const arr = this.wizardData?.memberTypeScope || [];
-        return arr.length ? arr.join(', ') : LBL_All;
-    }
     get regionDisplay() {
         const arr = this.wizardData?.regionScope || [];
         return arr.length ? arr.join(', ') : LBL_All;
     }
+    get applicationLevelDisplay() {
+        return this.wizardData?.applicationLevel || '—';
+    }
     get productScopeDisplay() {
-        const t = this.wizardData?.productScopeType;
-        const v = this.wizardData?.specificProducts;
+        const d = this.wizardData || {};
+        const t = d.productScopeType;
         if (t === 'All Items') return LBL_AllItems;
-        if (t === 'Product Family') return `${LBL_ProductFamilyPrefix} ${v || LBL_None}`;
-        if (t === 'Specific Products') return `${LBL_SpecificPrefix} ${v || LBL_None}`;
+        if (t === 'Product Family') {
+            const families = d.productFamilyScope || [];
+            return `${LBL_ProductFamilyPrefix} ${families.length ? families.join(', ') : LBL_None}`;
+        }
+        if (t === 'Specific Membership Types') {
+            const types = d.memberTypeScope || [];
+            return `Specific Membership Types: ${types.length ? types.join(', ') : LBL_None}`;
+        }
+        if (t === 'Specific Products') {
+            return `${LBL_SpecificPrefix} ${d.specificProducts || LBL_None}`;
+        }
         return '—';
     }
     get accountDisplay() { return this.wizardData?.accountId || LBL_Any; }
