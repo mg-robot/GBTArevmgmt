@@ -26,20 +26,21 @@
                     </lightning-combobox>
                 </div>
                 <div class="slds-col slds-size_5-of-12">
-                    <lightning-input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        label="Amount"
-                        variant="label-hidden"
-                        placeholder="0.00"
-                        value={row.amount}
-                        data-idx={idx}
-                        onchange={handleAmountChange}
-                        oninput={handleAmountChange}
-                        onblur={handleAmountChange}
-                        required>
-                    </lightning-input>
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                class="slds-input"
+                                placeholder="0.00"
+                                value={row.amount}
+                                data-idx={idx}
+                                oninput={handleAmountChange}
+                                onchange={handleAmountChange}
+                                required />
+                        </div>
+                    </div>
                 </div>
                 <div class="slds-col slds-size_2-of-12">
                     <lightning-button-icon
