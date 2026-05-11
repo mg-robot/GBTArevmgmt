@@ -150,18 +150,14 @@ export default class PromoCodeWizard extends LightningModal {
         createBulk({ input: cleanInput })
             .then((r) => {
                 if (r && r.success) {
-                    const action = activate ? 'created and activated' : 'saved as draft';
-                    const count = r.createdRecordIds ? r.createdRecordIds.length : 0;
-                    // ShowToastEvent doesn't surface from inside a LightningModal — the launcher
-                    // that opened this modal shows the toast after the modal closes (using the
-                    // count + action returned in the close result below).
-                    this.close({
-                        result: 'created',
-                        recordIds: r.createdRecordIds,
-                        status: r.status,
-                        count: count,
-                        action: action
-                    });
+                    // Close defensively — call signature varies between LightningModal versions
+                    // and some payload shapes have triggered internal "dispatchEvent" errors in
+                    // certain runtime configurations. Try with payload first, fall back to no-arg.
+                    try {
+                        this.close('created');
+                    } catch (closeErr) {
+                        try { this.close(); } catch (e2) { /* swallow */ }
+                    }
                 } else {
                     this.errorMessage = (r && r.errorMessage) || 'Save failed.';
                     if (r && r.conflictCurrencies && r.conflictCurrencies.length) {

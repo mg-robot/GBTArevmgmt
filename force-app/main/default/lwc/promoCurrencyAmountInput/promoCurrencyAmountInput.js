@@ -16,6 +16,9 @@ export default class PromoCurrencyAmountInput extends LightningElement {
                 options: []
             }));
             this.recalcOptions();
+        } else {
+            // Save the user a click — start them with one empty row ready to fill.
+            this.addRow();
         }
     }
 
