@@ -439,10 +439,11 @@ public with sharing class PromoCodeApplyService {
             }
         } catch (DmlException e) {
             Database.rollback(sp);
-            throw new AuraHandledException(
-                'Failed to reserve promo code usage: ' +
-                (e.getNumDml() > 0 ? e.getDmlMessage(0) : e.getMessage())
-            );
+            String msg = 'Failed to reserve promo code usage: ' +
+                (e.getNumDml() > 0 ? e.getDmlMessage(0) : e.getMessage());
+            AuraHandledException ex = new AuraHandledException(msg);
+            ex.setMessage(msg);
+            throw ex;
         }
     }
 

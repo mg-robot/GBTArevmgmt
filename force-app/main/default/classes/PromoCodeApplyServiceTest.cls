@@ -369,25 +369,33 @@ private class PromoCodeApplyServiceTest {
         Test.stopTest();
     }
 
+    /**
+     * Create a non-admin user. Wrapped in System.runAs(currentUser) to avoid the
+     * MIXED_DML_OPERATION error that fires when User + PermissionSetAssignment DML is mixed with
+     * data DML (Account, Order, etc.) earlier in the test.
+     */
     private static User createNonAdminUser() {
-        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
-        User u = new User(
-            Username = 'pcastest_' + System.currentTimeMillis() + '@example.invalid.test',
-            Email = 'pcastest@example.invalid',
-            FirstName = 'Test',
-            LastName = 'Runner',
-            Alias = 'pcas',
-            TimeZoneSidKey = 'America/Los_Angeles',
-            LocaleSidKey = 'en_US',
-            EmailEncodingKey = 'UTF-8',
-            LanguageLocaleKey = 'en_US',
-            ProfileId = p.Id
-        );
-        insert u;
-        List<PermissionSet> psets = [SELECT Id FROM PermissionSet WHERE Name = 'Promo_Code_Manager' LIMIT 1];
-        if (!psets.isEmpty()) {
-            insert new PermissionSetAssignment(AssigneeId = u.Id, PermissionSetId = psets[0].Id);
+        User runner;
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+            runner = new User(
+                Username = 'pcastest_' + System.currentTimeMillis() + '@example.invalid.test',
+                Email = 'pcastest@example.invalid',
+                FirstName = 'Test',
+                LastName = 'Runner',
+                Alias = 'pcas',
+                TimeZoneSidKey = 'America/Los_Angeles',
+                LocaleSidKey = 'en_US',
+                EmailEncodingKey = 'UTF-8',
+                LanguageLocaleKey = 'en_US',
+                ProfileId = p.Id
+            );
+            insert runner;
+            List<PermissionSet> psets = [SELECT Id FROM PermissionSet WHERE Name = 'Promo_Code_Manager' LIMIT 1];
+            if (!psets.isEmpty()) {
+                insert new PermissionSetAssignment(AssigneeId = runner.Id, PermissionSetId = psets[0].Id);
+            }
         }
-        return u;
+        return runner;
     }
 }
