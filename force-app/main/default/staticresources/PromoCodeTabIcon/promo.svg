@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  GBTA Promo Code tab icon (source). The exported PNG (promo.png) is what gets uploaded as the
+  Document record referenced by the custom tab style. See docs/promo-code/creation-wizard.md §8
+  for the post-deploy Document setup steps.
+
+  Color: #f28c15 (GBTA brand orange). Adjust hex below + re-export PNG if the brand palette shifts.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60" role="img" aria-label="Promo Code">
+  <rect width="60" height="60" rx="12" ry="12" fill="#f28c15"/>
+  <g fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Tag body -->
+    <path d="M 12 28 L 28 12 L 48 12 L 48 32 L 32 48 L 12 28 Z"/>
+    <!-- Tag hole -->
+    <circle cx="39" cy="21" r="3" fill="#ffffff"/>
+  </g>
+</svg>

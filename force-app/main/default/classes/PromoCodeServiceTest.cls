@@ -260,7 +260,7 @@ private class PromoCodeServiceTest {
         System.runAs(u) {
             try {
                 update rec;
-                System.assert(false, 'Expected VR_PromoCode_Lock_After_Create to block the edit');
+                System.assert(false, 'Expected VR_PromoCode_Lock_Core_Fields_After_Create to block the edit');
             } catch (DmlException e) {
                 System.assert(
                     e.getMessage().contains('locked after the promo code is created'),

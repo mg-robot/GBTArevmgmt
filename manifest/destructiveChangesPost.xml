@@ -5,5 +5,9 @@
         <members>Promo_Code__c.Sponsor_Account__c</members>
         <name>CustomField</name>
     </types>
+    <types>
+        <members>Promo_Code__c.VR_PromoCode_Lock_After_Create</members>
+        <name>ValidationRule</name>
+    </types>
     <version>65.0</version>
 </Package>
