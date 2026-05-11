@@ -27,163 +27,220 @@
  * Procedure Plan is wired.
  */
 global with sharing class PromoCodePricingPreHook implements RevSignaling.SignalingApexProcessor {
+  global RevSignaling.TransactionResponse execute(
+    RevSignaling.TransactionRequest request
+  ) {
+    String contextId = request == null ? null : request.ctxInstanceId;
+    if (String.isBlank(contextId)) {
+      return buildResponse(
+        RevSignaling.TransactionStatus.FAILED,
+        'PromoCodePricingPreHook: missing context instance Id.'
+      );
+    }
 
-    global RevSignaling.TransactionResponse execute(RevSignaling.TransactionRequest request) {
-        String contextId = request == null ? null : request.ctxInstanceId;
-        if (String.isBlank(contextId)) {
-            return buildResponse(RevSignaling.TransactionStatus.FAILED,
-                'PromoCodePricingPreHook: missing context instance Id.');
+    Context.IndustriesContext industriesContext = new Context.IndustriesContext();
+    try {
+      List<Object> itemDataList = queryTransactionItems(
+        industriesContext,
+        contextId
+      );
+      Map<Id, List<Object>> orderItemToDataPath = extractOrderItemPaths(
+        itemDataList
+      );
+      Set<Id> orderItemIds = orderItemToDataPath.keySet();
+
+      if (orderItemIds.isEmpty()) {
+        return buildResponse(
+          RevSignaling.TransactionStatus.SUCCESS,
+          'PromoCodePricingPreHook: no OrderItems in pricing context.'
+        );
+      }
+
+      Map<Id, Decimal> adjustmentByOrderItem = aggregateAdjustments(
+        orderItemIds
+      );
+      List<Map<String, Object>> nodeUpdates = buildNodeUpdates(
+        orderItemIds,
+        orderItemToDataPath,
+        adjustmentByOrderItem
+      );
+      submitContextUpdates(industriesContext, contextId, nodeUpdates);
+
+      return buildResponse(
+        RevSignaling.TransactionStatus.SUCCESS,
+        summarizeResult(adjustmentByOrderItem.size(), nodeUpdates.size())
+      );
+    } catch (Exception e) {
+      return buildResponse(
+        RevSignaling.TransactionStatus.FAILED,
+        'PromoCodePricingPreHook error: ' + e.getMessage()
+      );
+    }
+  }
+
+  private static List<Object> queryTransactionItems(
+    Context.IndustriesContext industriesContext,
+    String contextId
+  ) {
+    Map<String, Object> queryResult = (Map<String, Object>) industriesContext.queryTags(
+        new Map<String, Object>{
+          'contextId' => contextId,
+          'tags' => new List<String>{ 'SalesTransactionItem' }
         }
+      )
+      .get('queryResult');
+    return queryResult == null
+      ? null
+      : (List<Object>) queryResult.get('SalesTransactionItem');
+  }
 
-        Context.IndustriesContext industriesContext = new Context.IndustriesContext();
-        try {
-            List<Object> itemDataList = queryTransactionItems(industriesContext, contextId);
-            Map<Id, List<Object>> orderItemToDataPath = extractOrderItemPaths(itemDataList);
-            Set<Id> orderItemIds = orderItemToDataPath.keySet();
+  private static void submitContextUpdates(
+    Context.IndustriesContext industriesContext,
+    String contextId,
+    List<Map<String, Object>> nodeUpdates
+  ) {
+    if (nodeUpdates == null || nodeUpdates.isEmpty())
+      return;
+    industriesContext.updateContextAttributes(
+      new Map<String, Object>{
+        'contextId' => contextId,
+        'nodePathAndAttributes' => nodeUpdates
+      }
+    );
+  }
 
-            if (orderItemIds.isEmpty()) {
-                return buildResponse(RevSignaling.TransactionStatus.SUCCESS,
-                    'PromoCodePricingPreHook: no OrderItems in pricing context.');
+  @TestVisible
+  private static String summarizeResult(
+    Integer adjustmentCount,
+    Integer totalUpdates
+  ) {
+    Integer applied = adjustmentCount == null ? 0 : adjustmentCount;
+    Integer reset = (totalUpdates == null ? 0 : totalUpdates) - applied;
+    return 'PromoCodePricingPreHook: ' +
+      applied +
+      ' adjustment(s) applied, ' +
+      reset +
+      ' OrderItem(s) reset.';
+  }
+
+  @TestVisible
+  private static RevSignaling.TransactionResponse buildResponse(
+    RevSignaling.TransactionStatus status,
+    String message
+  ) {
+    RevSignaling.TransactionResponse response = new RevSignaling.TransactionResponse();
+    response.status = status;
+    response.message = message;
+    return response;
+  }
+
+  // -----------------------------------------------------------------------
+  // Extracted helpers — pure compute, no platform-class dependencies, @TestVisible
+  // -----------------------------------------------------------------------
+
+  /**
+   * Walks the queried SalesTransactionItem nodes and returns a map of OrderItem Id → its
+   * dataPath in the context tree. Skips nodes without a LineItem tag, a null OrderItem Id, or
+   * a LineItem dmlStatus of 'DELETED' (lines removed during the same pricing pass still appear
+   * in queryTags output but should not receive context updates).
+   */
+  @TestVisible
+  private static Map<Id, List<Object>> extractOrderItemPaths(
+    List<Object> itemDataList
+  ) {
+    Map<Id, List<Object>> result = new Map<Id, List<Object>>();
+    if (itemDataList == null)
+      return result;
+    for (Object itemObj : itemDataList) {
+      Map<String, Object> itemNode = (Map<String, Object>) itemObj;
+      Map<String, Object> tags = (Map<String, Object>) itemNode.get('tagValue');
+      if (tags == null || !tags.containsKey('LineItem'))
+        continue;
+      Object lineItemEntry = tags.get('LineItem');
+      if (!(lineItemEntry instanceof Map<String, Object>))
+        continue;
+      Map<String, Object> lineItemTag = (Map<String, Object>) lineItemEntry;
+      Object dmlStatus = lineItemTag.get('dmlStatus');
+      if (
+        dmlStatus != null &&
+        String.valueOf(dmlStatus).equalsIgnoreCase('DELETED')
+      )
+        continue;
+      Object oiIdObj = lineItemTag.get('tagValue');
+      if (oiIdObj == null)
+        continue;
+      Id orderItemId = (Id) oiIdObj;
+      result.put(orderItemId, (List<Object>) itemNode.get('dataPath'));
+    }
+    return result;
+  }
+
+  /**
+   * Sums Applied_Discount_Amount__c per OrderItem for all Pending Promo_Code_Item__c records
+   * tied to the given OrderItem Ids. OrderItems with no Pending PCIs are absent from the
+   * returned map (callers MUST treat absence as 0 for the reset behavior).
+   */
+  @TestVisible
+  private static Map<Id, Decimal> aggregateAdjustments(Set<Id> orderItemIds) {
+    Map<Id, Decimal> result = new Map<Id, Decimal>();
+    if (orderItemIds == null || orderItemIds.isEmpty())
+      return result;
+    for (Promo_Code_Item__c pci : [
+      SELECT Order_Item__c, Applied_Discount_Amount__c
+      FROM Promo_Code_Item__c
+      WHERE Order_Item__c IN :orderItemIds AND Status__c = 'Pending'
+    ]) {
+      Decimal current = result.get(pci.Order_Item__c);
+      Decimal amount = pci.Applied_Discount_Amount__c == null
+        ? 0
+        : pci.Applied_Discount_Amount__c;
+      result.put(pci.Order_Item__c, (current == null ? 0 : current) + amount);
+    }
+    return result;
+  }
+
+  /**
+   * Builds the node-update payloads for `updateContextAttributes`. One entry per OrderItem in
+   * orderItemIds — OrderItems without an entry in adjustmentByOrderItem get value=0, which is
+   * the reset behavior that prevents ghost-applies of removed promo codes.
+   */
+  @TestVisible
+  private static List<Map<String, Object>> buildNodeUpdates(
+    Set<Id> orderItemIds,
+    Map<Id, List<Object>> orderItemToDataPath,
+    Map<Id, Decimal> adjustmentByOrderItem
+  ) {
+    List<Map<String, Object>> nodeUpdates = new List<Map<String, Object>>();
+    if (orderItemIds == null)
+      return nodeUpdates;
+    for (Id oiId : orderItemIds) {
+      List<Object> fullPath = orderItemToDataPath == null
+        ? null
+        : orderItemToDataPath.get(oiId);
+      if (fullPath == null || fullPath.size() < 3)
+        continue;
+      List<Object> nodePath = new List<Object>{
+        fullPath.get(1),
+        fullPath.get(2)
+      };
+
+      Decimal adjustment = adjustmentByOrderItem != null &&
+        adjustmentByOrderItem.containsKey(oiId)
+        ? adjustmentByOrderItem.get(oiId)
+        : 0;
+
+      nodeUpdates.add(
+        new Map<String, Object>{
+          'nodePath' => new Map<String, Object>{ 'dataPath' => nodePath },
+          'attributes' => new List<Object>{
+            new Map<String, Object>{
+              'attributeName' => 'Promotion_Value__c',
+              'attributeValue' => String.valueOf(adjustment)
             }
-
-            Map<Id, Decimal> adjustmentByOrderItem = aggregateAdjustments(orderItemIds);
-            List<Map<String, Object>> nodeUpdates =
-                buildNodeUpdates(orderItemIds, orderItemToDataPath, adjustmentByOrderItem);
-            submitContextUpdates(industriesContext, contextId, nodeUpdates);
-
-            return buildResponse(RevSignaling.TransactionStatus.SUCCESS,
-                summarizeResult(adjustmentByOrderItem.size(), nodeUpdates.size()));
-        } catch (Exception e) {
-            return buildResponse(RevSignaling.TransactionStatus.FAILED,
-                'PromoCodePricingPreHook error: ' + e.getMessage());
+          }
         }
+      );
     }
-
-    private static List<Object> queryTransactionItems(
-        Context.IndustriesContext industriesContext, String contextId
-    ) {
-        Map<String, Object> queryResult = (Map<String, Object>)
-            industriesContext.queryTags(new Map<String, Object>{
-                'contextId' => contextId,
-                'tags' => new List<String>{ 'SalesTransactionItem' }
-            }).get('queryResult');
-        return queryResult == null ? null : (List<Object>) queryResult.get('SalesTransactionItem');
-    }
-
-    private static void submitContextUpdates(
-        Context.IndustriesContext industriesContext, String contextId,
-        List<Map<String, Object>> nodeUpdates
-    ) {
-        if (nodeUpdates == null || nodeUpdates.isEmpty()) return;
-        industriesContext.updateContextAttributes(new Map<String, Object>{
-            'contextId' => contextId,
-            'nodePathAndAttributes' => nodeUpdates
-        });
-    }
-
-    @TestVisible
-    private static String summarizeResult(Integer adjustmentCount, Integer totalUpdates) {
-        Integer applied = adjustmentCount == null ? 0 : adjustmentCount;
-        Integer reset = (totalUpdates == null ? 0 : totalUpdates) - applied;
-        return 'PromoCodePricingPreHook: ' + applied + ' adjustment(s) applied, '
-            + reset + ' OrderItem(s) reset.';
-    }
-
-    @TestVisible
-    private static RevSignaling.TransactionResponse buildResponse(
-        RevSignaling.TransactionStatus status, String message
-    ) {
-        RevSignaling.TransactionResponse response = new RevSignaling.TransactionResponse();
-        response.status = status;
-        response.message = message;
-        return response;
-    }
-
-    // -----------------------------------------------------------------------
-    // Extracted helpers — pure compute, no platform-class dependencies, @TestVisible
-    // -----------------------------------------------------------------------
-
-    /**
-     * Walks the queried SalesTransactionItem nodes and returns a map of OrderItem Id → its
-     * dataPath in the context tree. Skips nodes without a LineItem tag or a null OrderItem Id.
-     */
-    @TestVisible
-    private static Map<Id, List<Object>> extractOrderItemPaths(List<Object> itemDataList) {
-        Map<Id, List<Object>> result = new Map<Id, List<Object>>();
-        if (itemDataList == null) return result;
-        for (Object itemObj : itemDataList) {
-            Map<String, Object> itemNode = (Map<String, Object>) itemObj;
-            Map<String, Object> tags = (Map<String, Object>) itemNode.get('tagValue');
-            if (tags == null || !tags.containsKey('LineItem')) continue;
-            Object lineItemEntry = tags.get('LineItem');
-            if (!(lineItemEntry instanceof Map<String, Object>)) continue;
-            Object oiIdObj = ((Map<String, Object>) lineItemEntry).get('tagValue');
-            if (oiIdObj == null) continue;
-            Id orderItemId = (Id) oiIdObj;
-            result.put(orderItemId, (List<Object>) itemNode.get('dataPath'));
-        }
-        return result;
-    }
-
-    /**
-     * Sums Applied_Discount_Amount__c per OrderItem for all Pending Promo_Code_Item__c records
-     * tied to the given OrderItem Ids. OrderItems with no Pending PCIs are absent from the
-     * returned map (callers MUST treat absence as 0 for the reset behavior).
-     */
-    @TestVisible
-    private static Map<Id, Decimal> aggregateAdjustments(Set<Id> orderItemIds) {
-        Map<Id, Decimal> result = new Map<Id, Decimal>();
-        if (orderItemIds == null || orderItemIds.isEmpty()) return result;
-        for (Promo_Code_Item__c pci : [
-            SELECT Order_Item__c, Applied_Discount_Amount__c
-            FROM Promo_Code_Item__c
-            WHERE Order_Item__c IN :orderItemIds
-              AND Status__c = 'Pending'
-        ]) {
-            Decimal current = result.get(pci.Order_Item__c);
-            Decimal amount = pci.Applied_Discount_Amount__c == null
-                ? 0
-                : pci.Applied_Discount_Amount__c;
-            result.put(pci.Order_Item__c, (current == null ? 0 : current) + amount);
-        }
-        return result;
-    }
-
-    /**
-     * Builds the node-update payloads for `updateContextAttributes`. One entry per OrderItem in
-     * orderItemIds — OrderItems without an entry in adjustmentByOrderItem get value=0, which is
-     * the reset behavior that prevents ghost-applies of removed promo codes.
-     */
-    @TestVisible
-    private static List<Map<String, Object>> buildNodeUpdates(
-        Set<Id> orderItemIds,
-        Map<Id, List<Object>> orderItemToDataPath,
-        Map<Id, Decimal> adjustmentByOrderItem
-    ) {
-        List<Map<String, Object>> nodeUpdates = new List<Map<String, Object>>();
-        if (orderItemIds == null) return nodeUpdates;
-        for (Id oiId : orderItemIds) {
-            List<Object> fullPath = orderItemToDataPath == null
-                ? null
-                : orderItemToDataPath.get(oiId);
-            if (fullPath == null || fullPath.size() < 3) continue;
-            List<Object> nodePath = new List<Object>{ fullPath.get(1), fullPath.get(2) };
-
-            Decimal adjustment = adjustmentByOrderItem != null
-                    && adjustmentByOrderItem.containsKey(oiId)
-                ? adjustmentByOrderItem.get(oiId)
-                : 0;
-
-            nodeUpdates.add(new Map<String, Object>{
-                'nodePath' => new Map<String, Object>{ 'dataPath' => nodePath },
-                'attributes' => new List<Object>{
-                    new Map<String, Object>{
-                        'attributeName' => 'Promotion_Value__c',
-                        'attributeValue' => String.valueOf(adjustment)
-                    }
-                }
-            });
-        }
-        return nodeUpdates;
-    }
+    return nodeUpdates;
+  }
 }
