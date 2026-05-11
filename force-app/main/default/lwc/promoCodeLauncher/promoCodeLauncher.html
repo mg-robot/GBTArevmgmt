@@ -1,6 +1,7 @@
 <template>
     <div class="section">
-        <div class="cards-grid">
+        <div class="tiles-grid">
+            <!-- Top-left: Promo Code Setup -->
             <a class="setup-card" onclick={handleOpen} role="button" tabindex="0" onkeydown={handleKeydown}>
                 <div class="card-icon">
                     <lightning-icon icon-name="standard:pricing_workspace" size="medium"></lightning-icon>
@@ -11,16 +12,14 @@
                 </div>
             </a>
 
-            <!-- Placeholder slot for a second tile (e.g., Promo Code Usage). Filled in a later iteration. -->
-            <div class="setup-card setup-card_placeholder" aria-hidden="true">
-                <div class="card-icon">
-                    <lightning-icon icon-name="standard:dashboard_ea" size="medium"></lightning-icon>
-                </div>
-                <div class="card-body">
-                    <div class="card-title">Promo Code Usage</div>
-                    <div class="card-description">Coming soon &mdash; reporting on active redemptions and usage trends.</div>
-                </div>
-            </div>
+            <!-- Top-right: Quick Find -->
+            <c-promo-code-quick-find></c-promo-code-quick-find>
+
+            <!-- Bottom-left: Pending Activation (report link) -->
+            <c-promo-code-pending-activation></c-promo-code-pending-activation>
+
+            <!-- Bottom-right: High Usage (report link) -->
+            <c-promo-code-high-usage-watch></c-promo-code-high-usage-watch>
         </div>
     </div>
 </template>

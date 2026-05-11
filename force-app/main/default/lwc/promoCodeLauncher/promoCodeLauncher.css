@@ -15,21 +15,22 @@
 }
 
 /*
- * Two-column grid so the launch tile and its sibling placeholder sit side-by-side. Falls back to
- * a single column under ~700px so each card keeps a comfortable minimum width.
+ * 2×2 grid for the Promotions Home top section. Each cell is a tile. Falls back to a single
+ * column under ~700px so each tile keeps a comfortable minimum width.
  */
-.cards-grid {
+.tiles-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(320px, 1fr));
     gap: 1rem;
 }
 
 @media (max-width: 700px) {
-    .cards-grid {
+    .tiles-grid {
         grid-template-columns: 1fr;
     }
 }
 
+/* The Setup tile is rendered inline; the other three are LWCs that provide their own card chrome. */
 .setup-card {
     display: flex;
     align-items: flex-start;
@@ -41,6 +42,8 @@
     cursor: pointer;
     text-decoration: none;
     transition: border-color 120ms ease, box-shadow 120ms ease;
+    box-sizing: border-box;
+    height: 100%;
 }
 
 .setup-card:hover,
@@ -48,17 +51,6 @@
     border-color: var(--gbta-card-border-hover);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     outline: none;
-}
-
-/* Placeholder tile is non-interactive until wired up to a real action. */
-.setup-card_placeholder {
-    cursor: default;
-    opacity: 0.6;
-}
-
-.setup-card_placeholder:hover {
-    border-color: var(--gbta-card-border);
-    box-shadow: none;
 }
 
 .card-icon {

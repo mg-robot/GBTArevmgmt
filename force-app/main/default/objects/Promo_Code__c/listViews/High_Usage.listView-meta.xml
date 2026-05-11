@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>High_Usage</fullName>
+    <columns>NAME</columns>
+    <columns>Code__c</columns>
+    <columns>Display_Name__c</columns>
+    <columns>Confirmed_Usage_Count__c</columns>
+    <columns>Total_Usage_Limit__c</columns>
+    <columns>Status__c</columns>
+    <columns>Effective_End_Date__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Is_Currently_Usable__c</field>
+        <operation>equals</operation>
+        <value>1</value>
+    </filters>
+    <filters>
+        <field>Confirmed_Usage_Count__c</field>
+        <operation>greaterThan</operation>
+        <value>0</value>
+    </filters>
+    <label>High Usage</label>
+</ListView>

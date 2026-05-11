@@ -1,0 +1,27 @@
+<template>
+    <article class="tile">
+        <header class="tile-header">
+            <template if:true={iconUrl}>
+                <img src={iconUrl} alt="" class="tile-icon" />
+            </template>
+            <template if:false={iconUrl}>
+                <lightning-icon icon-name="utility:edit" size="small" variant="inverse" class="tile-icon-fallback"></lightning-icon>
+            </template>
+            <h2 class="tile-title">Promos Pending Activation</h2>
+        </header>
+
+        <div class="tile-body">
+            <p class="description">
+                All promo codes currently in <strong>Draft</strong> status, awaiting Membership Ops review and activation. Sorted by most recently created.
+            </p>
+            <lightning-button
+                label="Open list view"
+                icon-name="utility:open"
+                icon-position="right"
+                variant="brand"
+                onclick={handleOpen}
+                class="open-button">
+            </lightning-button>
+        </div>
+    </article>
+</template>

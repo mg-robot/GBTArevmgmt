@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pending_Activation</fullName>
+    <columns>NAME</columns>
+    <columns>Code__c</columns>
+    <columns>Display_Name__c</columns>
+    <columns>Discount_Type__c</columns>
+    <columns>Discount_Value__c</columns>
+    <columns>CREATED_DATE</columns>
+    <columns>CREATEDBY_USER</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Status__c</field>
+        <operation>equals</operation>
+        <value>Draft</value>
+    </filters>
+    <label>Pending Activation</label>
+</ListView>

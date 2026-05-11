@@ -1,0 +1,71 @@
+<template>
+    <article class="tile">
+        <header class="tile-header">
+            <template if:true={iconUrl}>
+                <img src={iconUrl} alt="" class="tile-icon" />
+            </template>
+            <template if:false={iconUrl}>
+                <lightning-icon icon-name="utility:search" size="small" variant="inverse" class="tile-icon-fallback"></lightning-icon>
+            </template>
+            <h2 class="tile-title">Quick Find Promo Code</h2>
+        </header>
+
+        <div class="tile-body">
+            <div class="search-row">
+                <lightning-input
+                    type="search"
+                    label="Promo code"
+                    variant="label-hidden"
+                    placeholder="Enter a code (e.g., SAVE10)"
+                    value={searchTerm}
+                    onchange={handleInput}
+                    onkeydown={handleKeydown}
+                    class="search-input">
+                </lightning-input>
+                <lightning-button
+                    label="Find"
+                    variant="brand"
+                    onclick={handleSearch}
+                    disabled={isLoading}>
+                </lightning-button>
+                <lightning-button
+                    label="Clear"
+                    variant="neutral"
+                    onclick={handleClear}
+                    disabled={clearDisabled}>
+                </lightning-button>
+            </div>
+
+            <template if:true={isLoading}>
+                <div class="state-row">
+                    <lightning-spinner size="small" alternative-text="Searching"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:true={showNoMatch}>
+                <div class="state-row no-match">
+                    No code found for &ldquo;{lastSearched}&rdquo;.
+                </div>
+            </template>
+
+            <template if:true={showResults}>
+                <ul class="results-list" role="list">
+                    <template for:each={results} for:item="r">
+                        <li key={r.recordId} class="result-row" data-id={r.recordId} onclick={handleSelect} onkeydown={handleRowKeydown} tabindex="0" role="button">
+                            <div class="result-main">
+                                <span class="result-code">{r.code}</span>
+                                <template if:true={r.currencyIsoCode}>
+                                    <span class="currency-badge">{r.currencyIsoCode}</span>
+                                </template>
+                            </div>
+                            <div class="result-meta">
+                                <span class="result-name">{r.displayName}</span>
+                                <span class={r.statusClass}>{r.status}</span>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+        </div>
+    </article>
+</template>
