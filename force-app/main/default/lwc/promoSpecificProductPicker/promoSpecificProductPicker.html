@@ -18,13 +18,12 @@
                     <li key={p.id} class="slds-listbox__item">
                         <div
                             class="slds-listbox__option slds-listbox__option_plain slds-p-around_x-small slds-cursor_pointer"
-                            data-name={p.name}
                             data-code={p.productCode}
+                            data-name={p.name}
                             onclick={addProduct}>
-                            <span class="slds-text-body_regular">{p.name}</span>
-                            <span class="slds-text-body_small slds-text-color_weak slds-m-left_xx-small">
-                                ({p.productCode})
-                            </span>
+                            <span class="slds-text-body_regular slds-text-color_default">{p.productCode}</span>
+                            <span class="slds-text-body_regular slds-m-horizontal_xx-small">—</span>
+                            <span class="slds-text-body_regular slds-text-color_weak">{p.name}</span>
                         </div>
                     </li>
                 </template>
@@ -38,9 +37,9 @@
             <div class="slds-pill_container slds-m-top_xx-small">
                 <template for:each={selected} for:item="p">
                     <lightning-pill
-                        key={p.name}
+                        key={p.code}
                         label={p.label}
-                        name={p.name}
+                        name={p.code}
                         onremove={removeProduct}>
                     </lightning-pill>
                 </template>

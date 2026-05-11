@@ -6,6 +6,12 @@ import LBL_SearchPlaceholder from '@salesforce/label/c.PromoCodeWizard_PP_Search
 import LBL_Searching from '@salesforce/label/c.PromoCodeWizard_PP_Searching';
 import LBL_SelectedTemplate from '@salesforce/label/c.PromoCodeWizard_PP_SelectedTemplate';
 
+/**
+ * Multi-select picker for Specific Products scope. Search filters out inactive products
+ * (server-side via PromoCodeService.searchProducts), surfaces "Product Code — Product Name"
+ * in result rows, and emits a CSV of Product Codes (NOT names) to the parent so that
+ * Specific_Products__c is populated per data-model.md spec.
+ */
 export default class PromoSpecificProductPicker extends LightningElement {
     @api initialCsv = '';
 
@@ -22,11 +28,15 @@ export default class PromoSpecificProductPicker extends LightningElement {
 
     connectedCallback() {
         if (this.initialCsv) {
-            const names = this.initialCsv
+            const codes = this.initialCsv
                 .split(',')
                 .map((s) => s.trim())
                 .filter(Boolean);
-            this.selected = names.map((n) => ({ name: n, label: n }));
+            // We only have the codes on rehydrate — show code as both code and label
+            // until the user searches/edits. (Full re-fetch of names is unnecessary for the
+            // happy path: edit-after-create is rare due to Lock VR, and on draft edit the
+            // staff can re-search to re-select.)
+            this.selected = codes.map((c) => ({ code: c, name: c, label: c }));
         }
     }
 
@@ -36,10 +46,6 @@ export default class PromoSpecificProductPicker extends LightningElement {
 
     get hasSelected() {
         return this.selected.length > 0;
-    }
-
-    get selectedCount() {
-        return this.selected.length;
     }
 
     get selectedHeader() {
@@ -55,8 +61,8 @@ export default class PromoSpecificProductPicker extends LightningElement {
         this.loading = true;
         searchProducts({ searchTerm: this.searchTerm })
             .then((r) => {
-                const taken = new Set(this.selected.map((s) => s.name));
-                this.results = (r || []).filter((p) => !taken.has(p.name));
+                const takenCodes = new Set(this.selected.map((s) => s.code));
+                this.results = (r || []).filter((p) => !takenCodes.has(p.productCode));
             })
             .catch(() => {
                 this.results = [];
@@ -67,26 +73,27 @@ export default class PromoSpecificProductPicker extends LightningElement {
     }
 
     addProduct(e) {
-        const name = e.currentTarget.dataset.name;
         const code = e.currentTarget.dataset.code;
-        if (!this.selected.some((s) => s.name === name)) {
+        const name = e.currentTarget.dataset.name;
+        if (!code) return; // Specific_Products__c is CSV of Product Codes — skip rows without one
+        if (!this.selected.some((s) => s.code === code)) {
             this.selected = [
                 ...this.selected,
-                { name, label: code ? `${name} (${code})` : name }
+                { code, name, label: `${code} — ${name}` }
             ];
             this.fireChange();
         }
-        this.results = this.results.filter((r) => r.name !== name);
+        this.results = this.results.filter((r) => r.productCode !== code);
     }
 
     removeProduct(e) {
-        const name = e.target.name;
-        this.selected = this.selected.filter((s) => s.name !== name);
+        const code = e.target.name;
+        this.selected = this.selected.filter((s) => s.code !== code);
         this.fireChange();
     }
 
     fireChange() {
-        const csv = this.selected.map((s) => s.name).join(',');
+        const csv = this.selected.map((s) => s.code).join(',');
         this.dispatchEvent(
             new CustomEvent('change', { detail: { csv, count: this.selected.length } })
         );

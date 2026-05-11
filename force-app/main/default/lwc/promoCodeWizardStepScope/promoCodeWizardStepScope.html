@@ -1,74 +1,101 @@
 <template>
-    <!-- Validity Window -->
+    <!-- Section 1: Validity Window -->
     <div class="slds-m-bottom_medium">
         <h3 class="section-heading">{label.validityHeading}</h3>
         <p class="helper-text">{label.validityHelper}</p>
-        <lightning-input
-            type="datetime"
-            label={label.effectiveStart}
-            value={wizardData.effectiveStart}
-            required
-            onchange={handleStartChange}>
-        </lightning-input>
-        <lightning-input
-            type="datetime"
-            label={label.effectiveEnd}
-            value={wizardData.effectiveEnd}
-            class="slds-m-top_small"
-            onchange={handleEndChange}>
-        </lightning-input>
+        <div class="slds-grid slds-gutters slds-wrap">
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+                <lightning-input
+                    type="datetime"
+                    label={label.effectiveStart}
+                    value={wizardData.effectiveStart}
+                    onchange={handleStartChange}>
+                </lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+                <lightning-input
+                    type="datetime"
+                    label={label.effectiveEnd}
+                    value={wizardData.effectiveEnd}
+                    onchange={handleEndChange}>
+                </lightning-input>
+            </div>
+        </div>
     </div>
 
-    <!-- Member & Region Scope -->
+    <!-- Section 2: Region & Application Level -->
     <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.memberRegionHeading}</h3>
-        <p class="helper-text">{label.memberRegionHelper}</p>
-        <lightning-checkbox-group
-            label={label.memberTypeScope}
-            options={memberTypeOptions}
-            value={wizardData.memberTypeScope}
-            onchange={handleMemberTypeScopeChange}>
-        </lightning-checkbox-group>
-        <lightning-checkbox-group
-            label={label.regionScope}
-            options={regionOptions}
-            value={wizardData.regionScope}
-            class="slds-m-top_small"
-            onchange={handleRegionScopeChange}>
-        </lightning-checkbox-group>
+        <h3 class="section-heading">{label.regionAppLevelHeading}</h3>
+        <p class="helper-text">{label.regionAppLevelHelper}</p>
+        <div class="slds-grid slds-gutters slds-wrap">
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+                <lightning-checkbox-group
+                    label={label.regionScope}
+                    options={regionOptions}
+                    value={wizardData.regionScope}
+                    onchange={handleRegionScopeChange}>
+                </lightning-checkbox-group>
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+                <lightning-radio-group
+                    label={label.applicationLevelLabel}
+                    options={applicationLevelOptions}
+                    value={wizardData.applicationLevel}
+                    type="radio"
+                    required
+                    onchange={handleApplicationLevelChange}>
+                </lightning-radio-group>
+            </div>
+        </div>
     </div>
 
-    <!-- Product Applicability -->
+    <!-- Section 3: Product Applicability -->
     <div class="slds-m-bottom_medium">
         <h3 class="section-heading">{label.productAppHeading}</h3>
         <p class="helper-text">{label.productAppHelper}</p>
-        <lightning-radio-group
-            label={label.productScope}
-            options={productScopeTypeOptions}
-            value={wizardData.productScopeType}
-            type="radio"
-            onchange={handleProductScopeTypeChange}>
-        </lightning-radio-group>
-        <template if:true={isProductFamily}>
-            <lightning-combobox
-                label={label.productFamily}
-                options={productFamilyOptions}
-                value={wizardData.specificProducts}
-                class="slds-m-top_small"
-                onchange={handleProductFamilyChange}>
-            </lightning-combobox>
-        </template>
-        <template if:true={isSpecificProducts}>
-            <div class="slds-m-top_small">
-                <c-promo-specific-product-picker
-                    initial-csv={wizardData.specificProducts}
-                    onchange={handleSpecificProductsChange}>
-                </c-promo-specific-product-picker>
+        <div class="slds-grid slds-gutters slds-wrap">
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+                <lightning-radio-group
+                    label={label.productScope}
+                    options={productScopeTypeOptions}
+                    value={wizardData.productScopeType}
+                    type="radio"
+                    required
+                    onchange={handleProductScopeTypeChange}>
+                </lightning-radio-group>
             </div>
-        </template>
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+                <template if:true={isAllItems}>
+                    <p class="helper-text slds-text-color_weak">{label.allItemsMessage}</p>
+                </template>
+                <template if:true={isProductFamily}>
+                    <lightning-checkbox-group
+                        label={label.productFamily}
+                        options={productFamilyOptions}
+                        value={wizardData.productFamilyScope}
+                        onchange={handleProductFamilyScopeChange}>
+                    </lightning-checkbox-group>
+                </template>
+                <template if:true={isSpecificMembershipTypes}>
+                    <lightning-checkbox-group
+                        label={label.memberTypeScope}
+                        options={memberTypeOptions}
+                        value={wizardData.memberTypeScope}
+                        onchange={handleMemberTypeScopeChange}>
+                    </lightning-checkbox-group>
+                </template>
+                <template if:true={isSpecificProducts}>
+                    <c-promo-specific-product-picker
+                        initial-csv={wizardData.specificProducts}
+                        onchange={handleSpecificProductsChange}>
+                    </c-promo-specific-product-picker>
+                </template>
+            </div>
+        </div>
+        <p class="helper-text slds-m-top_small slds-text-color_weak">{combinationHelpText}</p>
     </div>
 
-    <!-- Account Scope -->
+    <!-- Section 4: Account Scope -->
     <div class="slds-m-bottom_medium">
         <h3 class="section-heading">{label.accountScopeHeading}</h3>
         <p class="helper-text">{label.accountScopeHelper}</p>
