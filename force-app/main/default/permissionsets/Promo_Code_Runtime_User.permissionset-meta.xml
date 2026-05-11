@@ -146,4 +146,14 @@
         <field>Promo_Code_Item__c.Release_Reason__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>OrderItem.Promotion_Type__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>OrderItem.Promotion_Value__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
 </PermissionSet>
