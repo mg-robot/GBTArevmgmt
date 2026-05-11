@@ -1,5 +1,4 @@
 import LightningModal from 'lightning/modal';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import createBulk from '@salesforce/apex/PromoCodeService.createBulk';
 import getActiveCurrencies from '@salesforce/apex/PromoCodeService.getActiveCurrencies';
 
@@ -153,19 +152,18 @@ export default class PromoCodeWizard extends LightningModal {
                 if (r && r.success) {
                     const action = activate ? 'created and activated' : 'saved as draft';
                     const count = r.createdRecordIds ? r.createdRecordIds.length : 0;
-                    this.dispatchEvent(new ShowToastEvent({
-                        title: 'Promo Code',
-                        message: `${count} promo code${count === 1 ? '' : 's'} ${action}.`,
-                        variant: 'success'
-                    }));
+                    // ShowToastEvent doesn't surface from inside a LightningModal — the launcher
+                    // that opened this modal shows the toast after the modal closes (using the
+                    // count + action returned in the close result below).
                     this.close({
                         result: 'created',
                         recordIds: r.createdRecordIds,
-                        status: r.status
+                        status: r.status,
+                        count: count,
+                        action: action
                     });
                 } else {
-                    const diag = ` [debug: code="${w.code || ''}", displayName="${w.displayName || ''}", discountType="${w.discountType || ''}"]`;
-                    this.errorMessage = ((r && r.errorMessage) || 'Save failed.') + diag;
+                    this.errorMessage = (r && r.errorMessage) || 'Save failed.';
                     if (r && r.conflictCurrencies && r.conflictCurrencies.length) {
                         this.currentStep = 1;
                     }

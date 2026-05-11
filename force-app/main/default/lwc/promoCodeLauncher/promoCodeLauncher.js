@@ -1,10 +1,12 @@
 import { LightningElement } from 'lwc';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import PromoCodeWizard from 'c/promoCodeWizard';
 
 /**
- * Temporary launcher card hosted on the Promo Code Home FlexiPage. Opens the
- * PromoCodeWizard modal. Phase 4 replaces this with a list-view button
- * (promoCodeWizardButton) that surfaces on the Promo_Code__c list view itself.
+ * Launcher card on the Promotions Home FlexiPage. Opens the PromoCodeWizard modal.
+ * After the modal closes successfully, shows a toast with the count and action — the
+ * toast must fire from the launcher (not the modal) because LightningModal doesn't
+ * surface ShowToastEvent.
  */
 export default class PromoCodeLauncher extends LightningElement {
     async handleOpen() {
@@ -12,8 +14,14 @@ export default class PromoCodeLauncher extends LightningElement {
             size: 'medium',
             label: 'New Promo Code'
         });
-        // Result handling is currently no-op at the launcher level; the wizard
-        // itself fires a success toast. List-view refresh hookup lands in Phase 4.
-        return result;
+        if (result && result.result === 'created') {
+            const count = result.count || 0;
+            const action = result.action || 'created';
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Promo Code',
+                message: `${count} promo code${count === 1 ? '' : 's'} ${action}.`,
+                variant: 'success'
+            }));
+        }
     }
 }

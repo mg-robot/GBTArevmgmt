@@ -1,14 +1,15 @@
 import { LightningElement } from 'lwc';
 import { CloseActionScreenEvent } from 'lightning/actions';
 import { RefreshEvent } from 'lightning/refresh';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import PromoCodeWizard from 'c/promoCodeWizard';
 
 /**
  * Headless launcher used as the Lightning Web Component override for the standard
- * New action on Promo_Code__c. When the user clicks "New" on the list view,
- * Salesforce instantiates this component; on connected, it opens the PromoCodeWizard
- * modal. When the modal closes, this fires RefreshEvent so the list re-queries and
- * CloseActionScreenEvent to dismiss the action container.
+ * New action on Promo_Code__c. On mount, opens the PromoCodeWizard modal. After the
+ * modal closes successfully, fires a toast (the modal itself can't — LightningModal
+ * doesn't surface ShowToastEvent), refreshes the list view, and dismisses the action
+ * container.
  */
 export default class PromoCodeWizardButton extends LightningElement {
     _opened = false;
@@ -22,10 +23,17 @@ export default class PromoCodeWizardButton extends LightningElement {
                 label: 'New Promo Code'
             });
             if (result && result.result === 'created') {
+                const count = result.count || 0;
+                const action = result.action || 'created';
+                this.dispatchEvent(new ShowToastEvent({
+                    title: 'Promo Code',
+                    message: `${count} promo code${count === 1 ? '' : 's'} ${action}.`,
+                    variant: 'success'
+                }));
                 this.dispatchEvent(new RefreshEvent());
             }
         } catch (e) {
-            // swallow — wizard handles its own errors via toast
+            // swallow — wizard handles its own errors
         } finally {
             this.dispatchEvent(new CloseActionScreenEvent());
         }
