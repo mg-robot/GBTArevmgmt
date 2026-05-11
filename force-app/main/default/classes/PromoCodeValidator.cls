@@ -1,5 +1,5 @@
 /**
- * Stateless validator for promo codes at apply time. Implements the 10 ordered validation rules
+ * Stateless validator for promo codes at apply time. Implements the 9 ordered validation rules
  * from docs/promo-code/checkout-apply-flow.md §4.4. Each call returns a structured CodeResult
  * with an explicit errorCode + member-facing errorMessage; the first failing check short-circuits.
  *
@@ -9,20 +9,20 @@
  *   3. OUT_OF_WINDOW           — NOW() outside Effective_Start_Date..Effective_End_Date.
  *   4. USAGE_EXCEEDED          — Total_Usage_Limit__c hit (Confirmed + Pending across all members).
  *   5. MEMBER_LIMIT_EXCEEDED   — Per_Member_Usage_Limit__c hit for the current Member.
- *   6. MEMBER_TYPE_INELIGIBLE  — No product in the cart is in Member_Type_Scope__c. The scope's
- *                                values mirror Membership product names — see field description.
- *   7. REGION_INELIGIBLE       — Cart's Order.Region__c not in Region_Scope__c.
- *   8. ACCOUNT_INELIGIBLE      — Order.AccountId != Promo_Code__c.Account__c.
- *   9. NOT_APPLICABLE_TO_CART  — No OrderItem matches Product_Scope_Type__c / Specific_Products__c.
- *  10. NOT_COMBINABLE          — Conflict with already-validated codes in this Apply set.
+ *   6. REGION_INELIGIBLE       — Cart's Order.Region__c not in Region_Scope__c.
+ *   7. ACCOUNT_INELIGIBLE      — Order.AccountId != Promo_Code__c.Account__c.
+ *   8. NOT_APPLICABLE_TO_CART  — No OrderItem matches Product_Scope_Type__c rules (§5.2).
+ *   9. NOT_COMBINABLE          — Conflict with already-validated codes in this Apply set.
  *
- * Region is read from the Order's denormalized Region__c field (populated upstream by the join
- * flow). Member type is derived from the cart's products: Member_Type_Scope__c values mirror
- * Membership product names, so we check whether any line in the cart names a scope-listed product.
- * This avoids the validator needing to traverse Person Account fields and keeps it pure compute
- * given a cart context.
+ * Note on Member_Type_Scope__c: it is NOT an eligibility gate at the validator level — it's
+ * consumed by the allocation engine for product-name CONTAINS matching under
+ * Product_Scope_Type__c = 'Specific Membership Types'. Member-eligibility is enforced via
+ * Region_Scope__c (rule 6) and the optional Account__c lookup (rule 7).
  *
- * Combinability rule (§4.4 note):
+ * The eligibility check in rule 8 mirrors the allocation engine's Step 1 filter — the validator
+ * answers "is at least one line eligible?", the engine then computes the actual per-line math.
+ *
+ * Combinability rule:
  *   If any code in the validated set has Combinable__c = false, no other code can join it.
  *   Otherwise, every code in the set must share the same Combination_Group__c.
  *
@@ -31,19 +31,6 @@
  */
 public with sharing class PromoCodeValidator {
 
-    /**
-     * Validate a single submitted code against a cart context.
-     *
-     * @param submittedCode   the raw string the member typed (used for error display when the
-     *                        parent record is null / not found).
-     * @param parent          the matching Promo_Code__c record (may be null → NOT_FOUND).
-     * @param ctx             cart context: Order Id, AccountId, currency, region, member type,
-     *                        OrderItems with Product2.Family/Name eager-loaded.
-     * @param alreadyValid    parent records that have already passed validation in this Apply
-     *                        event. Used by the combinability check.
-     * @param usage           pre-aggregated Pending + Confirmed counts (global and per-member).
-     * @return a fully-populated CodeResult; valid = true means the code passed all 10 checks.
-     */
     public static PromoCodeApplyService.CodeResult validate(
         String submittedCode,
         Promo_Code__c parent,
@@ -100,17 +87,7 @@ public with sharing class PromoCodeValidator {
             }
         }
 
-        // 6. MEMBER_TYPE_INELIGIBLE
-        // Member_Type_Scope__c values mirror Membership Product names (per the field's design-doc
-        // description). The check is: at least one product in the cart must match the scope list.
-        if (!String.isBlank(parent.Member_Type_Scope__c)) {
-            if (!anyCartProductInScope(parent.Member_Type_Scope__c, ctx.orderItems)) {
-                return fail(cr, PromoCodeApplyService.ERR_MEMBER_TYPE_INELIGIBLE,
-                    messageFor(PromoCodeApplyService.ERR_MEMBER_TYPE_INELIGIBLE, parent, ctx, cr.code));
-            }
-        }
-
-        // 7. REGION_INELIGIBLE
+        // 6. REGION_INELIGIBLE
         if (!String.isBlank(parent.Region_Scope__c)) {
             if (!multiPicklistContains(parent.Region_Scope__c, ctx.region)) {
                 return fail(cr, PromoCodeApplyService.ERR_REGION_INELIGIBLE,
@@ -118,19 +95,19 @@ public with sharing class PromoCodeValidator {
             }
         }
 
-        // 8. ACCOUNT_INELIGIBLE
+        // 7. ACCOUNT_INELIGIBLE
         if (parent.Account__c != null && parent.Account__c != ctx.accountId) {
             return fail(cr, PromoCodeApplyService.ERR_ACCOUNT_INELIGIBLE,
                 messageFor(PromoCodeApplyService.ERR_ACCOUNT_INELIGIBLE, parent, ctx, cr.code));
         }
 
-        // 9. NOT_APPLICABLE_TO_CART
-        if (!hasQualifyingLine(parent, ctx.orderItems)) {
+        // 8. NOT_APPLICABLE_TO_CART
+        if (!hasEligibleLine(parent, ctx.orderItems)) {
             return fail(cr, PromoCodeApplyService.ERR_NOT_APPLICABLE_TO_CART,
                 messageFor(PromoCodeApplyService.ERR_NOT_APPLICABLE_TO_CART, parent, ctx, cr.code));
         }
 
-        // 10. NOT_COMBINABLE
+        // 9. NOT_COMBINABLE
         if (!isCombinableWith(parent, alreadyValid)) {
             return fail(cr, PromoCodeApplyService.ERR_NOT_COMBINABLE,
                 messageFor(PromoCodeApplyService.ERR_NOT_COMBINABLE, parent, ctx, cr.code));
@@ -143,9 +120,6 @@ public with sharing class PromoCodeValidator {
     /**
      * Aggregate Pending + Confirmed PCI counts across a set of parent codes, in two SOQLs.
      * Used by validation rules 4 (USAGE_EXCEEDED) and 5 (MEMBER_LIMIT_EXCEEDED).
-     *
-     * @param promoCodeIds  parent codes to count usage for.
-     * @param memberId      the member (Person Account) whose per-member usage we also tally.
      */
     public static PromoCodeApplyService.UsageCounts fetchUsageCounts(Set<Id> promoCodeIds, Id memberId) {
         PromoCodeApplyService.UsageCounts uc = new PromoCodeApplyService.UsageCounts();
@@ -193,10 +167,6 @@ public with sharing class PromoCodeValidator {
         return uc;
     }
 
-    /**
-     * Two-arg overload used by PromoCodeApplyService to look up a member-facing message after
-     * the validator has already returned a result (e.g., downgraded-NOT_APPLICABLE_TO_CART case).
-     */
     public static String messageFor(String errorCode, Promo_Code__c parent, PromoCodeApplyService.OrderContext ctx) {
         return messageFor(errorCode, parent, ctx, parent == null ? '' : parent.Code__c);
     }
@@ -224,9 +194,6 @@ public with sharing class PromoCodeValidator {
         }
         if (errorCode == PromoCodeApplyService.ERR_MEMBER_LIMIT_EXCEEDED) {
             return 'You\'ve already used this code the maximum number of times.';
-        }
-        if (errorCode == PromoCodeApplyService.ERR_MEMBER_TYPE_INELIGIBLE) {
-            return 'This code is not available for your member type.';
         }
         if (errorCode == PromoCodeApplyService.ERR_REGION_INELIGIBLE) {
             return 'This code is not available in your region.';
@@ -266,67 +233,83 @@ public with sharing class PromoCodeValidator {
         return false;
     }
 
-    private static Boolean anyCartProductInScope(String multiPicklistValue, List<OrderItem> orderItems) {
+    /**
+     * Mirrors the allocation engine's Step 1 eligibility filter — returns true if at least one
+     * OrderItem in the cart matches the code's Product_Scope_Type__c rule. The engine re-runs the
+     * same filter and computes adjustments; the validator only needs a boolean.
+     *
+     * Kept aligned with PromoCodeAllocationEngine.filterEligible — when scope semantics change,
+     * update both.
+     */
+    private static Boolean hasEligibleLine(Promo_Code__c code, List<OrderItem> orderItems) {
         if (orderItems == null || orderItems.isEmpty()) return false;
-        Set<String> scopeNames = new Set<String>();
-        for (String v : multiPicklistValue.split(';')) {
-            String trimmed = v.trim();
-            if (!String.isBlank(trimmed)) scopeNames.add(trimmed.toLowerCase());
-        }
-        for (OrderItem oi : orderItems) {
-            if (oi.Product2 != null && oi.Product2.Name != null
-                && scopeNames.contains(oi.Product2.Name.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
-    }
+        String scopeType = code.Product_Scope_Type__c == null ? 'All Items' : code.Product_Scope_Type__c;
 
-    private static Boolean hasQualifyingLine(Promo_Code__c code, List<OrderItem> orderItems) {
-        if (orderItems == null || orderItems.isEmpty()) return false;
-        String scopeType = code.Product_Scope_Type__c;
-        if (scopeType == null || scopeType == 'All Items') return true;
+        if (scopeType == 'All Items') return true;
 
-        String spec = code.Specific_Products__c;
         if (scopeType == 'Product Family') {
-            if (String.isBlank(spec)) return false;
-            String family = spec.trim();
+            Set<String> families = splitMultiPicklist(code.Product_Family_Scope__c);
             for (OrderItem oi : orderItems) {
-                if (oi.Product2 != null && oi.Product2.Family == family) return true;
+                if (oi.Product2 == null || oi.Product2.Family == null) continue;
+                if (families.contains(oi.Product2.Family.toLowerCase())) return true;
+            }
+            return false;
+        }
+        if (scopeType == 'Specific Membership Types') {
+            Set<String> tokens = splitMultiPicklist(code.Member_Type_Scope__c);
+            for (OrderItem oi : orderItems) {
+                if (oi.Product2 == null || oi.Product2.Name == null) continue;
+                String nameLc = oi.Product2.Name.toLowerCase();
+                for (String t : tokens) {
+                    if (nameLc.contains(t)) return true;
+                }
             }
             return false;
         }
         if (scopeType == 'Specific Products') {
-            if (String.isBlank(spec)) return false;
-            Set<String> names = new Set<String>();
-            for (String token : spec.split(',')) {
-                String trimmed = token.trim();
-                if (!String.isBlank(trimmed)) names.add(trimmed);
-            }
+            Set<String> codes = splitCsv(code.Specific_Products__c);
             for (OrderItem oi : orderItems) {
-                if (oi.Product2 != null && names.contains(oi.Product2.Name)) return true;
+                if (oi.Product2 == null || oi.Product2.ProductCode == null) continue;
+                if (codes.contains(oi.Product2.ProductCode.trim().toLowerCase())) return true;
             }
             return false;
         }
         return false;
+    }
+
+    private static Set<String> splitMultiPicklist(String value) {
+        Set<String> out = new Set<String>();
+        if (String.isBlank(value)) return out;
+        for (String token : value.split(';')) {
+            String t = token == null ? '' : token.trim();
+            if (!String.isBlank(t)) out.add(t.toLowerCase());
+        }
+        return out;
+    }
+
+    private static Set<String> splitCsv(String value) {
+        Set<String> out = new Set<String>();
+        if (String.isBlank(value)) return out;
+        for (String token : value.split(',')) {
+            String t = token == null ? '' : token.trim();
+            if (!String.isBlank(t)) out.add(t.toLowerCase());
+        }
+        return out;
     }
 
     private static Boolean isCombinableWith(Promo_Code__c candidate, List<Promo_Code__c> alreadyValid) {
         if (alreadyValid == null || alreadyValid.isEmpty()) return true;
 
-        // If candidate itself is non-combinable, it can't join an existing set.
         if (candidate.Combinable__c == false) return false;
 
-        // If any existing code is non-combinable, candidate can't join.
         for (Promo_Code__c existing : alreadyValid) {
             if (existing.Combinable__c == false) return false;
         }
 
-        // All codes in the set must share the same Combination_Group__c.
         String candidateGroup = candidate.Combination_Group__c;
         if (String.isBlank(candidateGroup)) {
-            // Combinable=true with no group — treat as not-combinable with anything (defensive;
-            // VR_PromoCode_RequireCombinationGroup should prevent this state at the data layer).
+            // Combinable=true with no group — treat as not-combinable. The data-layer VR
+            // VR_PromoCode_RequireCombinationGroup should prevent this state at save time.
             return false;
         }
         for (Promo_Code__c existing : alreadyValid) {

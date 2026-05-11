@@ -10,7 +10,7 @@
  *   1. Resolve order context (Order + AccountId + Region + Primary_Type + CurrencyIsoCode +
  *      OrderItems with Product2.Family/Name + UnitPrice + Quantity).
  *   2. Fetch Promo_Code__c records for submitted codes filtered by the cart's currency.
- *   3. Run each code through PromoCodeValidator (10 ordered checks; first failure short-circuits).
+ *   3. Run each code through PromoCodeValidator (9 ordered checks; first failure short-circuits).
  *   4. Run PromoCodeAllocationEngine over the valid set to compute per-line adjustments.
  *   5. Single-transaction reservation (Savepoint-wrapped):
  *        a. Release any existing Pending PCIs for this Order (Reason='Reapplied').
@@ -43,7 +43,6 @@ public with sharing class PromoCodeApplyService {
     public static final String ERR_OUT_OF_WINDOW           = 'OUT_OF_WINDOW';
     public static final String ERR_USAGE_EXCEEDED          = 'USAGE_EXCEEDED';
     public static final String ERR_MEMBER_LIMIT_EXCEEDED   = 'MEMBER_LIMIT_EXCEEDED';
-    public static final String ERR_MEMBER_TYPE_INELIGIBLE  = 'MEMBER_TYPE_INELIGIBLE';
     public static final String ERR_REGION_INELIGIBLE       = 'REGION_INELIGIBLE';
     public static final String ERR_ACCOUNT_INELIGIBLE      = 'ACCOUNT_INELIGIBLE';
     public static final String ERR_NOT_APPLICABLE_TO_CART  = 'NOT_APPLICABLE_TO_CART';
@@ -354,7 +353,7 @@ public with sharing class PromoCodeApplyService {
         ctx.currencyIsoCode = isMultiCurrency ? (String) ord.get('CurrencyIsoCode') : null;
 
         ctx.orderItems = [
-            SELECT Id, OrderId, Product2Id, Product2.Name, Product2.Family,
+            SELECT Id, OrderId, Product2Id, Product2.Name, Product2.Family, Product2.ProductCode,
                    Quantity, UnitPrice
             FROM OrderItem
             WHERE OrderId = :orderId
@@ -375,7 +374,8 @@ public with sharing class PromoCodeApplyService {
             'Effective_Start_Date__c, Effective_End_Date__c, ' +
             'Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c, ' +
             'Member_Type_Scope__c, Region_Scope__c, Account__c, ' +
-            'Product_Scope_Type__c, Specific_Products__c, ' +
+            'Product_Scope_Type__c, Product_Family_Scope__c, Specific_Products__c, ' +
+            'Application_Level__c, ' +
             'Combinable__c, Combination_Group__c, ' +
             'Discount_Type__c, Discount_Value__c ' +
             'FROM Promo_Code__c ' +

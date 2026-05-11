@@ -1,27 +1,50 @@
 /**
  * Computes per-line discount allocations for a set of validated promo codes against a cart of
- * OrderItems. Pure compute — no DML, no SOQL. Inputs are already-fetched records; outputs are
- * in-memory CodeAllocation instances that the apply service persists as Promo_Code_Item__c.
+ * OrderItems. Pure compute — no DML, no SOQL. Caller (PromoCodeApplyService) is responsible for
+ * upstream validation and downstream persistence as Promo_Code_Item__c.
  *
- * Allocation rules — see docs/promo-code/checkout-apply-flow.md §5:
- * - Qualifying lines per code are filtered by Product_Scope_Type__c:
- *     "All Items"         → every OrderItem
- *     "Product Family"    → OrderItems whose Product2.Family matches the (single) value in
- *                           Specific_Products__c
- *     "Specific Products" → OrderItems whose Product2.Name is in the CSV of Specific_Products__c
- * - Percent codes: each qualifying line is reduced by (UnitPrice × Quantity × value/100).
- * - Amount codes with multiple qualifying lines: the fixed amount is distributed pro-rata across
- *   lines by each line's pre-discount subtotal (UnitPrice × Quantity). Avoids the
- *   "full amount on every line" multiplication while staying intuitive. See §5.3.
- * - Stacking (§5.4): when multiple codes apply to the same line, the per-code adjustments are
- *   summed (additive). Percent codes are computed against the original UnitPrice, not against a
- *   progressively-discounted price, so two 10% codes = 20% off, not 19%.
- * - Each line's total adjustment is floored at its pre-discount subtotal so NetPrice never goes
- *   below zero.
+ * Allocation is governed by two fields on the parent Promo_Code__c:
+ *   - Application_Level__c   ("Per Order" | "Per Line")
+ *   - Product_Scope_Type__c  ("All Items" | "Product Family" | "Specific Membership Types"
+ *                             | "Specific Products")
  *
- * The engine emits one CodeAllocation per (code, OrderItem) pair where the adjustment is > 0.
- * Lines that qualify but receive a zero adjustment (e.g., a percent code with value=0) are
- * skipped — there's nothing to record.
+ * Step 1 — eligibility (Product_Scope_Type__c):
+ *   All Items                 → every OrderItem in the cart
+ *   Product Family            → Product_Family_Scope__c (multi-picklist; semicolon-split)
+ *                                ⇒ Product2.Family ∈ selected families
+ *   Specific Membership Types → Member_Type_Scope__c (multi-picklist; semicolon-split)
+ *                                ⇒ Product2.Name CONTAINS any selected token (case-insensitive)
+ *   Specific Products         → Specific_Products__c (CSV of ProductCodes; comma-split)
+ *                                ⇒ Product2.ProductCode ∈ list (case-insensitive, trimmed)
+ *
+ * Step 1.5 — guards: drop eligible lines where UnitPrice × Quantity ≤ 0 or Quantity ≤ 0 (free
+ * items and zero-qty lines have nothing to discount).
+ *
+ * Step 2 — value math (Application_Level × Discount_Type):
+ *   Per Line × Amount  → Discount_Value to each eligible line
+ *   Per Line × Percent → UnitPrice × Quantity × pct/100 per eligible line
+ *   Per Order × Amount  → targetValue = Discount_Value, distributed proportionately
+ *   Per Order × Percent → targetValue = Σ line subtotal × pct/100, distributed proportionately
+ *
+ *   Proportionate distribution: lineAdjustment[i] = targetValue × (subtotal[i] / Σ subtotal),
+ *   computed internally at 4 decimals, rounded to 2 for output. Residual cent (= targetValue −
+ *   Σ rounded shares) is allocated to the largest-subtotal eligible line so the cart-level total
+ *   matches targetValue exactly.
+ *
+ * Stacking when multiple codes hit the same line:
+ *   - Adjustments are additive
+ *   - Percent codes computed against original (UnitPrice × Quantity), NOT against progressively-
+ *     discounted prices — so two 10% codes = 20% off, not 19%
+ *   - Each line's CUMULATIVE adjustment across all codes is floored at the line's pre-discount
+ *     subtotal — no negative NetPrice
+ *
+ * Override discount type is NOT supported in v1 (Discount_Type__c picklist is restricted to
+ * "Percent" and "Amount"; see docs/promo-code/checkout-apply-flow.md and the Phase A6 handoff doc).
+ *
+ * The engine emits one CodeAllocation per (code, eligible OrderItem) pair where the capped
+ * adjustment is > 0. CodeAllocation carries snapshots of Application_Level and Product_Scope_Type
+ * (in addition to Discount_Type / Discount_Value) so the apply service can persist them onto
+ * each PCI for audit.
  */
 public with sharing class PromoCodeAllocationEngine {
 
@@ -32,19 +55,10 @@ public with sharing class PromoCodeAllocationEngine {
         public Decimal adjustmentAmount;
         public String discountTypeSnapshot;
         public Decimal discountValueSnapshot;
+        public String applicationLevelSnapshot;
+        public String productScopeTypeSnapshot;
     }
 
-    /**
-     * Allocate validated promo codes across the OrderItems in the cart.
-     *
-     * @param validCodes     parent Promo_Code__c records that have passed all 10 validation
-     *                       checks. Caller is responsible for prior validation.
-     * @param orderItems     OrderItems in the cart, eager-loaded with Product2.Family +
-     *                       Product2.Name + UnitPrice + Quantity.
-     * @return list of CodeAllocation, one per (code, qualifying OrderItem) pair with a non-zero
-     *         adjustment. List is grouped by code (caller-friendly for DML construction) but
-     *         the order within a code is not guaranteed.
-     */
     public static List<CodeAllocation> allocate(
         List<Promo_Code__c> validCodes,
         List<OrderItem> orderItems
@@ -54,121 +68,197 @@ public with sharing class PromoCodeAllocationEngine {
             return out;
         }
 
-        // Pre-compute per-line subtotal once (UnitPrice × Quantity). Floor for the stacking cap.
+        // Pre-compute per-line subtotal once (UnitPrice × Quantity), kept at full precision for
+        // proportional math and rounded only when emitting CodeAllocation amounts.
         Map<Id, Decimal> subtotalByLine = new Map<Id, Decimal>();
         for (OrderItem oi : orderItems) {
             Decimal unit = oi.UnitPrice == null ? 0 : oi.UnitPrice;
             Decimal qty = oi.Quantity == null ? 0 : oi.Quantity;
-            subtotalByLine.put(oi.Id, (unit * qty).setScale(2, System.RoundingMode.HALF_UP));
+            subtotalByLine.put(oi.Id, (unit * qty).setScale(4, System.RoundingMode.HALF_UP));
         }
 
-        // Running tally of allocations already assigned to each line, used to floor stacking.
+        // Running cumulative adjustment per line — used to floor stacking at the line's subtotal
+        // so multiple codes can't push a line below zero.
         Map<Id, Decimal> allocatedByLine = new Map<Id, Decimal>();
         for (Id oid : subtotalByLine.keySet()) allocatedByLine.put(oid, 0);
 
         for (Promo_Code__c code : validCodes) {
-            List<OrderItem> qualifying = filterQualifying(code, orderItems);
-            if (qualifying.isEmpty()) {
-                continue;
-            }
+            List<OrderItem> eligible = filterEligible(code, orderItems);
+            eligible = applyApplyGuards(eligible, subtotalByLine);
+            if (eligible.isEmpty()) continue;
 
-            String discountType = code.Discount_Type__c;
-            Decimal discountValue = code.Discount_Value__c == null ? 0 : code.Discount_Value__c;
+            String level = code.Application_Level__c == null ? 'Per Order' : code.Application_Level__c;
+            String dtype = code.Discount_Type__c;
+            Decimal dval = code.Discount_Value__c == null ? 0 : code.Discount_Value__c;
+            if (dval <= 0) continue;
 
-            if (discountType == 'Percent') {
-                allocatePercent(code, qualifying, subtotalByLine, allocatedByLine, out);
-            } else if (discountType == 'Amount') {
-                allocateAmount(code, qualifying, subtotalByLine, allocatedByLine, out);
+            if (level == 'Per Line') {
+                allocatePerLine(code, dtype, dval, eligible, subtotalByLine, allocatedByLine, out);
+            } else {
+                allocatePerOrder(code, dtype, dval, eligible, subtotalByLine, allocatedByLine, out);
             }
         }
 
         return out;
     }
 
-    private static List<OrderItem> filterQualifying(Promo_Code__c code, List<OrderItem> all) {
-        String scopeType = code.Product_Scope_Type__c;
-        String spec = code.Specific_Products__c;
+    // ============================================================
+    // Eligibility (Step 1)
+    // ============================================================
 
-        if (scopeType == null || scopeType == 'All Items') {
-            return all;
+    private static List<OrderItem> filterEligible(Promo_Code__c code, List<OrderItem> all) {
+        String scopeType = code.Product_Scope_Type__c == null ? 'All Items' : code.Product_Scope_Type__c;
+
+        if (scopeType == 'All Items') {
+            return new List<OrderItem>(all);
         }
         if (scopeType == 'Product Family') {
-            String family = spec == null ? null : spec.trim();
+            Set<String> families = splitMultiPicklist(code.Product_Family_Scope__c);
             List<OrderItem> hits = new List<OrderItem>();
             for (OrderItem oi : all) {
-                if (oi.Product2 != null && oi.Product2.Family == family) {
-                    hits.add(oi);
+                if (oi.Product2 == null || oi.Product2.Family == null) continue;
+                if (families.contains(oi.Product2.Family.toLowerCase())) hits.add(oi);
+            }
+            return hits;
+        }
+        if (scopeType == 'Specific Membership Types') {
+            Set<String> tokens = splitMultiPicklist(code.Member_Type_Scope__c);
+            List<OrderItem> hits = new List<OrderItem>();
+            for (OrderItem oi : all) {
+                if (oi.Product2 == null || oi.Product2.Name == null) continue;
+                String nameLc = oi.Product2.Name.toLowerCase();
+                for (String t : tokens) {
+                    if (nameLc.contains(t)) { hits.add(oi); break; }
                 }
             }
             return hits;
         }
         if (scopeType == 'Specific Products') {
-            Set<String> names = new Set<String>();
-            if (spec != null) {
-                for (String token : spec.split(',')) {
-                    String trimmed = token.trim();
-                    if (!String.isBlank(trimmed)) names.add(trimmed);
-                }
-            }
+            Set<String> codes = splitCsv(code.Specific_Products__c);
             List<OrderItem> hits = new List<OrderItem>();
             for (OrderItem oi : all) {
-                if (oi.Product2 != null && names.contains(oi.Product2.Name)) {
-                    hits.add(oi);
-                }
+                if (oi.Product2 == null || oi.Product2.ProductCode == null) continue;
+                if (codes.contains(oi.Product2.ProductCode.trim().toLowerCase())) hits.add(oi);
             }
             return hits;
         }
         return new List<OrderItem>();
     }
 
-    private static void allocatePercent(
+    /**
+     * Drop eligible lines that have nothing to discount: zero/negative subtotal or zero qty.
+     * Mirrors the design doc's "NetPrice ≤ 0 or Quantity ≤ 0" exclusion — at apply time NetPrice
+     * isn't yet populated, so we guard against the pre-pricing equivalent (UnitPrice × Quantity).
+     */
+    private static List<OrderItem> applyApplyGuards(List<OrderItem> eligible, Map<Id, Decimal> subtotalByLine) {
+        List<OrderItem> out = new List<OrderItem>();
+        for (OrderItem oi : eligible) {
+            if (oi.Quantity == null || oi.Quantity <= 0) continue;
+            Decimal subtotal = subtotalByLine.get(oi.Id);
+            if (subtotal == null || subtotal <= 0) continue;
+            out.add(oi);
+        }
+        return out;
+    }
+
+    private static Set<String> splitMultiPicklist(String value) {
+        Set<String> out = new Set<String>();
+        if (String.isBlank(value)) return out;
+        for (String token : value.split(';')) {
+            String t = token == null ? '' : token.trim();
+            if (!String.isBlank(t)) out.add(t.toLowerCase());
+        }
+        return out;
+    }
+
+    private static Set<String> splitCsv(String value) {
+        Set<String> out = new Set<String>();
+        if (String.isBlank(value)) return out;
+        for (String token : value.split(',')) {
+            String t = token == null ? '' : token.trim();
+            if (!String.isBlank(t)) out.add(t.toLowerCase());
+        }
+        return out;
+    }
+
+    // ============================================================
+    // Value math (Step 2)
+    // ============================================================
+
+    /**
+     * Per Line: replicate full value to each eligible line. Adjustment is capped per-line by the
+     * remaining headroom (subtotal − already-allocated by prior codes in this allocate() call).
+     */
+    private static void allocatePerLine(
         Promo_Code__c code,
-        List<OrderItem> qualifying,
+        String discountType,
+        Decimal discountValue,
+        List<OrderItem> eligible,
         Map<Id, Decimal> subtotalByLine,
         Map<Id, Decimal> allocatedByLine,
         List<CodeAllocation> out
     ) {
-        Decimal pct = code.Discount_Value__c == null ? 0 : code.Discount_Value__c;
-        if (pct <= 0) return;
-
-        for (OrderItem oi : qualifying) {
+        for (OrderItem oi : eligible) {
             Decimal subtotal = subtotalByLine.get(oi.Id);
-            Decimal raw = (subtotal * pct / 100).setScale(2, System.RoundingMode.HALF_UP);
+            Decimal raw;
+            if (discountType == 'Percent') {
+                raw = (subtotal * discountValue / 100).setScale(4, System.RoundingMode.HALF_UP);
+            } else if (discountType == 'Amount') {
+                raw = discountValue.setScale(4, System.RoundingMode.HALF_UP);
+            } else {
+                // Unsupported discount type (e.g., Override is dropped in v1).
+                continue;
+            }
             Decimal capped = capAdjustment(raw, subtotal, allocatedByLine.get(oi.Id));
             if (capped > 0) {
-                out.add(buildAllocation(code, oi.Id, capped));
-                allocatedByLine.put(oi.Id, allocatedByLine.get(oi.Id) + capped);
+                Decimal rounded = capped.setScale(2, System.RoundingMode.HALF_UP);
+                if (rounded <= 0) continue;
+                out.add(buildAllocation(code, oi.Id, rounded));
+                allocatedByLine.put(oi.Id, allocatedByLine.get(oi.Id) + rounded);
             }
         }
     }
 
-    private static void allocateAmount(
+    /**
+     * Per Order: compute a single targetValue (the total cart-level discount this code should
+     * produce), then distribute proportionately across eligible lines by pre-discount subtotal.
+     * Residual cent from rounding goes to the largest-subtotal line so the total exactly matches
+     * targetValue. Each line's share is then capped at the line's remaining headroom.
+     */
+    private static void allocatePerOrder(
         Promo_Code__c code,
-        List<OrderItem> qualifying,
+        String discountType,
+        Decimal discountValue,
+        List<OrderItem> eligible,
         Map<Id, Decimal> subtotalByLine,
         Map<Id, Decimal> allocatedByLine,
         List<CodeAllocation> out
     ) {
-        Decimal amt = code.Discount_Value__c == null ? 0 : code.Discount_Value__c;
-        if (amt <= 0) return;
-
-        // Pro-rata distribution by pre-discount subtotal.
         Decimal totalSubtotal = 0;
-        for (OrderItem oi : qualifying) {
-            totalSubtotal += subtotalByLine.get(oi.Id);
-        }
+        for (OrderItem oi : eligible) totalSubtotal += subtotalByLine.get(oi.Id);
         if (totalSubtotal <= 0) return;
 
-        // Compute shares, then reconcile rounding remainder onto the largest-subtotal line so the
-        // sum of allocations exactly equals the intended amount (modulo per-line caps).
+        Decimal targetValue;
+        if (discountType == 'Percent') {
+            targetValue = (totalSubtotal * discountValue / 100).setScale(4, System.RoundingMode.HALF_UP);
+        } else if (discountType == 'Amount') {
+            targetValue = discountValue.setScale(4, System.RoundingMode.HALF_UP);
+        } else {
+            return; // unsupported discount type (Override dropped in v1)
+        }
+        // targetValue can't exceed the eligible-subtotal pool — clamp here so the proportional
+        // math doesn't try to over-allocate.
+        if (targetValue > totalSubtotal) targetValue = totalSubtotal;
+
+        // Compute per-line shares and identify the largest line for residual reconciliation.
         Map<Id, Decimal> shareByLine = new Map<Id, Decimal>();
         Decimal allocatedRunning = 0;
         Id largestLineId = null;
         Decimal largestSubtotal = -1;
 
-        for (OrderItem oi : qualifying) {
+        for (OrderItem oi : eligible) {
             Decimal subtotal = subtotalByLine.get(oi.Id);
-            Decimal share = (amt * subtotal / totalSubtotal).setScale(2, System.RoundingMode.HALF_UP);
+            Decimal share = (targetValue * subtotal / totalSubtotal).setScale(2, System.RoundingMode.HALF_UP);
             shareByLine.put(oi.Id, share);
             allocatedRunning += share;
             if (subtotal > largestSubtotal) {
@@ -177,17 +267,21 @@ public with sharing class PromoCodeAllocationEngine {
             }
         }
 
-        Decimal remainder = amt - allocatedRunning;
+        // Reconcile rounding residual onto the largest-subtotal line.
+        Decimal remainder = targetValue.setScale(2, System.RoundingMode.HALF_UP) - allocatedRunning;
         if (remainder != 0 && largestLineId != null) {
             shareByLine.put(largestLineId, shareByLine.get(largestLineId) + remainder);
         }
 
-        for (OrderItem oi : qualifying) {
+        // Emit, capped per-line by stacking headroom.
+        for (OrderItem oi : eligible) {
             Decimal raw = shareByLine.get(oi.Id);
             Decimal capped = capAdjustment(raw, subtotalByLine.get(oi.Id), allocatedByLine.get(oi.Id));
             if (capped > 0) {
-                out.add(buildAllocation(code, oi.Id, capped));
-                allocatedByLine.put(oi.Id, allocatedByLine.get(oi.Id) + capped);
+                Decimal rounded = capped.setScale(2, System.RoundingMode.HALF_UP);
+                if (rounded <= 0) continue;
+                out.add(buildAllocation(code, oi.Id, rounded));
+                allocatedByLine.put(oi.Id, allocatedByLine.get(oi.Id) + rounded);
             }
         }
     }
@@ -207,6 +301,8 @@ public with sharing class PromoCodeAllocationEngine {
         a.adjustmentAmount = amount;
         a.discountTypeSnapshot = code.Discount_Type__c;
         a.discountValueSnapshot = code.Discount_Value__c;
+        a.applicationLevelSnapshot = code.Application_Level__c;
+        a.productScopeTypeSnapshot = code.Product_Scope_Type__c;
         return a;
     }
 }

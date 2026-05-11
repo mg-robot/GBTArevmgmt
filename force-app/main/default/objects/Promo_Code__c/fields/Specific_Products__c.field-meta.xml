@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Specific_Products__c</fullName>
-    <description>Used only when Product_Scope_Type__c = Specific Products. Comma-separated list of Product2.Name values populated by the promoSpecificProductPicker LWC. The picker filters out IsActive = false products and shows Product Code alongside Product Name in the search results so staff can disambiguate, but the persisted CSV is names — matches the allocation engine. OrderItems whose Product2.Name is in the list are eligible.</description>
+    <description>Used only when Product_Scope_Type__c = Specific Products. Comma-separated list of Product2.ProductCode values. Matched case-insensitively (trimmed) by PromoCodeAllocationEngine against OrderItem.Product2.ProductCode. The promoSpecificProductPicker LWC is the staff-facing input; its persistence semantics must align with this contract — codes, not names. Apply-flow side: OrderItems whose Product2.ProductCode is in the CSV are eligible.</description>
     <label>Specific Products</label>
     <length>32768</length>
     <required>false</required>
