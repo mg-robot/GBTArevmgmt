@@ -36,492 +36,598 @@
  *   Customer_Community_Place_Order permission set is the canonical grant for community members.
  */
 public with sharing class PromoCodeApplyService {
+  // --- Error-code constants (mirrored in PromoCodeValidator) ---
+  public static final String ERR_NOT_FOUND = 'NOT_FOUND';
+  public static final String ERR_NOT_ACTIVE = 'NOT_ACTIVE';
+  public static final String ERR_OUT_OF_WINDOW = 'OUT_OF_WINDOW';
+  public static final String ERR_USAGE_EXCEEDED = 'USAGE_EXCEEDED';
+  public static final String ERR_MEMBER_LIMIT_EXCEEDED = 'MEMBER_LIMIT_EXCEEDED';
+  public static final String ERR_REGION_INELIGIBLE = 'REGION_INELIGIBLE';
+  public static final String ERR_ACCOUNT_INELIGIBLE = 'ACCOUNT_INELIGIBLE';
+  public static final String ERR_NOT_APPLICABLE_TO_CART = 'NOT_APPLICABLE_TO_CART';
+  public static final String ERR_NOT_COMBINABLE = 'NOT_COMBINABLE';
 
-    // --- Error-code constants (mirrored in PromoCodeValidator) ---
-    public static final String ERR_NOT_FOUND               = 'NOT_FOUND';
-    public static final String ERR_NOT_ACTIVE              = 'NOT_ACTIVE';
-    public static final String ERR_OUT_OF_WINDOW           = 'OUT_OF_WINDOW';
-    public static final String ERR_USAGE_EXCEEDED          = 'USAGE_EXCEEDED';
-    public static final String ERR_MEMBER_LIMIT_EXCEEDED   = 'MEMBER_LIMIT_EXCEEDED';
-    public static final String ERR_REGION_INELIGIBLE       = 'REGION_INELIGIBLE';
-    public static final String ERR_ACCOUNT_INELIGIBLE      = 'ACCOUNT_INELIGIBLE';
-    public static final String ERR_NOT_APPLICABLE_TO_CART  = 'NOT_APPLICABLE_TO_CART';
-    public static final String ERR_NOT_COMBINABLE          = 'NOT_COMBINABLE';
+  // ============================================================
+  // DTOs
+  // ============================================================
 
-    // ============================================================
-    // DTOs
-    // ============================================================
-
-    public class ApplyResult {
-        @AuraEnabled public List<CodeResult> codeResults;
-        @AuraEnabled public Decimal totalAdjustment;
-        @AuraEnabled public Boolean repriceRequired;
-        @AuraEnabled public String applicationGroupId;
-    }
-
-    public class CodeResult {
-        @AuraEnabled public String code;
-        @AuraEnabled public String currencyIsoCode;
-        @AuraEnabled public Boolean valid;
-        @AuraEnabled public Decimal appliedAmount;
-        @AuraEnabled public List<Id> appliedToOrderItemIds;
-        @AuraEnabled public String errorCode;
-        @AuraEnabled public String errorMessage;
-        @AuraEnabled public String displayName;
-    }
-
-    /**
-     * In-memory snapshot of the cart used by the validator and allocation engine. Built once per
-     * service entry point so downstream code is pure compute and unit-testable without re-querying.
-     */
-    public class OrderContext {
-        public Id orderId;
-        public Id accountId;
-        public String currencyIsoCode;
-        public String region;
-        public List<OrderItem> orderItems;
-
-        public Boolean isMultiCurrency() { return currencyIsoCode != null; }
-    }
-
-    // ============================================================
-    // Public API
-    // ============================================================
-
-    /**
-     * Validate the submitted codes against the cart and, for the codes that pass, reserve usage
-     * by inserting Pending Promo_Code_Item__c records.
-     *
-     * @param orderId  the cart Order. Must exist and the running user must have read access.
-     * @param codes    list of submitted code strings. Duplicates in the input are deduped
-     *                 case-insensitively before processing; whitespace is trimmed; empties are
-     *                 ignored.
-     * @return ApplyResult with one CodeResult per (deduped) submitted code plus a summary.
-     */
+  public class ApplyResult {
     @AuraEnabled
-    public static ApplyResult apply(Id orderId, List<String> codes) {
-        if (orderId == null) {
-            throw new AuraHandledException('Order Id is required.');
-        }
-
-        ApplyResult result = new ApplyResult();
-        result.codeResults = new List<CodeResult>();
-        result.totalAdjustment = 0;
-        result.repriceRequired = false;
-
-        List<String> normalizedCodes = normalizeCodeList(codes);
-        if (normalizedCodes.isEmpty()) {
-            return result;
-        }
-
-        OrderContext ctx = loadOrderContext(orderId);
-
-        Map<String, Promo_Code__c> codeToParent = fetchPromoCodes(normalizedCodes, ctx.currencyIsoCode);
-        Set<Id> parentIds = new Set<Id>();
-        for (Promo_Code__c p : codeToParent.values()) parentIds.add(p.Id);
-
-        UsageCounts usage = PromoCodeValidator.fetchUsageCounts(parentIds, ctx.accountId);
-
-        List<Promo_Code__c> validParents = new List<Promo_Code__c>();
-        for (String submitted : normalizedCodes) {
-            Promo_Code__c parent = codeToParent.get(submitted.toUpperCase());
-            CodeResult cr = PromoCodeValidator.validate(submitted, parent, ctx, validParents, usage);
-            result.codeResults.add(cr);
-            if (cr.valid) {
-                validParents.add(parent);
-            }
-        }
-
-        // Allocate adjustments across qualifying lines.
-        List<PromoCodeAllocationEngine.CodeAllocation> allocations =
-            PromoCodeAllocationEngine.allocate(validParents, ctx.orderItems);
-
-        // Sum per-code totals for the response.
-        Map<Id, Decimal> totalByPromoCode = new Map<Id, Decimal>();
-        Map<Id, List<Id>> linesByPromoCode = new Map<Id, List<Id>>();
-        for (PromoCodeAllocationEngine.CodeAllocation a : allocations) {
-            Decimal running = totalByPromoCode.get(a.promoCodeId);
-            totalByPromoCode.put(a.promoCodeId, (running == null ? 0 : running) + a.adjustmentAmount);
-            List<Id> lines = linesByPromoCode.get(a.promoCodeId);
-            if (lines == null) {
-                lines = new List<Id>();
-                linesByPromoCode.put(a.promoCodeId, lines);
-            }
-            lines.add(a.orderItemId);
-        }
-
-        // Back-fill applied amounts onto valid CodeResults; if a valid code allocated zero (no
-        // qualifying lines in the as-applied set), downgrade it to NOT_APPLICABLE_TO_CART so the
-        // member sees a clear error rather than a silent zero. This catches edge cases where the
-        // validator's step 9 passed but a later code in the set consumed the only qualifying line.
-        for (CodeResult cr : result.codeResults) {
-            if (!cr.valid) continue;
-            Promo_Code__c parent = codeToParent.get(cr.code.toUpperCase());
-            Decimal codeTotal = totalByPromoCode.get(parent.Id);
-            if (codeTotal == null || codeTotal <= 0) {
-                cr.valid = false;
-                cr.errorCode = ERR_NOT_APPLICABLE_TO_CART;
-                cr.errorMessage = PromoCodeValidator.messageFor(ERR_NOT_APPLICABLE_TO_CART, parent, ctx);
-                continue;
-            }
-            cr.appliedAmount = codeTotal;
-            cr.appliedToOrderItemIds = linesByPromoCode.get(parent.Id);
-            result.totalAdjustment += codeTotal;
-        }
-
-        // Filter allocations whose code got downgraded above.
-        Set<Id> stillValidPromoCodeIds = new Set<Id>();
-        for (CodeResult cr : result.codeResults) {
-            if (cr.valid) {
-                stillValidPromoCodeIds.add(codeToParent.get(cr.code.toUpperCase()).Id);
-            }
-        }
-        List<PromoCodeAllocationEngine.CodeAllocation> finalAllocations =
-            new List<PromoCodeAllocationEngine.CodeAllocation>();
-        for (PromoCodeAllocationEngine.CodeAllocation a : allocations) {
-            if (stillValidPromoCodeIds.contains(a.promoCodeId)) finalAllocations.add(a);
-        }
-
-        if (finalAllocations.isEmpty()) {
-            // No valid codes — still persist the entered list (the LWC keeps invalid codes around
-            // so the member can correct them).
-            updatePromoCodesEnteredCsv(orderId, normalizedCodes);
-            result.repriceRequired = false;
-            return result;
-        }
-
-        String applicationGroupId = generateUuid();
-        reserveUsage(orderId, applicationGroupId, finalAllocations, ctx);
-        updatePromoCodesEnteredCsv(orderId, normalizedCodes);
-
-        result.applicationGroupId = applicationGroupId;
-        result.repriceRequired = true;
-        return result;
-    }
-
-    /**
-     * Release a previously-applied reservation group. Removes the released codes from
-     * Order.Promo_Codes_Entered__c so the cart state stays consistent.
-     *
-     * @param orderId            the cart Order.
-     * @param applicationGroupId the UUID stamped on the PCIs at Apply.
-     * @return ApplyResult summarizing remaining state. codeResults is empty; repriceRequired is
-     *         true if any PCIs were released (the caller should re-price).
-     */
+    public List<CodeResult> codeResults;
     @AuraEnabled
-    public static ApplyResult remove(Id orderId, String applicationGroupId) {
-        if (orderId == null) {
-            throw new AuraHandledException('Order Id is required.');
-        }
-        if (String.isBlank(applicationGroupId)) {
-            throw new AuraHandledException('Application Group Id is required.');
-        }
-
-        ApplyResult result = new ApplyResult();
-        result.codeResults = new List<CodeResult>();
-        result.totalAdjustment = 0;
-        result.repriceRequired = false;
-
-        List<Promo_Code_Item__c> pcis = [
-            SELECT Id, Status__c, Promo_Code__r.Code__c
-            FROM Promo_Code_Item__c
-            WHERE Order_Item__r.OrderId = :orderId
-              AND Application_Group_Id__c = :applicationGroupId
-              AND Status__c = 'Pending'
-        ];
-
-        if (pcis.isEmpty()) {
-            return result;
-        }
-
-        Set<String> removedCodes = new Set<String>();
-        for (Promo_Code_Item__c pci : pcis) {
-            pci.Status__c = 'Released';
-            pci.Released_Date__c = System.now();
-            pci.Release_Reason__c = 'Code Removed';
-            if (pci.Promo_Code__r != null && pci.Promo_Code__r.Code__c != null) {
-                removedCodes.add(pci.Promo_Code__r.Code__c.toUpperCase());
-            }
-        }
-
-        Savepoint sp = Database.setSavepoint();
-        try {
-            update pcis;
-            rebuildPromoCodesEnteredCsv(orderId, removedCodes);
-        } catch (DmlException e) {
-            Database.rollback(sp);
-            throw new AuraHandledException('Failed to remove promo code: ' + e.getMessage());
-        }
-
-        result.repriceRequired = true;
-        return result;
-    }
-
-    /**
-     * Re-validate all currently-Pending codes on an Order against fresh data. Used by the parent
-     * Checkout LWC immediately before invoking Place Sales Transaction as a defensive guard
-     * against codes that have expired or been deactivated mid-session.
-     *
-     * @param orderId the cart Order.
-     * @return one CodeResult per unique Pending parent code. Codes whose state has changed
-     *         (expired, deactivated, etc.) come back with valid=false and the relevant errorCode.
-     */
+    public Decimal totalAdjustment;
     @AuraEnabled
-    public static List<CodeResult> revalidateAll(Id orderId) {
-        if (orderId == null) {
-            throw new AuraHandledException('Order Id is required.');
-        }
+    public Boolean repriceRequired;
+    @AuraEnabled
+    public String applicationGroupId;
+  }
 
-        OrderContext ctx = loadOrderContext(orderId);
+  public class CodeResult {
+    @AuraEnabled
+    public String code;
+    @AuraEnabled
+    public String currencyIsoCode;
+    @AuraEnabled
+    public Boolean valid;
+    @AuraEnabled
+    public Decimal appliedAmount;
+    @AuraEnabled
+    public List<Id> appliedToOrderItemIds;
+    @AuraEnabled
+    public String errorCode;
+    @AuraEnabled
+    public String errorMessage;
+    @AuraEnabled
+    public String displayName;
+  }
 
-        // Collect unique parent codes from current Pending PCIs.
-        List<Promo_Code_Item__c> pendingPcis = [
-            SELECT Promo_Code__c
-            FROM Promo_Code_Item__c
-            WHERE Order_Item__r.OrderId = :orderId
-              AND Status__c = 'Pending'
-        ];
-        Set<Id> parentIds = new Set<Id>();
-        for (Promo_Code_Item__c pci : pendingPcis) parentIds.add(pci.Promo_Code__c);
+  /**
+   * In-memory snapshot of the cart used by the validator and allocation engine. Built once per
+   * service entry point so downstream code is pure compute and unit-testable without re-querying.
+   */
+  public class OrderContext {
+    public Id orderId;
+    public Id accountId;
+    public String currencyIsoCode;
+    public String region;
+    public List<OrderItem> orderItems;
 
-        List<CodeResult> out = new List<CodeResult>();
-        if (parentIds.isEmpty()) {
-            return out;
-        }
+    public Boolean isMultiCurrency() {
+      return currencyIsoCode != null;
+    }
+  }
 
-        List<Promo_Code__c> parents = [
-            SELECT Id, Code__c, CurrencyIsoCode, Status__c, Display_Name__c,
-                   Effective_Start_Date__c, Effective_End_Date__c,
-                   Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
-                   Member_Type_Scope__c, Region_Scope__c, Account__c,
-                   Product_Scope_Type__c, Product_Family_Scope__c, Specific_Products__c,
-                   Application_Level__c,
-                   Combinable__c, Combination_Group__c, Discount_Type__c, Discount_Value__c
-            FROM Promo_Code__c
-            WHERE Id IN :parentIds
-        ];
+  // ============================================================
+  // Public API
+  // ============================================================
 
-        UsageCounts usage = PromoCodeValidator.fetchUsageCounts(parentIds, ctx.accountId);
-
-        List<Promo_Code__c> validSoFar = new List<Promo_Code__c>();
-        for (Promo_Code__c parent : parents) {
-            CodeResult cr = PromoCodeValidator.validate(parent.Code__c, parent, ctx, validSoFar, usage);
-            out.add(cr);
-            if (cr.valid) {
-                validSoFar.add(parent);
-            }
-        }
-        return out;
+  /**
+   * Validate the submitted codes against the cart and, for the codes that pass, reserve usage
+   * by inserting Pending Promo_Code_Item__c records.
+   *
+   * @param orderId  the cart Order. Must exist and the running user must have read access.
+   * @param codes    list of submitted code strings. Duplicates in the input are deduped
+   *                 case-insensitively before processing; whitespace is trimmed; empties are
+   *                 ignored.
+   * @return ApplyResult with one CodeResult per (deduped) submitted code plus a summary.
+   */
+  @AuraEnabled
+  public static ApplyResult apply(Id orderId, List<String> codes) {
+    if (orderId == null) {
+      throw new AuraHandledException('Order Id is required.');
     }
 
-    // ============================================================
-    // Internals
-    // ============================================================
+    ApplyResult result = new ApplyResult();
+    result.codeResults = new List<CodeResult>();
+    result.totalAdjustment = 0;
+    result.repriceRequired = false;
 
-    private static List<String> normalizeCodeList(List<String> raw) {
-        List<String> out = new List<String>();
-        if (raw == null) return out;
-        Set<String> seen = new Set<String>();
-        for (String s : raw) {
-            if (String.isBlank(s)) continue;
-            String trimmed = s.trim();
-            String key = trimmed.toUpperCase();
-            if (seen.contains(key)) continue;
-            seen.add(key);
-            out.add(trimmed);
+    List<String> normalizedCodes = normalizeCodeList(codes);
+    if (normalizedCodes.isEmpty()) {
+      return result;
+    }
+
+    OrderContext ctx = loadOrderContext(orderId);
+
+    Map<String, Promo_Code__c> codeToParent = fetchPromoCodes(
+      normalizedCodes,
+      ctx.currencyIsoCode
+    );
+    Set<Id> parentIds = new Set<Id>();
+    for (Promo_Code__c p : codeToParent.values())
+      parentIds.add(p.Id);
+
+    UsageCounts usage = PromoCodeValidator.fetchUsageCounts(
+      parentIds,
+      ctx.accountId
+    );
+
+    List<Promo_Code__c> validParents = new List<Promo_Code__c>();
+    for (String submitted : normalizedCodes) {
+      Promo_Code__c parent = codeToParent.get(submitted.toUpperCase());
+      CodeResult cr = PromoCodeValidator.validate(
+        submitted,
+        parent,
+        ctx,
+        validParents,
+        usage
+      );
+      result.codeResults.add(cr);
+      if (cr.valid) {
+        validParents.add(parent);
+      }
+    }
+
+    // Allocate adjustments across qualifying lines.
+    List<PromoCodeAllocationEngine.CodeAllocation> allocations = PromoCodeAllocationEngine.allocate(
+      validParents,
+      ctx.orderItems
+    );
+
+    // Sum per-code totals for the response.
+    Map<Id, Decimal> totalByPromoCode = new Map<Id, Decimal>();
+    Map<Id, List<Id>> linesByPromoCode = new Map<Id, List<Id>>();
+    for (PromoCodeAllocationEngine.CodeAllocation a : allocations) {
+      Decimal running = totalByPromoCode.get(a.promoCodeId);
+      totalByPromoCode.put(
+        a.promoCodeId,
+        (running == null ? 0 : running) + a.adjustmentAmount
+      );
+      List<Id> lines = linesByPromoCode.get(a.promoCodeId);
+      if (lines == null) {
+        lines = new List<Id>();
+        linesByPromoCode.put(a.promoCodeId, lines);
+      }
+      lines.add(a.orderItemId);
+    }
+
+    // Back-fill applied amounts onto valid CodeResults; if a valid code allocated zero (no
+    // qualifying lines in the as-applied set), downgrade it to NOT_APPLICABLE_TO_CART so the
+    // member sees a clear error rather than a silent zero. This catches edge cases where the
+    // validator's step 9 passed but a later code in the set consumed the only qualifying line.
+    for (CodeResult cr : result.codeResults) {
+      if (!cr.valid)
+        continue;
+      Promo_Code__c parent = codeToParent.get(cr.code.toUpperCase());
+      Decimal codeTotal = totalByPromoCode.get(parent.Id);
+      if (codeTotal == null || codeTotal <= 0) {
+        cr.valid = false;
+        cr.errorCode = ERR_NOT_APPLICABLE_TO_CART;
+        cr.errorMessage = PromoCodeValidator.messageFor(
+          ERR_NOT_APPLICABLE_TO_CART,
+          parent,
+          ctx
+        );
+        continue;
+      }
+      cr.appliedAmount = codeTotal;
+      cr.appliedToOrderItemIds = linesByPromoCode.get(parent.Id);
+      result.totalAdjustment += codeTotal;
+    }
+
+    // Filter allocations whose code got downgraded above.
+    Set<Id> stillValidPromoCodeIds = new Set<Id>();
+    for (CodeResult cr : result.codeResults) {
+      if (cr.valid) {
+        stillValidPromoCodeIds.add(codeToParent.get(cr.code.toUpperCase()).Id);
+      }
+    }
+    List<PromoCodeAllocationEngine.CodeAllocation> finalAllocations = new List<PromoCodeAllocationEngine.CodeAllocation>();
+    for (PromoCodeAllocationEngine.CodeAllocation a : allocations) {
+      if (stillValidPromoCodeIds.contains(a.promoCodeId))
+        finalAllocations.add(a);
+    }
+
+    if (finalAllocations.isEmpty()) {
+      // No valid codes — still persist the entered list (the LWC keeps invalid codes around
+      // so the member can correct them).
+      updatePromoCodesEnteredCsv(orderId, normalizedCodes);
+      result.repriceRequired = false;
+      return result;
+    }
+
+    String applicationGroupId = generateUuid();
+    reserveUsage(orderId, applicationGroupId, finalAllocations, ctx);
+    updatePromoCodesEnteredCsv(orderId, normalizedCodes);
+
+    result.applicationGroupId = applicationGroupId;
+    result.repriceRequired = true;
+    return result;
+  }
+
+  /**
+   * Release a previously-applied reservation group. Removes the released codes from
+   * Order.Promo_Codes_Entered__c so the cart state stays consistent.
+   *
+   * @param orderId            the cart Order.
+   * @param applicationGroupId the UUID stamped on the PCIs at Apply.
+   * @return ApplyResult summarizing remaining state. codeResults is empty; repriceRequired is
+   *         true if any PCIs were released (the caller should re-price).
+   */
+  @AuraEnabled
+  public static ApplyResult remove(Id orderId, String applicationGroupId) {
+    if (orderId == null) {
+      throw new AuraHandledException('Order Id is required.');
+    }
+    if (String.isBlank(applicationGroupId)) {
+      throw new AuraHandledException('Application Group Id is required.');
+    }
+
+    ApplyResult result = new ApplyResult();
+    result.codeResults = new List<CodeResult>();
+    result.totalAdjustment = 0;
+    result.repriceRequired = false;
+
+    List<Promo_Code_Item__c> pcis = [
+      SELECT Id, Status__c, Promo_Code__r.Code__c
+      FROM Promo_Code_Item__c
+      WHERE
+        Order_Item__r.OrderId = :orderId
+        AND Application_Group_Id__c = :applicationGroupId
+        AND Status__c = 'Pending'
+    ];
+
+    if (pcis.isEmpty()) {
+      return result;
+    }
+
+    Set<String> removedCodes = new Set<String>();
+    for (Promo_Code_Item__c pci : pcis) {
+      pci.Status__c = 'Released';
+      pci.Released_Date__c = System.now();
+      pci.Release_Reason__c = 'Code Removed';
+      if (pci.Promo_Code__r != null && pci.Promo_Code__r.Code__c != null) {
+        removedCodes.add(pci.Promo_Code__r.Code__c.toUpperCase());
+      }
+    }
+
+    Savepoint sp = Database.setSavepoint();
+    try {
+      update pcis;
+      rebuildPromoCodesEnteredCsv(orderId, removedCodes);
+    } catch (DmlException e) {
+      Database.rollback(sp);
+      throw new AuraHandledException(
+        'Failed to remove promo code: ' + e.getMessage()
+      );
+    }
+
+    result.repriceRequired = true;
+    return result;
+  }
+
+  /**
+   * Re-validate all currently-Pending codes on an Order against fresh data. Used by the parent
+   * Checkout LWC immediately before invoking Place Sales Transaction as a defensive guard
+   * against codes that have expired or been deactivated mid-session.
+   *
+   * @param orderId the cart Order.
+   * @return one CodeResult per unique Pending parent code. Codes whose state has changed
+   *         (expired, deactivated, etc.) come back with valid=false and the relevant errorCode.
+   */
+  @AuraEnabled
+  public static List<CodeResult> revalidateAll(Id orderId) {
+    if (orderId == null) {
+      throw new AuraHandledException('Order Id is required.');
+    }
+
+    OrderContext ctx = loadOrderContext(orderId);
+
+    // Collect unique parent codes from current Pending PCIs.
+    List<Promo_Code_Item__c> pendingPcis = [
+      SELECT Promo_Code__c
+      FROM Promo_Code_Item__c
+      WHERE Order_Item__r.OrderId = :orderId AND Status__c = 'Pending'
+    ];
+    Set<Id> parentIds = new Set<Id>();
+    for (Promo_Code_Item__c pci : pendingPcis)
+      parentIds.add(pci.Promo_Code__c);
+
+    List<CodeResult> out = new List<CodeResult>();
+    if (parentIds.isEmpty()) {
+      return out;
+    }
+
+    List<Promo_Code__c> parents = [
+      SELECT
+        Id,
+        Code__c,
+        CurrencyIsoCode,
+        Status__c,
+        Display_Name__c,
+        Effective_Start_Date__c,
+        Effective_End_Date__c,
+        Total_Usage_Limit__c,
+        Per_Member_Usage_Limit__c,
+        Confirmed_Usage_Count__c,
+        Member_Type_Scope__c,
+        Region_Scope__c,
+        Account__c,
+        Product_Scope_Type__c,
+        Product_Family_Scope__c,
+        Specific_Products__c,
+        Application_Level__c,
+        Combinable__c,
+        Combination_Group__c,
+        Discount_Type__c,
+        Discount_Value__c
+      FROM Promo_Code__c
+      WHERE Id IN :parentIds
+    ];
+
+    UsageCounts usage = PromoCodeValidator.fetchUsageCounts(
+      parentIds,
+      ctx.accountId
+    );
+
+    List<Promo_Code__c> validSoFar = new List<Promo_Code__c>();
+    for (Promo_Code__c parent : parents) {
+      CodeResult cr = PromoCodeValidator.validate(
+        parent.Code__c,
+        parent,
+        ctx,
+        validSoFar,
+        usage
+      );
+      out.add(cr);
+      if (cr.valid) {
+        validSoFar.add(parent);
+      }
+    }
+    return out;
+  }
+
+  // ============================================================
+  // Internals
+  // ============================================================
+
+  private static List<String> normalizeCodeList(List<String> raw) {
+    List<String> out = new List<String>();
+    if (raw == null)
+      return out;
+    Set<String> seen = new Set<String>();
+    for (String s : raw) {
+      if (String.isBlank(s))
+        continue;
+      String trimmed = s.trim();
+      String key = trimmed.toUpperCase();
+      if (seen.contains(key))
+        continue;
+      seen.add(key);
+      out.add(trimmed);
+    }
+    return out;
+  }
+
+  private static OrderContext loadOrderContext(Id orderId) {
+    Boolean isMultiCurrency =
+      Schema.getGlobalDescribe().containsKey('CurrencyType') &&
+      Schema.SObjectType.Order.fields.getMap().containsKey('currencyisocode');
+
+    String orderSoql =
+      'SELECT Id, AccountId, Region__c' +
+      (isMultiCurrency ? ', CurrencyIsoCode' : '') +
+      ' FROM Order WHERE Id = :orderId LIMIT 1';
+    List<SObject> orders = Database.query(orderSoql);
+    if (orders.isEmpty()) {
+      throw new AuraHandledException(
+        'Order not found or not accessible: ' + orderId
+      );
+    }
+    SObject ord = orders[0];
+
+    OrderContext ctx = new OrderContext();
+    ctx.orderId = orderId;
+    ctx.accountId = (Id) ord.get('AccountId');
+    ctx.region = (String) ord.get('Region__c');
+    ctx.currencyIsoCode = isMultiCurrency
+      ? (String) ord.get('CurrencyIsoCode')
+      : null;
+
+    ctx.orderItems = [
+      SELECT
+        Id,
+        OrderId,
+        Product2Id,
+        Product2.Name,
+        Product2.Family,
+        Product2.ProductCode,
+        Quantity,
+        UnitPrice
+      FROM OrderItem
+      WHERE OrderId = :orderId
+    ];
+
+    return ctx;
+  }
+
+  private static Map<String, Promo_Code__c> fetchPromoCodes(
+    List<String> codes,
+    String currencyIso
+  ) {
+    Set<String> upperCodes = new Set<String>();
+    for (String c : codes)
+      upperCodes.add(c.toUpperCase());
+
+    Boolean isMultiCurrency = currencyIso != null;
+
+    String baseSelect =
+      'SELECT Id, Code__c, ' +
+      (isMultiCurrency ? 'CurrencyIsoCode, ' : '') +
+      'Status__c, Display_Name__c, ' +
+      'Effective_Start_Date__c, Effective_End_Date__c, ' +
+      'Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c, ' +
+      'Member_Type_Scope__c, Region_Scope__c, Account__c, ' +
+      'Product_Scope_Type__c, Product_Family_Scope__c, Specific_Products__c, ' +
+      'Application_Level__c, ' +
+      'Combinable__c, Combination_Group__c, ' +
+      'Discount_Type__c, Discount_Value__c ' +
+      'FROM Promo_Code__c ' +
+      'WHERE Code__c IN :upperCodes' +
+      (isMultiCurrency ? ' AND CurrencyIsoCode = :currencyIso' : '');
+
+    Map<String, Promo_Code__c> result = new Map<String, Promo_Code__c>();
+    for (Promo_Code__c p : (List<Promo_Code__c>) Database.query(baseSelect)) {
+      if (p.Code__c != null) {
+        result.put(p.Code__c.toUpperCase(), p);
+      }
+    }
+    return result;
+  }
+
+  private static void reserveUsage(
+    Id orderId,
+    String applicationGroupId,
+    List<PromoCodeAllocationEngine.CodeAllocation> allocations,
+    OrderContext ctx
+  ) {
+    Savepoint sp = Database.setSavepoint();
+    try {
+      // 1. Release any existing Pending PCIs for this Order. We mark them rather than delete
+      //    to preserve the audit trail of redemption attempts.
+      List<Promo_Code_Item__c> existing = [
+        SELECT Id
+        FROM Promo_Code_Item__c
+        WHERE Order_Item__r.OrderId = :orderId AND Status__c = 'Pending'
+      ];
+      if (!existing.isEmpty()) {
+        Datetime now = System.now();
+        for (Promo_Code_Item__c pci : existing) {
+          pci.Status__c = 'Released';
+          pci.Released_Date__c = now;
+          pci.Release_Reason__c = 'Reapplied';
         }
-        return out;
+        update existing;
+      }
+
+      // 2. Insert new Pending PCIs (one per allocation).
+      List<Promo_Code_Item__c> toInsert = new List<Promo_Code_Item__c>();
+      Datetime appliedDate = System.now();
+      for (PromoCodeAllocationEngine.CodeAllocation a : allocations) {
+        Promo_Code_Item__c pci = new Promo_Code_Item__c(
+          Promo_Code__c = a.promoCodeId,
+          Order_Item__c = a.orderItemId,
+          Member__c = ctx.accountId,
+          Applied_Discount_Amount__c = a.adjustmentAmount,
+          Discount_Type_Snapshot__c = a.discountTypeSnapshot,
+          Discount_Value_Snapshot__c = a.discountValueSnapshot,
+          Application_Level_Snapshot__c = a.applicationLevelSnapshot,
+          Product_Scope_Type_Snapshot__c = a.productScopeTypeSnapshot,
+          Application_Group_Id__c = applicationGroupId,
+          Applied_Date__c = appliedDate,
+          Status__c = 'Pending'
+        );
+        toInsert.add(pci);
+      }
+      if (!toInsert.isEmpty()) {
+        insert toInsert;
+      }
+    } catch (DmlException e) {
+      Database.rollback(sp);
+      String msg =
+        'Failed to reserve promo code usage: ' +
+        (e.getNumDml() > 0 ? e.getDmlMessage(0) : e.getMessage());
+      AuraHandledException ex = new AuraHandledException(msg);
+      ex.setMessage(msg);
+      throw ex;
+    }
+  }
+
+  /**
+   * Persists the comma-separated list of codes the member has entered. Invoked on every Apply
+   * regardless of whether codes were valid — the LWC keeps invalid codes visible so the member
+   * can correct them, and we want that list to survive navigation away from the cart.
+   */
+  private static void updatePromoCodesEnteredCsv(
+    Id orderId,
+    List<String> codes
+  ) {
+    Order o = new Order(Id = orderId);
+    o.Promo_Codes_Entered__c = codes == null || codes.isEmpty()
+      ? null
+      : String.join(codes, ',');
+    update o;
+  }
+
+  /**
+   * Used by Remove. Removes the just-released codes from the Order's CSV but preserves any
+   * other codes the member still has applied (since multiple Apply events can have layered).
+   */
+  private static void rebuildPromoCodesEnteredCsv(
+    Id orderId,
+    Set<String> removedCodesUpper
+  ) {
+    Order o = [
+      SELECT Id, Promo_Codes_Entered__c
+      FROM Order
+      WHERE Id = :orderId
+      LIMIT 1
+    ];
+    if (String.isBlank(o.Promo_Codes_Entered__c))
+      return;
+
+    List<String> kept = new List<String>();
+    for (String token : o.Promo_Codes_Entered__c.split(',')) {
+      String trimmed = token.trim();
+      if (String.isBlank(trimmed))
+        continue;
+      if (!removedCodesUpper.contains(trimmed.toUpperCase())) {
+        kept.add(trimmed);
+      }
+    }
+    o.Promo_Codes_Entered__c = kept.isEmpty() ? null : String.join(kept, ',');
+    update o;
+  }
+
+  /**
+   * Generates a UUID v4 string for Application_Group_Id__c. Apex has no native UUID type;
+   * this uses cryptographic randomness and the standard hyphenated formatting.
+   */
+  @TestVisible
+  private static String generateUuid() {
+    Blob b = Crypto.generateAesKey(128);
+    String hex = EncodingUtil.convertToHex(b);
+    return hex.substring(0, 8) +
+      '-' +
+      hex.substring(8, 12) +
+      '-' +
+      '4' +
+      hex.substring(13, 16) +
+      '-' +
+      '8' +
+      hex.substring(17, 20) +
+      '-' +
+      hex.substring(20, 32);
+  }
+
+  /**
+   * Aggregate Pending + Confirmed usage stats for a set of promo codes, scoped both globally
+   * and to a specific member, in a single query each. Used by the validator for rules 4 and 5.
+   */
+  public class UsageCounts {
+    public Map<Id, Integer> pendingByCode = new Map<Id, Integer>();
+    public Map<Id, Integer> confirmedByCode = new Map<Id, Integer>();
+    public Map<Id, Integer> memberPendingByCode = new Map<Id, Integer>();
+    public Map<Id, Integer> memberConfirmedByCode = new Map<Id, Integer>();
+
+    public Integer totalUsed(Id promoCodeId) {
+      Integer pending = pendingByCode.containsKey(promoCodeId)
+        ? pendingByCode.get(promoCodeId)
+        : 0;
+      Integer confirmed = confirmedByCode.containsKey(promoCodeId)
+        ? confirmedByCode.get(promoCodeId)
+        : 0;
+      return pending + confirmed;
     }
 
-    private static OrderContext loadOrderContext(Id orderId) {
-        Boolean isMultiCurrency = Schema.getGlobalDescribe().containsKey('CurrencyType')
-            && Schema.SObjectType.Order.fields.getMap().containsKey('currencyisocode');
-
-        String orderSoql =
-            'SELECT Id, AccountId, Region__c'
-            + (isMultiCurrency ? ', CurrencyIsoCode' : '')
-            + ' FROM Order WHERE Id = :orderId LIMIT 1';
-        List<SObject> orders = Database.query(orderSoql);
-        if (orders.isEmpty()) {
-            throw new AuraHandledException('Order not found or not accessible: ' + orderId);
-        }
-        SObject ord = orders[0];
-
-        OrderContext ctx = new OrderContext();
-        ctx.orderId = orderId;
-        ctx.accountId = (Id) ord.get('AccountId');
-        ctx.region = (String) ord.get('Region__c');
-        ctx.currencyIsoCode = isMultiCurrency ? (String) ord.get('CurrencyIsoCode') : null;
-
-        ctx.orderItems = [
-            SELECT Id, OrderId, Product2Id, Product2.Name, Product2.Family, Product2.ProductCode,
-                   Quantity, UnitPrice
-            FROM OrderItem
-            WHERE OrderId = :orderId
-        ];
-
-        return ctx;
+    public Integer memberUsed(Id promoCodeId) {
+      Integer pending = memberPendingByCode.containsKey(promoCodeId)
+        ? memberPendingByCode.get(promoCodeId)
+        : 0;
+      Integer confirmed = memberConfirmedByCode.containsKey(promoCodeId)
+        ? memberConfirmedByCode.get(promoCodeId)
+        : 0;
+      return pending + confirmed;
     }
-
-    private static Map<String, Promo_Code__c> fetchPromoCodes(List<String> codes, String currencyIso) {
-        Set<String> upperCodes = new Set<String>();
-        for (String c : codes) upperCodes.add(c.toUpperCase());
-
-        Boolean isMultiCurrency = currencyIso != null;
-
-        String baseSelect =
-            'SELECT Id, Code__c, ' + (isMultiCurrency ? 'CurrencyIsoCode, ' : '') +
-            'Status__c, Display_Name__c, ' +
-            'Effective_Start_Date__c, Effective_End_Date__c, ' +
-            'Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c, ' +
-            'Member_Type_Scope__c, Region_Scope__c, Account__c, ' +
-            'Product_Scope_Type__c, Product_Family_Scope__c, Specific_Products__c, ' +
-            'Application_Level__c, ' +
-            'Combinable__c, Combination_Group__c, ' +
-            'Discount_Type__c, Discount_Value__c ' +
-            'FROM Promo_Code__c ' +
-            'WHERE Code__c IN :upperCodes' +
-            (isMultiCurrency ? ' AND CurrencyIsoCode = :currencyIso' : '');
-
-        Map<String, Promo_Code__c> result = new Map<String, Promo_Code__c>();
-        for (Promo_Code__c p : (List<Promo_Code__c>) Database.query(baseSelect)) {
-            if (p.Code__c != null) {
-                result.put(p.Code__c.toUpperCase(), p);
-            }
-        }
-        return result;
-    }
-
-    private static void reserveUsage(
-        Id orderId,
-        String applicationGroupId,
-        List<PromoCodeAllocationEngine.CodeAllocation> allocations,
-        OrderContext ctx
-    ) {
-        Savepoint sp = Database.setSavepoint();
-        try {
-            // 1. Release any existing Pending PCIs for this Order. We mark them rather than delete
-            //    to preserve the audit trail of redemption attempts.
-            List<Promo_Code_Item__c> existing = [
-                SELECT Id
-                FROM Promo_Code_Item__c
-                WHERE Order_Item__r.OrderId = :orderId
-                  AND Status__c = 'Pending'
-            ];
-            if (!existing.isEmpty()) {
-                Datetime now = System.now();
-                for (Promo_Code_Item__c pci : existing) {
-                    pci.Status__c = 'Released';
-                    pci.Released_Date__c = now;
-                    pci.Release_Reason__c = 'Reapplied';
-                }
-                update existing;
-            }
-
-            // 2. Insert new Pending PCIs (one per allocation).
-            List<Promo_Code_Item__c> toInsert = new List<Promo_Code_Item__c>();
-            Datetime appliedDate = System.now();
-            for (PromoCodeAllocationEngine.CodeAllocation a : allocations) {
-                Promo_Code_Item__c pci = new Promo_Code_Item__c(
-                    Promo_Code__c = a.promoCodeId,
-                    Order_Item__c = a.orderItemId,
-                    Member__c = ctx.accountId,
-                    Applied_Discount_Amount__c = a.adjustmentAmount,
-                    Discount_Type_Snapshot__c = a.discountTypeSnapshot,
-                    Discount_Value_Snapshot__c = a.discountValueSnapshot,
-                    Application_Level_Snapshot__c = a.applicationLevelSnapshot,
-                    Product_Scope_Type_Snapshot__c = a.productScopeTypeSnapshot,
-                    Application_Group_Id__c = applicationGroupId,
-                    Applied_Date__c = appliedDate,
-                    Status__c = 'Pending'
-                );
-                toInsert.add(pci);
-            }
-            if (!toInsert.isEmpty()) {
-                insert toInsert;
-            }
-        } catch (DmlException e) {
-            Database.rollback(sp);
-            String msg = 'Failed to reserve promo code usage: ' +
-                (e.getNumDml() > 0 ? e.getDmlMessage(0) : e.getMessage());
-            AuraHandledException ex = new AuraHandledException(msg);
-            ex.setMessage(msg);
-            throw ex;
-        }
-    }
-
-    /**
-     * Persists the comma-separated list of codes the member has entered. Invoked on every Apply
-     * regardless of whether codes were valid — the LWC keeps invalid codes visible so the member
-     * can correct them, and we want that list to survive navigation away from the cart.
-     */
-    private static void updatePromoCodesEnteredCsv(Id orderId, List<String> codes) {
-        Order o = new Order(Id = orderId);
-        o.Promo_Codes_Entered__c = codes == null || codes.isEmpty() ? null : String.join(codes, ',');
-        update o;
-    }
-
-    /**
-     * Used by Remove. Removes the just-released codes from the Order's CSV but preserves any
-     * other codes the member still has applied (since multiple Apply events can have layered).
-     */
-    private static void rebuildPromoCodesEnteredCsv(Id orderId, Set<String> removedCodesUpper) {
-        Order o = [SELECT Id, Promo_Codes_Entered__c FROM Order WHERE Id = :orderId LIMIT 1];
-        if (String.isBlank(o.Promo_Codes_Entered__c)) return;
-
-        List<String> kept = new List<String>();
-        for (String token : o.Promo_Codes_Entered__c.split(',')) {
-            String trimmed = token.trim();
-            if (String.isBlank(trimmed)) continue;
-            if (!removedCodesUpper.contains(trimmed.toUpperCase())) {
-                kept.add(trimmed);
-            }
-        }
-        o.Promo_Codes_Entered__c = kept.isEmpty() ? null : String.join(kept, ',');
-        update o;
-    }
-
-    /**
-     * Generates a UUID v4 string for Application_Group_Id__c. Apex has no native UUID type;
-     * this uses cryptographic randomness and the standard hyphenated formatting.
-     */
-    @TestVisible
-    private static String generateUuid() {
-        Blob b = Crypto.generateAesKey(128);
-        String hex = EncodingUtil.convertToHex(b);
-        return hex.substring(0, 8) + '-' +
-               hex.substring(8, 12) + '-' +
-               '4' + hex.substring(13, 16) + '-' +
-               '8' + hex.substring(17, 20) + '-' +
-               hex.substring(20, 32);
-    }
-
-    /**
-     * Aggregate Pending + Confirmed usage stats for a set of promo codes, scoped both globally
-     * and to a specific member, in a single query each. Used by the validator for rules 4 and 5.
-     */
-    public class UsageCounts {
-        public Map<Id, Integer> pendingByCode = new Map<Id, Integer>();
-        public Map<Id, Integer> confirmedByCode = new Map<Id, Integer>();
-        public Map<Id, Integer> memberPendingByCode = new Map<Id, Integer>();
-        public Map<Id, Integer> memberConfirmedByCode = new Map<Id, Integer>();
-
-        public Integer totalUsed(Id promoCodeId, Integer confirmedFromParent) {
-            Integer pending = pendingByCode.containsKey(promoCodeId) ? pendingByCode.get(promoCodeId) : 0;
-            // Prefer the parent's Confirmed_Usage_Count__c (kept in sync by the activation handler)
-            // over re-querying PCIs, but fall back to the queried count if the parent value is null.
-            Integer confirmed = confirmedFromParent != null
-                ? confirmedFromParent
-                : (confirmedByCode.containsKey(promoCodeId) ? confirmedByCode.get(promoCodeId) : 0);
-            return pending + confirmed;
-        }
-
-        public Integer memberUsed(Id promoCodeId) {
-            Integer pending = memberPendingByCode.containsKey(promoCodeId)
-                ? memberPendingByCode.get(promoCodeId) : 0;
-            Integer confirmed = memberConfirmedByCode.containsKey(promoCodeId)
-                ? memberConfirmedByCode.get(promoCodeId) : 0;
-            return pending + confirmed;
-        }
-    }
+  }
 }

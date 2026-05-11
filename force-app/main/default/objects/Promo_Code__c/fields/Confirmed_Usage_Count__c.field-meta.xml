@@ -1,14 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Confirmed_Usage_Count__c</fullName>
-    <defaultValue>0</defaultValue>
-    <description>Apex-maintained. Incremented when a Promo_Code_Item__c flips Pending -&gt; Confirmed (Order Activation).</description>
+    <description
+  >Platform-maintained rollup summary: count of Promo_Code_Item__c children whose Status__c = &apos;Confirmed&apos;. Drives usage-cap validation in PromoCodeValidator and the High Usage list view threshold.</description>
     <label>Confirmed Usage Count</label>
-    <precision>8</precision>
-    <required>false</required>
-    <scale>0</scale>
+    <summaryFilterItems>
+        <field>Promo_Code_Item__c.Status__c</field>
+        <operation>equals</operation>
+        <value>Confirmed</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Promo_Code_Item__c.Promo_Code__c</summaryForeignKey>
+    <summaryOperation>count</summaryOperation>
     <trackHistory>true</trackHistory>
     <trackTrending>false</trackTrending>
-    <type>Number</type>
-    <unique>false</unique>
+    <type>Summary</type>
 </CustomField>
