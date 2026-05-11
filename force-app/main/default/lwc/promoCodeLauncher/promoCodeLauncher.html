@@ -2,15 +2,12 @@
     <lightning-card>
         <div class="slds-p-around_medium">
             <lightning-button
-                label="New Promo Code"
+                label={label.btnNew}
                 variant="brand"
                 icon-name="utility:add"
                 onclick={handleOpen}>
             </lightning-button>
-            <p class="slds-m-top_x-small slds-text-color_weak slds-text-body_small">
-                Launches the Promo Code creation wizard. Records are created in Draft and
-                require activation before members can apply them at checkout.
-            </p>
+            <p class="slds-m-top_x-small slds-text-color_weak slds-text-body_small">{label.helper}</p>
         </div>
     </lightning-card>
 </template>

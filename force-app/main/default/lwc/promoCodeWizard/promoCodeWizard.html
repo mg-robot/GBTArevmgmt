@@ -1,13 +1,13 @@
 <template>
-    <lightning-modal-header label="New Promo Code"></lightning-modal-header>
+    <lightning-modal-header label={label.modalTitle}></lightning-modal-header>
 
     <lightning-modal-body>
         <div class="progress-wrap">
             <lightning-progress-indicator current-step={progressValue} type="path" variant="base" onstepclick={handleProgressClick}>
-                <lightning-progress-step label="Definition" value="step1"></lightning-progress-step>
-                <lightning-progress-step label="Scope & Eligibility" value="step2"></lightning-progress-step>
-                <lightning-progress-step label="Limits & Behavior" value="step3"></lightning-progress-step>
-                <lightning-progress-step label="Review & Activate" value="step4"></lightning-progress-step>
+                <lightning-progress-step label={label.stepDefinition} value="step1"></lightning-progress-step>
+                <lightning-progress-step label={label.stepScopeEligibility} value="step2"></lightning-progress-step>
+                <lightning-progress-step label={label.stepLimitsBehavior} value="step3"></lightning-progress-step>
+                <lightning-progress-step label={label.stepReviewActivate} value="step4"></lightning-progress-step>
             </lightning-progress-indicator>
         </div>
 
@@ -47,24 +47,24 @@
         </template>
 
         <template if:true={isSubmitting}>
-            <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+            <lightning-spinner alternative-text={label.saving} size="medium"></lightning-spinner>
         </template>
     </lightning-modal-body>
 
     <lightning-modal-footer>
-        <lightning-button label="Cancel" onclick={handleCancel} class="slds-m-right_x-small"></lightning-button>
+        <lightning-button label={label.btnCancel} onclick={handleCancel} class="slds-m-right_x-small"></lightning-button>
         <template if:false={isFirstStep}>
-            <lightning-button label="Back" onclick={handleBack} class="slds-m-right_x-small"></lightning-button>
+            <lightning-button label={label.btnBack} onclick={handleBack} class="slds-m-right_x-small"></lightning-button>
         </template>
         <template if:true={isReviewStep}>
             <lightning-button
-                label="Save as Draft"
+                label={label.btnSaveAsDraft}
                 onclick={handleSaveDraft}
                 disabled={isSubmitting}
                 class="slds-m-right_x-small">
             </lightning-button>
             <lightning-button
-                label="Activate Now"
+                label={label.btnActivateNow}
                 variant="brand"
                 onclick={handleActivateNow}
                 disabled={isSubmitting}>
@@ -72,7 +72,7 @@
         </template>
         <template if:false={isReviewStep}>
             <lightning-button
-                label="Next"
+                label={label.btnNext}
                 variant="brand"
                 onclick={handleNext}
                 disabled={nextDisabled}>

@@ -5,6 +5,22 @@ import MEMBER_TYPE_SCOPE_FIELD from '@salesforce/schema/Promo_Code__c.Member_Typ
 import REGION_SCOPE_FIELD from '@salesforce/schema/Promo_Code__c.Region_Scope__c';
 import PRODUCT_SCOPE_TYPE_FIELD from '@salesforce/schema/Promo_Code__c.Product_Scope_Type__c';
 
+import LBL_ValidityHeading from '@salesforce/label/c.PromoCodeWizard_S2_Validity_Heading';
+import LBL_ValidityHelper from '@salesforce/label/c.PromoCodeWizard_S2_Validity_Helper';
+import LBL_EffectiveStart from '@salesforce/label/c.PromoCodeWizard_S2_EffectiveStart_Label';
+import LBL_EffectiveEnd from '@salesforce/label/c.PromoCodeWizard_S2_EffectiveEnd_Label';
+import LBL_MemberRegionHeading from '@salesforce/label/c.PromoCodeWizard_S2_MemberRegion_Heading';
+import LBL_MemberRegionHelper from '@salesforce/label/c.PromoCodeWizard_S2_MemberRegion_Helper';
+import LBL_MemberTypeScope from '@salesforce/label/c.PromoCodeWizard_S2_MemberType_Label';
+import LBL_RegionScope from '@salesforce/label/c.PromoCodeWizard_S2_Region_Label';
+import LBL_ProductAppHeading from '@salesforce/label/c.PromoCodeWizard_S2_ProductApp_Heading';
+import LBL_ProductAppHelper from '@salesforce/label/c.PromoCodeWizard_S2_ProductApp_Helper';
+import LBL_ProductScope from '@salesforce/label/c.PromoCodeWizard_S2_ProductScope_Label';
+import LBL_ProductFamily from '@salesforce/label/c.PromoCodeWizard_S2_ProductFamily_Label';
+import LBL_AccountScopeHeading from '@salesforce/label/c.PromoCodeWizard_S2_AccountScope_Heading';
+import LBL_AccountScopeHelper from '@salesforce/label/c.PromoCodeWizard_S2_AccountScope_Helper';
+import LBL_Account from '@salesforce/label/c.PromoCodeWizard_S2_Account_Label';
+
 const MASTER_RT = '012000000000000AAA';
 const PRODUCT_FAMILY_VALUES = [
     { label: 'Membership', value: 'Membership' },
@@ -14,8 +30,7 @@ const PRODUCT_FAMILY_VALUES = [
 
 /**
  * Step 2 of the wizard. Captures effective window, member type & region scope,
- * product applicability, and optional Account scope. Always passes validation
- * (every field is optional).
+ * product applicability, and optional Account scope. All user-facing text from Custom Labels.
  */
 export default class PromoCodeWizardStepScope extends LightningElement {
     @api wizardData;
@@ -23,6 +38,24 @@ export default class PromoCodeWizardStepScope extends LightningElement {
     @track _memberTypeOptions = [];
     @track _regionOptions = [];
     @track _productScopeTypeOptions = [];
+
+    label = {
+        validityHeading: LBL_ValidityHeading,
+        validityHelper: LBL_ValidityHelper,
+        effectiveStart: LBL_EffectiveStart,
+        effectiveEnd: LBL_EffectiveEnd,
+        memberRegionHeading: LBL_MemberRegionHeading,
+        memberRegionHelper: LBL_MemberRegionHelper,
+        memberTypeScope: LBL_MemberTypeScope,
+        regionScope: LBL_RegionScope,
+        productAppHeading: LBL_ProductAppHeading,
+        productAppHelper: LBL_ProductAppHelper,
+        productScope: LBL_ProductScope,
+        productFamily: LBL_ProductFamily,
+        accountScopeHeading: LBL_AccountScopeHeading,
+        accountScopeHelper: LBL_AccountScopeHelper,
+        account: LBL_Account
+    };
 
     @wire(getPicklistValues, { recordTypeId: MASTER_RT, fieldApiName: MEMBER_TYPE_SCOPE_FIELD })
     wiredMemberType({ data }) {

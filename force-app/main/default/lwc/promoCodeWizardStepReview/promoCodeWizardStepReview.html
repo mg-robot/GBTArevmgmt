@@ -1,8 +1,5 @@
 <template>
-    <p class="slds-m-bottom_small">
-        About to create <strong>{recordCount}</strong> Promo Code record(s) sharing Code
-        <strong>{wizardData.code}</strong>:
-    </p>
+    <p class="slds-m-bottom_small">{previewText}</p>
     <div class="record-list">
         <template for:each={recordPreview} for:item="r">
             <div key={r.label}>{r.label}</div>
@@ -12,17 +9,17 @@
     <!-- Definition summary -->
     <div class="summary-card">
         <div class="summary-section-title">
-            <span class="summary-section-name">Definition</span>
-            <a href="#" data-step="1" class="summary-section-edit" onclick={handleEditClick}>Edit</a>
+            <span class="summary-section-name">{label.sectionDefinition}</span>
+            <a href="#" data-step="1" class="summary-section-edit" onclick={handleEditClick}>{label.edit}</a>
         </div>
         <dl class="slds-dl_horizontal slds-text-body_small">
-            <dt class="slds-dl_horizontal__label">Code</dt>
+            <dt class="slds-dl_horizontal__label">{label.code}</dt>
             <dd class="slds-dl_horizontal__detail">{wizardData.code}</dd>
-            <dt class="slds-dl_horizontal__label">Display Name</dt>
+            <dt class="slds-dl_horizontal__label">{label.displayName}</dt>
             <dd class="slds-dl_horizontal__detail">{wizardData.displayName}</dd>
-            <dt class="slds-dl_horizontal__label">Discount Type</dt>
+            <dt class="slds-dl_horizontal__label">{label.discType}</dt>
             <dd class="slds-dl_horizontal__detail">{wizardData.discountType}</dd>
-            <dt class="slds-dl_horizontal__label">Discount Value</dt>
+            <dt class="slds-dl_horizontal__label">{label.discValue}</dt>
             <dd class="slds-dl_horizontal__detail">{discountValueDisplay}</dd>
         </dl>
     </div>
@@ -30,19 +27,19 @@
     <!-- Scope summary -->
     <div class="summary-card">
         <div class="summary-section-title">
-            <span class="summary-section-name">Scope &amp; Eligibility</span>
-            <a href="#" data-step="2" class="summary-section-edit" onclick={handleEditClick}>Edit</a>
+            <span class="summary-section-name">{label.sectionScope}</span>
+            <a href="#" data-step="2" class="summary-section-edit" onclick={handleEditClick}>{label.edit}</a>
         </div>
         <dl class="slds-dl_horizontal slds-text-body_small">
-            <dt class="slds-dl_horizontal__label">Effective</dt>
+            <dt class="slds-dl_horizontal__label">{label.effective}</dt>
             <dd class="slds-dl_horizontal__detail">{effectiveDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">Member Types</dt>
+            <dt class="slds-dl_horizontal__label">{label.memberTypes}</dt>
             <dd class="slds-dl_horizontal__detail">{memberTypeDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">Regions</dt>
+            <dt class="slds-dl_horizontal__label">{label.regions}</dt>
             <dd class="slds-dl_horizontal__detail">{regionDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">Products</dt>
+            <dt class="slds-dl_horizontal__label">{label.products}</dt>
             <dd class="slds-dl_horizontal__detail">{productScopeDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">Account</dt>
+            <dt class="slds-dl_horizontal__label">{label.account}</dt>
             <dd class="slds-dl_horizontal__detail">{accountDisplay}</dd>
         </dl>
     </div>
@@ -50,25 +47,20 @@
     <!-- Limits summary -->
     <div class="summary-card">
         <div class="summary-section-title">
-            <span class="summary-section-name">Limits &amp; Behavior</span>
-            <a href="#" data-step="3" class="summary-section-edit" onclick={handleEditClick}>Edit</a>
+            <span class="summary-section-name">{label.sectionLimits}</span>
+            <a href="#" data-step="3" class="summary-section-edit" onclick={handleEditClick}>{label.edit}</a>
         </div>
         <dl class="slds-dl_horizontal slds-text-body_small">
-            <dt class="slds-dl_horizontal__label">Total Limit</dt>
+            <dt class="slds-dl_horizontal__label">{label.totalLimit}</dt>
             <dd class="slds-dl_horizontal__detail">{totalLimitDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">Per-Member Limit</dt>
+            <dt class="slds-dl_horizontal__label">{label.perMemberLimit}</dt>
             <dd class="slds-dl_horizontal__detail">{perMemberLimitDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">Combinable</dt>
+            <dt class="slds-dl_horizontal__label">{label.combinable}</dt>
             <dd class="slds-dl_horizontal__detail">{combinableDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">Approval Required</dt>
+            <dt class="slds-dl_horizontal__label">{label.approvalRequired}</dt>
             <dd class="slds-dl_horizontal__detail">{approvalDisplay}</dd>
         </dl>
     </div>
 
-    <div class="activation-banner">
-        This promo code will not be available for use until it has been activated.
-        <strong>Save as Draft</strong> creates the record(s) but no member can redeem until you
-        activate them later from the record page. <strong>Activate Now</strong> makes the code(s)
-        immediately available.
-    </div>
+    <div class="activation-banner">{label.activationBanner}</div>
 </template>

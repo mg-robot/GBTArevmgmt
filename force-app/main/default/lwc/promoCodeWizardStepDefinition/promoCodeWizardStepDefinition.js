@@ -1,20 +1,30 @@
 import { LightningElement, api } from 'lwc';
 import checkCodeUniqueness from '@salesforce/apex/PromoCodeService.checkCodeUniqueness';
 
-const DISCOUNT_TYPE_OPTIONS = [
-    { label: 'Percent', value: 'Percent' },
-    { label: 'Amount', value: 'Amount' }
-];
+import LBL_IdentityHeading from '@salesforce/label/c.PromoCodeWizard_S1_Identity_Heading';
+import LBL_IdentityHelper from '@salesforce/label/c.PromoCodeWizard_S1_Identity_Helper';
+import LBL_CodeLabel from '@salesforce/label/c.PromoCodeWizard_S1_Code_Label';
+import LBL_CodePatternError from '@salesforce/label/c.PromoCodeWizard_S1_Code_PatternError';
+import LBL_CodeConflictPrefix from '@salesforce/label/c.PromoCodeWizard_S1_Code_ConflictPrefix';
+import LBL_CodeConflictSuffix from '@salesforce/label/c.PromoCodeWizard_S1_Code_ConflictSuffix';
+import LBL_DisplayName from '@salesforce/label/c.PromoCodeWizard_S1_DisplayName_Label';
+import LBL_Terms from '@salesforce/label/c.PromoCodeWizard_S1_Terms_Label';
+import LBL_TermsHelper from '@salesforce/label/c.PromoCodeWizard_S1_Terms_Helper';
+import LBL_DiscDetailsHeading from '@salesforce/label/c.PromoCodeWizard_S1_DiscDetails_Heading';
+import LBL_DiscTypeLabel from '@salesforce/label/c.PromoCodeWizard_S1_DiscType_Label';
+import LBL_DiscTypePercent from '@salesforce/label/c.PromoCodeWizard_S1_DiscType_Percent';
+import LBL_DiscTypeAmount from '@salesforce/label/c.PromoCodeWizard_S1_DiscType_Amount';
+import LBL_DiscValueHeading from '@salesforce/label/c.PromoCodeWizard_S1_DiscValue_Heading';
+import LBL_DiscValuePercentHelper from '@salesforce/label/c.PromoCodeWizard_S1_DiscValue_PercentHelper';
+import LBL_DiscValueAmountHelper from '@salesforce/label/c.PromoCodeWizard_S1_DiscValue_AmountHelper';
+import LBL_PercentOff from '@salesforce/label/c.PromoCodeWizard_S1_PercentOff_Label';
+import LBL_Currencies from '@salesforce/label/c.PromoCodeWizard_S1_Currencies_Label';
 
 /**
  * Step 1 of the wizard. Captures Code, Display Name, Terms, Discount Type, and Discount Value.
- *
- * State strategy: this step maintains a local snapshot (`_localData`) that is updated
- * synchronously on every field change. Validation is computed against `_localData`, not
- * against `@api wizardData` (which is updated by the parent on a microtask after the
- * `fieldchange` event bubbles up — meaning it can be stale for fields touched in earlier
- * dispatches). This guarantees the Next button's enabled state reflects every keystroke
- * the user has committed, no matter how fast they click.
+ * Maintains a local snapshot updated synchronously on every change so validation is always
+ * current regardless of when the @api wizardData binding refreshes.
+ * All user-facing text is sourced from Custom Labels.
  */
 export default class PromoCodeWizardStepDefinition extends LightningElement {
     @api wizardData;
@@ -24,12 +34,32 @@ export default class PromoCodeWizardStepDefinition extends LightningElement {
     _initialized = false;
     codeConflicts = null;
     _debounceTimer;
-    // Tracks whether the embedded promoCurrencyAmountInput has any incomplete rows.
-    // The child filters those out of its `amounts` payload, so the step needs the raw
-    // validity flag to detect "user added an empty row" and disable Next.
     _amountsRowsComplete = true;
 
-    get discountTypeOptions() { return DISCOUNT_TYPE_OPTIONS; }
+    label = {
+        identityHeading: LBL_IdentityHeading,
+        identityHelper: LBL_IdentityHelper,
+        codeLabel: LBL_CodeLabel,
+        codePatternError: LBL_CodePatternError,
+        codeConflictPrefix: LBL_CodeConflictPrefix,
+        codeConflictSuffix: LBL_CodeConflictSuffix,
+        displayName: LBL_DisplayName,
+        terms: LBL_Terms,
+        termsHelper: LBL_TermsHelper,
+        discDetailsHeading: LBL_DiscDetailsHeading,
+        discTypeLabel: LBL_DiscTypeLabel,
+        discValueHeading: LBL_DiscValueHeading,
+        discValuePercentHelper: LBL_DiscValuePercentHelper,
+        discValueAmountHelper: LBL_DiscValueAmountHelper,
+        percentOff: LBL_PercentOff,
+        currencies: LBL_Currencies
+    };
+
+    discountTypeOptions = [
+        { label: LBL_DiscTypePercent, value: 'Percent' },
+        { label: LBL_DiscTypeAmount, value: 'Amount' }
+    ];
+
     get hasType() { return !!this._localData.discountType; }
     get isPercent() { return this._localData.discountType === 'Percent'; }
     get isAmount() { return this._localData.discountType === 'Amount'; }
@@ -47,8 +77,6 @@ export default class PromoCodeWizardStepDefinition extends LightningElement {
     }
 
     renderedCallback() {
-        // If the wizardData reference changed externally (e.g., wizard reset, navigate
-        // away and back), pull in any fields we haven't yet captured locally.
         if (this._initialized && this.wizardData) {
             let resynced = false;
             for (const k of Object.keys(this.wizardData)) {
@@ -84,16 +112,11 @@ export default class PromoCodeWizardStepDefinition extends LightningElement {
     handlePercentCurrenciesChange(e) { this.dispatch('percentCurrencies', e.detail.value); }
 
     handleAmountsChange(e) {
-        // Child fires both the filtered amounts payload AND its own validity flag.
-        // We need the flag because the filtered payload alone can't distinguish
-        // "1 valid row" from "1 valid row + 1 empty row" — both look like length-1 amounts.
         this._amountsRowsComplete = !!e.detail.valid;
         this.dispatch('amounts', e.detail.amounts);
     }
 
     dispatch(field, value) {
-        // Update local snapshot synchronously so validation immediately reflects this change
-        // alongside every previous change.
         this._localData = { ...this._localData, [field]: value };
         this.dispatchEvent(new CustomEvent('fieldchange', { detail: { field, value } }));
         this.fireValidate();

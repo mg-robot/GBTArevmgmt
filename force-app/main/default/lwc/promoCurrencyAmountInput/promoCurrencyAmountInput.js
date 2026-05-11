@@ -1,11 +1,27 @@
 import { LightningElement, api } from 'lwc';
 
+import LBL_Heading from '@salesforce/label/c.PromoCodeWizard_Amt_Heading';
+import LBL_AddRow from '@salesforce/label/c.PromoCodeWizard_Amt_AddRow';
+import LBL_SelectCurrency from '@salesforce/label/c.PromoCodeWizard_Amt_SelectCurrency';
+import LBL_AmountPlaceholder from '@salesforce/label/c.PromoCodeWizard_Amt_AmountPlaceholder';
+import LBL_Remove from '@salesforce/label/c.PromoCodeWizard_Amt_Remove';
+import LBL_NoRows from '@salesforce/label/c.PromoCodeWizard_Amt_NoRows';
+
 export default class PromoCurrencyAmountInput extends LightningElement {
     @api availableCurrencies = [];
     @api initialAmounts = [];
 
     rows = [];
     nextKey = 1;
+
+    label = {
+        heading: LBL_Heading,
+        addRow: LBL_AddRow,
+        selectCurrency: LBL_SelectCurrency,
+        amountPlaceholder: LBL_AmountPlaceholder,
+        remove: LBL_Remove,
+        noRows: LBL_NoRows
+    };
 
     connectedCallback() {
         if (this.initialAmounts && this.initialAmounts.length) {
@@ -17,7 +33,6 @@ export default class PromoCurrencyAmountInput extends LightningElement {
             }));
             this.recalcOptions();
         } else {
-            // Save the user a click — start them with one empty row ready to fill.
             this.addRow();
         }
     }
@@ -60,7 +75,6 @@ export default class PromoCurrencyAmountInput extends LightningElement {
     handleCurrencyChange(e) {
         const idx = parseInt(e.currentTarget.dataset.idx, 10);
         const newIso = e.detail.value;
-        // Use map (not in-place mutation) so the reactivity tracker definitely sees the change.
         this.rows = this.rows.map((r, i) => (i === idx ? { ...r, currencyIsoCode: newIso } : r));
         this.recalcOptions();
         this.fireChange();
@@ -71,8 +85,6 @@ export default class PromoCurrencyAmountInput extends LightningElement {
         if (isNaN(idx) || !this.rows[idx]) return;
         const v = e.target.value;
         const newAmount = v === '' || v == null || isNaN(parseFloat(v)) ? null : parseFloat(v);
-        // Idempotent — same handler is wired to onchange, oninput, AND onblur so we don't
-        // miss a value commit. Skip work if the value hasn't actually changed.
         if (this.rows[idx].amount === newAmount) return;
         this.rows = this.rows.map((r, i) => (i === idx ? { ...r, amount: newAmount } : r));
         this.fireChange();

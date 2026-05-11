@@ -1,6 +1,11 @@
 import { LightningElement, api } from 'lwc';
 import searchProducts from '@salesforce/apex/PromoCodeService.searchProducts';
 
+import LBL_SearchLabel from '@salesforce/label/c.PromoCodeWizard_PP_Search_Label';
+import LBL_SearchPlaceholder from '@salesforce/label/c.PromoCodeWizard_PP_SearchPlaceholder';
+import LBL_Searching from '@salesforce/label/c.PromoCodeWizard_PP_Searching';
+import LBL_SelectedTemplate from '@salesforce/label/c.PromoCodeWizard_PP_SelectedTemplate';
+
 export default class PromoSpecificProductPicker extends LightningElement {
     @api initialCsv = '';
 
@@ -8,6 +13,12 @@ export default class PromoSpecificProductPicker extends LightningElement {
     results = [];
     selected = [];
     loading = false;
+
+    label = {
+        searchLabel: LBL_SearchLabel,
+        searchPlaceholder: LBL_SearchPlaceholder,
+        searching: LBL_Searching
+    };
 
     connectedCallback() {
         if (this.initialCsv) {
@@ -29,6 +40,10 @@ export default class PromoSpecificProductPicker extends LightningElement {
 
     get selectedCount() {
         return this.selected.length;
+    }
+
+    get selectedHeader() {
+        return LBL_SelectedTemplate.replace('{0}', this.selected.length);
     }
 
     handleSearch(e) {

@@ -1,8 +1,8 @@
 <template>
     <div class="slds-grid slds-grid_align-spread slds-m-bottom_x-small">
-        <strong class="slds-text-body_regular">Currency &times; Amount</strong>
+        <strong class="slds-text-body_regular">{label.heading}</strong>
         <lightning-button
-            label="Add Row"
+            label={label.addRow}
             icon-name="utility:add"
             variant="brand"
             class="add-row-button"
@@ -17,7 +17,7 @@
                     <lightning-combobox
                         label="Currency"
                         variant="label-hidden"
-                        placeholder="Select currency"
+                        placeholder={label.selectCurrency}
                         value={row.currencyIsoCode}
                         options={row.options}
                         data-idx={idx}
@@ -33,7 +33,7 @@
                                 step="0.01"
                                 min="0.01"
                                 class="slds-input"
-                                placeholder="0.00"
+                                placeholder={label.amountPlaceholder}
                                 value={row.amount}
                                 data-idx={idx}
                                 oninput={handleAmountChange}
@@ -45,8 +45,8 @@
                 <div class="slds-col slds-size_2-of-12">
                     <lightning-button-icon
                         icon-name="utility:delete"
-                        alternative-text="Remove"
-                        title="Remove"
+                        alternative-text={label.remove}
+                        title={label.remove}
                         data-idx={idx}
                         onclick={removeRow}>
                     </lightning-button-icon>
@@ -56,8 +56,6 @@
     </template>
 
     <template if:false={hasRows}>
-        <p class="slds-text-color_weak slds-text-body_small">
-            No rows yet. Click <strong>Add Row</strong> to specify a currency-amount pair.
-        </p>
+        <p class="slds-text-color_weak slds-text-body_small">{label.noRows}</p>
     </template>
 </template>

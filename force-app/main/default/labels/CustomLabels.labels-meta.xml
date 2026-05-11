@@ -1,0 +1,819 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>PromoCodeWizard_Modal_Title</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Title of the Promo Code creation modal</shortDescription>
+        <value>New Promo Code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Btn_Cancel</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Cancel button</shortDescription>
+        <value>Cancel</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Btn_Back</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Back button</shortDescription>
+        <value>Back</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Btn_Next</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Next button</shortDescription>
+        <value>Next</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Btn_SaveAsDraft</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Save as Draft button</shortDescription>
+        <value>Save as Draft</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Btn_ActivateNow</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Activate Now button</shortDescription>
+        <value>Activate Now</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Saving</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Saving spinner text</shortDescription>
+        <value>Saving...</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_CancelConfirm</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Confirm prompt when cancelling mid-wizard</shortDescription>
+        <value>Discard your in-progress promo code? All entered data will be lost.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_SaveFailed</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic save failure message</shortDescription>
+        <value>Save failed.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Toast_Title</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Title for the success toast</shortDescription>
+        <value>Promo Code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Toast_Created</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toast action when Activate Now used</shortDescription>
+        <value>created and activated</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Toast_Draft</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toast action when Save as Draft used</shortDescription>
+        <value>saved as draft</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Step_Definition</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Step 1 label in progress indicator</shortDescription>
+        <value>Definition</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Step_ScopeEligibility</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Step 2 label in progress indicator</shortDescription>
+        <value>Scope &amp; Eligibility</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Step_LimitsBehavior</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Step 3 label in progress indicator</shortDescription>
+        <value>Limits &amp; Behavior</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Step_ReviewActivate</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Step 4 label in progress indicator</shortDescription>
+        <value>Review &amp; Activate</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Identity_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Identity section heading</shortDescription>
+        <value>Identity</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Identity_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Identity section helper text</shortDescription>
+        <value>Choose a code your members will type at checkout. Codes are case-insensitive and must be unique within each currency. Members will see the Display Name in their cart, not the raw code.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Code_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Code field label</shortDescription>
+        <value>Code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Code_PatternError</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Code field pattern error message</shortDescription>
+        <value>Uppercase alphanumeric only</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Code_ConflictPrefix</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Prefix for code conflict notice</shortDescription>
+        <value>Note: this code is already in use in</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Code_ConflictSuffix</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Suffix for code conflict notice</shortDescription>
+        <value>. New currencies are still allowed.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DisplayName_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Display Name field label</shortDescription>
+        <value>Display Name</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Terms_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Terms field label</shortDescription>
+        <value>Terms</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Terms_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Terms field helper text</shortDescription>
+        <value>Describe the terms, conditions, and scope of this promo code.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DiscDetails_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Discount Details section heading</shortDescription>
+        <value>Discount Details</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DiscType_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Discount Type field label</shortDescription>
+        <value>Discount Type</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DiscType_Percent</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Percent radio option label</shortDescription>
+        <value>Percent</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DiscType_Amount</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Amount radio option label</shortDescription>
+        <value>Amount</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DiscValue_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Discount Value section heading</shortDescription>
+        <value>Discount Value</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DiscValue_PercentHelper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Percent path helper text</shortDescription>
+        <value>Percent discounts apply universally; one record is still created per currency for symmetry, but the percentage stays the same. Deselect currencies you don't want to support.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_DiscValue_AmountHelper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Amount path helper text</shortDescription>
+        <value>Each currency you select will produce one promo code record. Members in that currency will see the amount in their local currency at checkout.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_PercentOff_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Percent Off input label</shortDescription>
+        <value>Percent Off</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S1_Currencies_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Currencies checkbox group label</shortDescription>
+        <value>Currencies</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_Validity_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Validity Window section heading</shortDescription>
+        <value>Validity Window</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_Validity_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Validity Window helper text</shortDescription>
+        <value>Set when this code is valid. After the end date passes, members will see a "this code is not valid right now" message at checkout — the code stays Active in the system but won't apply.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_EffectiveStart_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Effective Start label</shortDescription>
+        <value>Effective Start</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_EffectiveEnd_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Effective End label</shortDescription>
+        <value>Effective End</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_MemberRegion_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Member &amp; Region Scope section heading</shortDescription>
+        <value>Member &amp; Region Scope</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_MemberRegion_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Member &amp; Region helper text</shortDescription>
+        <value>Leave blank to make this code available to everyone. Selecting member types or regions restricts use to matching members.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_MemberType_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Member Type Scope checkbox group label</shortDescription>
+        <value>Member Type Scope (blank = all)</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_Region_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Region Scope checkbox group label</shortDescription>
+        <value>Region Scope (blank = all)</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_ProductApp_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Product Applicability section heading</shortDescription>
+        <value>Product Applicability</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_ProductApp_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Product Applicability helper text</shortDescription>
+        <value>Choose what this code discounts. All Items discounts the entire cart. Product Family matches against the Product's Family field (e.g., Membership, Chapter). Specific Products matches by product name.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_ProductScope_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Product Scope Type radio label</shortDescription>
+        <value>Product Scope Type</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_ProductFamily_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Product Family combobox label</shortDescription>
+        <value>Product Family</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_AccountScope_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Account Scope section heading</shortDescription>
+        <value>Account Scope</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_AccountScope_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Account Scope helper text</shortDescription>
+        <value>Optional. Setting an Account here restricts the code to members affiliated with that Account — useful for sponsorship deals or partner-restricted promotions.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_Account_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Account record picker label</shortDescription>
+        <value>Account (optional)</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_UsageLimits_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Usage Limits section heading</shortDescription>
+        <value>Usage Limits</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_UsageLimits_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Usage Limits helper text</shortDescription>
+        <value>Leave either field blank for unlimited. Total limits how many redemptions across all members. Per-Member limits how many times one member can use this code. The system reserves usage when the code is applied at checkout and confirms when the order is placed.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_TotalLimit_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Total Usage Limit label</shortDescription>
+        <value>Total Usage Limit</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_PerMemberLimit_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Per-Member Usage Limit label</shortDescription>
+        <value>Per-Member Usage Limit</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Unlimited_Placeholder</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Unlimited placeholder for usage limits</shortDescription>
+        <value>Blank = unlimited</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Combinability_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Combinability section heading</shortDescription>
+        <value>Combinability</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Combinability_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Combinability helper text</shortDescription>
+        <value>Codes in the same Combination Group can be applied together. Codes in different groups are mutually exclusive. Non-combinable codes block any other code from being applied alongside them.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Combinable_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Combinable toggle label</shortDescription>
+        <value>Combinable</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Combinable_Yes</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toggle active label</shortDescription>
+        <value>Yes</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Combinable_No</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toggle inactive label</shortDescription>
+        <value>No</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_CombinationGroup_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Combination Group combobox label</shortDescription>
+        <value>Combination Group</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Approval_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Runtime Approval section heading</shortDescription>
+        <value>Runtime Approval</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_Approval_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Runtime Approval helper text</shortDescription>
+        <value>Require Approval on Orders Using This Code — when checked, any order a member places with this code applied will be routed for approval before final placement. Use for high-value discounts that need a human check before the transaction goes through. (This does not control approval of the promo code record itself — that workflow is not enabled in this release.)</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S3_ApprovalRequired_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Approval Required checkbox label</shortDescription>
+        <value>Require Approval on Orders Using This Code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_PreviewTemplate</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Preview line. {0}=count, {1}=code</shortDescription>
+        <value>About to create {0} Promo Code record(s) sharing Code {1}:</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Edit</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Edit link in review summary</shortDescription>
+        <value>Edit</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_DisplayName_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Display Name summary label</shortDescription>
+        <value>Display Name</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_DiscType_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Discount Type summary label</shortDescription>
+        <value>Discount Type</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_DiscValue_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Discount Value summary label</shortDescription>
+        <value>Discount Value</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Effective_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Effective summary label</shortDescription>
+        <value>Effective</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_MemberTypes_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Member Types summary label</shortDescription>
+        <value>Member Types</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Regions_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Regions summary label</shortDescription>
+        <value>Regions</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Products_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Products summary label</shortDescription>
+        <value>Products</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Account_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Account summary label</shortDescription>
+        <value>Account</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_TotalLimit_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Total Limit summary label</shortDescription>
+        <value>Total Limit</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_PerMemberLimit_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Per-Member Limit summary label</shortDescription>
+        <value>Per-Member Limit</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Combinable_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Combinable summary label</shortDescription>
+        <value>Combinable</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_ApprovalRequired_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Approval Required summary label</shortDescription>
+        <value>Approval Required</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_All</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"All" display value</shortDescription>
+        <value>All</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_AllItems</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"All Items" product scope display</shortDescription>
+        <value>All Items</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Unlimited</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"Unlimited" display value</shortDescription>
+        <value>Unlimited</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Any</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"Any" Account display value</shortDescription>
+        <value>Any</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_NoStart</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"(no start)" effective-start display</shortDescription>
+        <value>(no start)</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_NoEnd</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"(no end)" effective-end display</shortDescription>
+        <value>(no end)</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_None</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"(none)" empty value display</shortDescription>
+        <value>(none)</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_Yes</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"Yes" display value</shortDescription>
+        <value>Yes</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_No</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"No" display value</shortDescription>
+        <value>No</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_CombinableYesGroup</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Combinable yes with group. {0}=group</shortDescription>
+        <value>Yes (group: {0})</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_ProductFamilyPrefix</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"Product Family:" display prefix</shortDescription>
+        <value>Product Family:</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_SpecificPrefix</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"Specific:" display prefix</shortDescription>
+        <value>Specific:</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S4_ActivationBanner</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Activation banner copy</shortDescription>
+        <value>This promo code will not be available for use until it has been activated. Save as Draft creates the record(s) but no member can redeem until you activate them later from the record page. Activate Now makes the code(s) immediately available.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Amt_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Currency x Amount heading</shortDescription>
+        <value>Currency × Amount</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Amt_AddRow</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Add Row button</shortDescription>
+        <value>Add Row</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Amt_SelectCurrency</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Currency combobox placeholder</shortDescription>
+        <value>Select currency</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Amt_AmountPlaceholder</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Amount input placeholder</shortDescription>
+        <value>0.00</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Amt_Remove</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Remove row button alt/title text</shortDescription>
+        <value>Remove</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Amt_NoRows</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Empty state message</shortDescription>
+        <value>No rows yet. Click Add Row to specify a currency-amount pair.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_PP_Search_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Product picker search label</shortDescription>
+        <value>Search products</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_PP_SearchPlaceholder</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Product picker search placeholder</shortDescription>
+        <value>Type at least 2 characters...</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_PP_Searching</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Product picker spinner alt text</shortDescription>
+        <value>Searching</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_PP_SelectedTemplate</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>"Selected (N)" template. {0}=count</shortDescription>
+        <value>Selected ({0})</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Launcher_Btn_New</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Launcher card New Promo Code button</shortDescription>
+        <value>New Promo Code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_Launcher_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Launcher card helper text</shortDescription>
+        <value>Launches the Promo Code creation wizard. Records are created in Draft and require activation before members can apply them at checkout.</value>
+    </labels>
+</CustomLabels>

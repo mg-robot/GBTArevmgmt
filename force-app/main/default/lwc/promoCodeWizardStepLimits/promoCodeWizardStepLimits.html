@@ -1,17 +1,12 @@
 <template>
     <!-- Usage Limits -->
     <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">Usage Limits</h3>
-        <p class="helper-text">
-            Leave either field blank for unlimited. <strong>Total</strong> limits how many redemptions
-            across all members. <strong>Per-Member</strong> limits how many times one member can use
-            this code. The system reserves usage when the code is applied at checkout and confirms when
-            the order is placed.
-        </p>
+        <h3 class="section-heading">{label.usageLimitsHeading}</h3>
+        <p class="helper-text">{label.usageLimitsHelper}</p>
         <lightning-input
             type="number"
-            label="Total Usage Limit"
-            placeholder="Blank = unlimited"
+            label={label.totalLimit}
+            placeholder={label.unlimitedPlaceholder}
             step="1"
             min="1"
             value={wizardData.totalLimit}
@@ -19,8 +14,8 @@
         </lightning-input>
         <lightning-input
             type="number"
-            label="Per-Member Usage Limit"
-            placeholder="Blank = unlimited"
+            label={label.perMemberLimit}
+            placeholder={label.unlimitedPlaceholder}
             step="1"
             min="1"
             class="slds-m-top_small"
@@ -31,23 +26,19 @@
 
     <!-- Combinability -->
     <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">Combinability</h3>
-        <p class="helper-text">
-            Codes in the same Combination Group can be applied together. Codes in different groups
-            are mutually exclusive. Non-combinable codes block any other code from being applied
-            alongside them.
-        </p>
+        <h3 class="section-heading">{label.combinabilityHeading}</h3>
+        <p class="helper-text">{label.combinabilityHelper}</p>
         <lightning-input
             type="toggle"
-            label="Combinable"
+            label={label.combinable}
             checked={wizardData.combinable}
-            message-toggle-active="Yes"
-            message-toggle-inactive="No"
+            message-toggle-active={label.combinableYes}
+            message-toggle-inactive={label.combinableNo}
             onchange={handleCombinableChange}>
         </lightning-input>
         <template if:true={wizardData.combinable}>
             <lightning-combobox
-                label="Combination Group"
+                label={label.combinationGroup}
                 required
                 options={combinationGroupOptions}
                 value={wizardData.combinationGroup}
@@ -59,17 +50,11 @@
 
     <!-- Runtime Approval -->
     <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">Runtime Approval</h3>
-        <p class="helper-text">
-            <strong>Require Approval on Orders Using This Code</strong> — when checked, any order a
-            member places with this code applied will be routed for approval before final placement.
-            Use for high-value discounts that need a human check before the transaction goes through.
-            <em>(This does not control approval of the promo code record itself — that workflow is not
-            enabled in this release.)</em>
-        </p>
+        <h3 class="section-heading">{label.approvalHeading}</h3>
+        <p class="helper-text">{label.approvalHelper}</p>
         <lightning-input
             type="checkbox"
-            label="Require Approval on Orders Using This Code"
+            label={label.approvalRequired}
             checked={wizardData.approvalRequired}
             onchange={handleApprovalRequiredChange}>
         </lightning-input>

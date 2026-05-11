@@ -1,28 +1,24 @@
 <template>
     <!-- Identity -->
     <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">Identity</h3>
-        <p class="helper-text">
-            Choose a code your members will type at checkout. Codes are case-insensitive and must be
-            unique within each currency. Members will see the <strong>Display Name</strong> in their
-            cart, not the raw code.
-        </p>
+        <h3 class="section-heading">{label.identityHeading}</h3>
+        <p class="helper-text">{label.identityHelper}</p>
         <lightning-input
-            label="Code"
+            label={label.codeLabel}
             value={wizardData.code}
             maxlength="50"
             pattern="[A-Z0-9]+"
-            message-when-pattern-mismatch="Uppercase alphanumeric only"
+            message-when-pattern-mismatch={label.codePatternError}
             required
             onchange={handleCodeChange}>
         </lightning-input>
         <template if:true={hasCodeConflicts}>
             <p class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
-                Note: this code is already in use in {codeConflictsLabel}. New currencies are still allowed.
+                {label.codeConflictPrefix} {codeConflictsLabel}{label.codeConflictSuffix}
             </p>
         </template>
         <lightning-input
-            label="Display Name"
+            label={label.displayName}
             value={wizardData.displayName}
             maxlength="80"
             required
@@ -30,8 +26,8 @@
             onchange={handleDisplayNameChange}>
         </lightning-input>
         <div class="slds-m-top_small">
-            <label class="slds-form-element__label">Terms</label>
-            <p class="helper-text">Describe the terms, conditions, and scope of this promo code.</p>
+            <label class="slds-form-element__label">{label.terms}</label>
+            <p class="helper-text">{label.termsHelper}</p>
             <lightning-input-rich-text
                 value={wizardData.terms}
                 onchange={handleTermsChange}>
@@ -41,10 +37,10 @@
 
     <!-- Discount Details -->
     <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">Discount Details</h3>
-        <span class="field-label">Discount Type<span class="required-asterisk">*</span></span>
+        <h3 class="section-heading">{label.discDetailsHeading}</h3>
+        <span class="field-label">{label.discTypeLabel}<span class="required-asterisk">*</span></span>
         <lightning-radio-group
-            label="Discount Type"
+            label={label.discTypeLabel}
             variant="label-hidden"
             options={discountTypeOptions}
             value={wizardData.discountType}
@@ -57,16 +53,12 @@
     <!-- Discount Value -->
     <template if:true={hasType}>
         <div class="slds-m-bottom_medium">
-            <h3 class="section-heading">Discount Value</h3>
+            <h3 class="section-heading">{label.discValueHeading}</h3>
             <template if:true={isPercent}>
-                <p class="helper-text">
-                    Percent discounts apply universally; one record is still created per currency
-                    for symmetry, but the percentage stays the same. Deselect currencies you don't
-                    want to support.
-                </p>
+                <p class="helper-text">{label.discValuePercentHelper}</p>
                 <lightning-input
                     type="number"
-                    label="Percent Off"
+                    label={label.percentOff}
                     min="0.01"
                     max="100"
                     step="0.01"
@@ -75,7 +67,7 @@
                     onchange={handlePercentValueChange}>
                 </lightning-input>
                 <lightning-checkbox-group
-                    label="Currencies"
+                    label={label.currencies}
                     options={currencyOptions}
                     value={wizardData.percentCurrencies}
                     class="slds-m-top_small"
@@ -83,10 +75,7 @@
                 </lightning-checkbox-group>
             </template>
             <template if:true={isAmount}>
-                <p class="helper-text">
-                    Each currency you select will produce one promo code record. Members in that
-                    currency will see the amount in their local currency at checkout.
-                </p>
+                <p class="helper-text">{label.discValueAmountHelper}</p>
                 <c-promo-currency-amount-input
                     available-currencies={availableCurrencies}
                     initial-amounts={wizardData.amounts}

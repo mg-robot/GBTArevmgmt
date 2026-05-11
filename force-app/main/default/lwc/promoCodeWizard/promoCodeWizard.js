@@ -2,17 +2,47 @@ import LightningModal from 'lightning/modal';
 import createBulk from '@salesforce/apex/PromoCodeService.createBulk';
 import getActiveCurrencies from '@salesforce/apex/PromoCodeService.getActiveCurrencies';
 
+import LBL_ModalTitle from '@salesforce/label/c.PromoCodeWizard_Modal_Title';
+import LBL_BtnCancel from '@salesforce/label/c.PromoCodeWizard_Btn_Cancel';
+import LBL_BtnBack from '@salesforce/label/c.PromoCodeWizard_Btn_Back';
+import LBL_BtnNext from '@salesforce/label/c.PromoCodeWizard_Btn_Next';
+import LBL_BtnSaveAsDraft from '@salesforce/label/c.PromoCodeWizard_Btn_SaveAsDraft';
+import LBL_BtnActivateNow from '@salesforce/label/c.PromoCodeWizard_Btn_ActivateNow';
+import LBL_Saving from '@salesforce/label/c.PromoCodeWizard_Saving';
+import LBL_CancelConfirm from '@salesforce/label/c.PromoCodeWizard_CancelConfirm';
+import LBL_SaveFailed from '@salesforce/label/c.PromoCodeWizard_SaveFailed';
+import LBL_StepDefinition from '@salesforce/label/c.PromoCodeWizard_Step_Definition';
+import LBL_StepScopeEligibility from '@salesforce/label/c.PromoCodeWizard_Step_ScopeEligibility';
+import LBL_StepLimitsBehavior from '@salesforce/label/c.PromoCodeWizard_Step_LimitsBehavior';
+import LBL_StepReviewActivate from '@salesforce/label/c.PromoCodeWizard_Step_ReviewActivate';
+
 /**
  * Promo Code creation wizard modal. Opened via PromoCodeWizard.open() from a launcher.
  * 4 steps: Definition / Scope & Eligibility / Limits & Behavior / Review & Activate.
  * On Step 4, staff choose Save as Draft (Status=Draft) or Activate Now (Status=Active).
  * Apex creates N records (one per currency) in a single transaction.
+ *
+ * All user-facing text is sourced from Custom Labels for translation via Translation Workbench.
  */
 export default class PromoCodeWizard extends LightningModal {
     currentStep = 1;
     isSubmitting = false;
     errorMessage = '';
     availableCurrencies = [];
+
+    label = {
+        modalTitle: LBL_ModalTitle,
+        btnCancel: LBL_BtnCancel,
+        btnBack: LBL_BtnBack,
+        btnNext: LBL_BtnNext,
+        btnSaveAsDraft: LBL_BtnSaveAsDraft,
+        btnActivateNow: LBL_BtnActivateNow,
+        saving: LBL_Saving,
+        stepDefinition: LBL_StepDefinition,
+        stepScopeEligibility: LBL_StepScopeEligibility,
+        stepLimitsBehavior: LBL_StepLimitsBehavior,
+        stepReviewActivate: LBL_StepReviewActivate
+    };
 
     wizardData = {
         code: '',
@@ -103,7 +133,7 @@ export default class PromoCodeWizard extends LightningModal {
         const hasData = this.wizardData.code || this.wizardData.displayName || this.wizardData.discountType;
         if (hasData) {
             // eslint-disable-next-line no-alert
-            if (!window.confirm('Discard your in-progress promo code? All entered data will be lost.')) {
+            if (!window.confirm(LBL_CancelConfirm)) {
                 return;
             }
         }
@@ -117,8 +147,6 @@ export default class PromoCodeWizard extends LightningModal {
         this.isSubmitting = true;
         this.errorMessage = '';
         const w = this.wizardData || {};
-        // Read each property explicitly rather than spreading the @track proxy —
-        // spread can drop properties in some LWC reactivity edge cases.
         const isPercent = w.discountType === 'Percent';
         const isAmount = w.discountType === 'Amount';
         const input = {
@@ -144,29 +172,24 @@ export default class PromoCodeWizard extends LightningModal {
             activateImmediately: activate
         };
 
-        // Strip any reactive proxy wrapping by round-tripping through JSON so Apex's
-        // @AuraEnabled deserializer gets a plain object literal.
         const cleanInput = JSON.parse(JSON.stringify(input));
         createBulk({ input: cleanInput })
             .then((r) => {
                 if (r && r.success) {
-                    // Close defensively — call signature varies between LightningModal versions
-                    // and some payload shapes have triggered internal "dispatchEvent" errors in
-                    // certain runtime configurations. Try with payload first, fall back to no-arg.
                     try {
                         this.close('created');
                     } catch (closeErr) {
                         try { this.close(); } catch (e2) { /* swallow */ }
                     }
                 } else {
-                    this.errorMessage = (r && r.errorMessage) || 'Save failed.';
+                    this.errorMessage = (r && r.errorMessage) || LBL_SaveFailed;
                     if (r && r.conflictCurrencies && r.conflictCurrencies.length) {
                         this.currentStep = 1;
                     }
                 }
             })
             .catch((err) => {
-                this.errorMessage = (err && err.body && err.body.message) || (err && err.message) || 'Save failed.';
+                this.errorMessage = (err && err.body && err.body.message) || (err && err.message) || LBL_SaveFailed;
             })
             .finally(() => {
                 this.isSubmitting = false;
