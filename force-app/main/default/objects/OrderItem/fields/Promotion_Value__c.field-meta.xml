@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Promotion_Value__c</fullName>
     <description>Numeric value of the applied promotion. Interpretation depends on Promotion_Type__c: Amount = currency amount discounted; Percent = percent off (0-100); Override = absolute override price.</description>
+    <inlineHelpText>Numeric value of the adjustment, interpreted per Promotion_Type__c.</inlineHelpText>
     <label>Promotion Value</label>
     <precision>16</precision>
     <required>false</required>
