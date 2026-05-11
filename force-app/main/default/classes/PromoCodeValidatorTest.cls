@@ -295,6 +295,101 @@ private class PromoCodeValidatorTest {
     }
 
     // -----------------------------------------------------------
+    // Rule 8 — extra scope-type coverage of hasEligibleLine branches
+    // -----------------------------------------------------------
+
+    @IsTest
+    static void validate_productFamily_eligibleLine_passes() {
+        Account a = ensureAccount();
+        Promo_Code__c pc = PromoCodeTestDataFactory.buildBase('FAM_OK', CURRENCY_ISO, 'Percent', 10);
+        pc.Product_Scope_Type__c = 'Product Family';
+        pc.Product_Family_Scope__c = 'Membership';
+        insert pc;
+        pc = [SELECT Id, Code__c, Status__c, Display_Name__c, Effective_Start_Date__c, Effective_End_Date__c,
+                     Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
+                     Member_Type_Scope__c, Region_Scope__c, Account__c, Product_Scope_Type__c,
+                     Product_Family_Scope__c, Specific_Products__c, Application_Level__c,
+                     Combinable__c, Combination_Group__c, Discount_Type__c, Discount_Value__c
+              FROM Promo_Code__c WHERE Id = :pc.Id];
+
+        // Cart has a 'Membership'-family line → eligible.
+        PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+        PromoCodeApplyService.CodeResult cr =
+            PromoCodeValidator.validate('FAM_OK', pc, ctx, new List<Promo_Code__c>(), emptyUsage());
+
+        System.assertEquals(true, cr.valid, 'Family-eligible code should validate; got: ' + cr.errorCode);
+    }
+
+    @IsTest
+    static void validate_productFamily_noEligibleLine_returnsNotApplicableToCart() {
+        Account a = ensureAccount();
+        Promo_Code__c pc = PromoCodeTestDataFactory.buildBase('FAM_MISS', CURRENCY_ISO, 'Percent', 10);
+        pc.Product_Scope_Type__c = 'Product Family';
+        pc.Product_Family_Scope__c = 'Chapter;Section';
+        insert pc;
+        pc = [SELECT Id, Code__c, Status__c, Display_Name__c, Effective_Start_Date__c, Effective_End_Date__c,
+                     Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
+                     Member_Type_Scope__c, Region_Scope__c, Account__c, Product_Scope_Type__c,
+                     Product_Family_Scope__c, Specific_Products__c, Application_Level__c,
+                     Combinable__c, Combination_Group__c, Discount_Type__c, Discount_Value__c
+              FROM Promo_Code__c WHERE Id = :pc.Id];
+
+        PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+        PromoCodeApplyService.CodeResult cr =
+            PromoCodeValidator.validate('FAM_MISS', pc, ctx, new List<Promo_Code__c>(), emptyUsage());
+
+        System.assertEquals(false, cr.valid);
+        System.assertEquals(PromoCodeApplyService.ERR_NOT_APPLICABLE_TO_CART, cr.errorCode);
+    }
+
+    @IsTest
+    static void validate_specificMembershipTypes_containsMatch_passes() {
+        Account a = ensureAccount();
+        Promo_Code__c pc = PromoCodeTestDataFactory.buildBase('SMT_OK', CURRENCY_ISO, 'Percent', 10);
+        pc.Product_Scope_Type__c = 'Specific Membership Types';
+        // Member_Type_Scope__c is a restricted picklist — values must mirror Membership product
+        // names. CONTAINS matching against the cart's 'Direct Membership' line is satisfied here.
+        pc.Member_Type_Scope__c = 'Direct Membership';
+        insert pc;
+        pc = [SELECT Id, Code__c, Status__c, Display_Name__c, Effective_Start_Date__c, Effective_End_Date__c,
+                     Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
+                     Member_Type_Scope__c, Region_Scope__c, Account__c, Product_Scope_Type__c,
+                     Product_Family_Scope__c, Specific_Products__c, Application_Level__c,
+                     Combinable__c, Combination_Group__c, Discount_Type__c, Discount_Value__c
+              FROM Promo_Code__c WHERE Id = :pc.Id];
+
+        // Cart's 'Direct Membership' line — "Direct" CONTAINS-matches.
+        PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+        PromoCodeApplyService.CodeResult cr =
+            PromoCodeValidator.validate('SMT_OK', pc, ctx, new List<Promo_Code__c>(), emptyUsage());
+
+        System.assertEquals(true, cr.valid, 'Membership-type CONTAINS should match; got: ' + cr.errorCode);
+    }
+
+    @IsTest
+    static void validate_specificMembershipTypes_noContainsMatch_returnsNotApplicableToCart() {
+        Account a = ensureAccount();
+        Promo_Code__c pc = PromoCodeTestDataFactory.buildBase('SMT_MISS', CURRENCY_ISO, 'Percent', 10);
+        pc.Product_Scope_Type__c = 'Specific Membership Types';
+        pc.Member_Type_Scope__c = 'Educator Membership;Student Membership';
+        insert pc;
+        pc = [SELECT Id, Code__c, Status__c, Display_Name__c, Effective_Start_Date__c, Effective_End_Date__c,
+                     Total_Usage_Limit__c, Per_Member_Usage_Limit__c, Confirmed_Usage_Count__c,
+                     Member_Type_Scope__c, Region_Scope__c, Account__c, Product_Scope_Type__c,
+                     Product_Family_Scope__c, Specific_Products__c, Application_Level__c,
+                     Combinable__c, Combination_Group__c, Discount_Type__c, Discount_Value__c
+              FROM Promo_Code__c WHERE Id = :pc.Id];
+
+        // 'Direct Membership' doesn't contain "Educator" or "Student".
+        PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+        PromoCodeApplyService.CodeResult cr =
+            PromoCodeValidator.validate('SMT_MISS', pc, ctx, new List<Promo_Code__c>(), emptyUsage());
+
+        System.assertEquals(false, cr.valid);
+        System.assertEquals(PromoCodeApplyService.ERR_NOT_APPLICABLE_TO_CART, cr.errorCode);
+    }
+
+    // -----------------------------------------------------------
     // Rule 9: NOT_COMBINABLE
     // -----------------------------------------------------------
 
