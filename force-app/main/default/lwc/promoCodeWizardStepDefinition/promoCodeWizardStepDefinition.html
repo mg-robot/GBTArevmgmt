@@ -30,9 +30,9 @@
             onchange={handleDisplayNameChange}>
         </lightning-input>
         <div class="slds-m-top_small">
+            <label class="slds-form-element__label">Terms</label>
+            <p class="helper-text">Describe the terms, conditions, and scope of this promo code.</p>
             <lightning-input-rich-text
-                label-visible
-                label="Terms"
                 value={wizardData.terms}
                 onchange={handleTermsChange}>
             </lightning-input-rich-text>

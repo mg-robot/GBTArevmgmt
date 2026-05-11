@@ -8,37 +8,57 @@ const DISCOUNT_TYPE_OPTIONS = [
 
 /**
  * Step 1 of the wizard. Captures Code, Display Name, Terms, Discount Type, and Discount Value.
- * Dispatches `fieldchange` per change and `stepvalidate` synchronously against the predicted
- * next wizard state — this avoids the lag where validation would otherwise wait for the parent
- * to commit + re-render before re-validating.
+ *
+ * State strategy: this step maintains a local snapshot (`_localData`) that is updated
+ * synchronously on every field change. Validation is computed against `_localData`, not
+ * against `@api wizardData` (which is updated by the parent on a microtask after the
+ * `fieldchange` event bubbles up — meaning it can be stale for fields touched in earlier
+ * dispatches). This guarantees the Next button's enabled state reflects every keystroke
+ * the user has committed, no matter how fast they click.
  */
 export default class PromoCodeWizardStepDefinition extends LightningElement {
     @api wizardData;
     @api availableCurrencies;
 
+    _localData = {};
+    _initialized = false;
     codeConflicts = null;
     _debounceTimer;
     // Tracks whether the embedded promoCurrencyAmountInput has any incomplete rows.
-    // The child filters those out of its `amounts` payload, so the parent step needs the
-    // raw validity flag to detect "user added an empty row" and disable Next.
+    // The child filters those out of its `amounts` payload, so the step needs the raw
+    // validity flag to detect "user added an empty row" and disable Next.
     _amountsRowsComplete = true;
 
     get discountTypeOptions() { return DISCOUNT_TYPE_OPTIONS; }
-    get hasType() { return !!this.wizardData?.discountType; }
-    get isPercent() { return this.wizardData?.discountType === 'Percent'; }
-    get isAmount() { return this.wizardData?.discountType === 'Amount'; }
+    get hasType() { return !!this._localData.discountType; }
+    get isPercent() { return this._localData.discountType === 'Percent'; }
+    get isAmount() { return this._localData.discountType === 'Amount'; }
     get currencyOptions() {
         return (this.availableCurrencies || []).map((c) => ({ label: c, value: c }));
     }
     get hasCodeConflicts() { return this.codeConflicts && this.codeConflicts.length > 0; }
     get codeConflictsLabel() { return this.codeConflicts ? this.codeConflicts.join(', ') : ''; }
+    get d() { return this._localData; }
 
     connectedCallback() {
-        this.fireValidate(this.wizardData);
+        this._localData = { ...(this.wizardData || {}) };
+        this._initialized = true;
+        this.fireValidate();
     }
 
     renderedCallback() {
-        this.fireValidate(this.wizardData);
+        // If the wizardData reference changed externally (e.g., wizard reset, navigate
+        // away and back), pull in any fields we haven't yet captured locally.
+        if (this._initialized && this.wizardData) {
+            let resynced = false;
+            for (const k of Object.keys(this.wizardData)) {
+                if (this._localData[k] === undefined && this.wizardData[k] !== undefined) {
+                    this._localData = { ...this._localData, [k]: this.wizardData[k] };
+                    resynced = true;
+                }
+            }
+            if (resynced) this.fireValidate();
+        }
     }
 
     handleCodeChange(e) {
@@ -72,20 +92,19 @@ export default class PromoCodeWizardStepDefinition extends LightningElement {
     }
 
     dispatch(field, value) {
+        // Update local snapshot synchronously so validation immediately reflects this change
+        // alongside every previous change.
+        this._localData = { ...this._localData, [field]: value };
         this.dispatchEvent(new CustomEvent('fieldchange', { detail: { field, value } }));
-        // Validate against the PREDICTED next state instead of waiting for the parent
-        // to commit + re-render. Otherwise the user can click Next before the validity
-        // check has caught up.
-        const predicted = { ...(this.wizardData || {}), [field]: value };
-        this.fireValidate(predicted);
+        this.fireValidate();
     }
 
-    fireValidate(data) {
-        this.dispatchEvent(new CustomEvent('stepvalidate', { detail: { valid: this.computeValid(data) } }));
+    fireValidate() {
+        this.dispatchEvent(new CustomEvent('stepvalidate', { detail: { valid: this.computeValid() } }));
     }
 
-    computeValid(data) {
-        const d = data || this.wizardData;
+    computeValid() {
+        const d = this._localData;
         if (!d) return false;
         if (!d.code || !/^[A-Z0-9]+$/.test(d.code)) return false;
         if (!d.displayName || !d.displayName.trim()) return false;

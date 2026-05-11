@@ -49,14 +49,16 @@ export default class PromoCurrencyAmountInput extends LightningElement {
 
     removeRow(e) {
         const idx = parseInt(e.currentTarget.dataset.idx, 10);
-        this.rows.splice(idx, 1);
+        this.rows = this.rows.filter((_, i) => i !== idx);
         this.recalcOptions();
         this.fireChange();
     }
 
     handleCurrencyChange(e) {
         const idx = parseInt(e.currentTarget.dataset.idx, 10);
-        this.rows[idx].currencyIsoCode = e.detail.value;
+        const newIso = e.detail.value;
+        // Use map (not in-place mutation) so the reactivity tracker definitely sees the change.
+        this.rows = this.rows.map((r, i) => (i === idx ? { ...r, currencyIsoCode: newIso } : r));
         this.recalcOptions();
         this.fireChange();
     }
@@ -64,7 +66,8 @@ export default class PromoCurrencyAmountInput extends LightningElement {
     handleAmountChange(e) {
         const idx = parseInt(e.currentTarget.dataset.idx, 10);
         const v = e.target.value;
-        this.rows[idx].amount = v === '' || v == null ? null : parseFloat(v);
+        const newAmount = v === '' || v == null ? null : parseFloat(v);
+        this.rows = this.rows.map((r, i) => (i === idx ? { ...r, amount: newAmount } : r));
         this.fireChange();
     }
 
