@@ -65,8 +65,12 @@ export default class PromoCurrencyAmountInput extends LightningElement {
 
     handleAmountChange(e) {
         const idx = parseInt(e.currentTarget.dataset.idx, 10);
+        if (isNaN(idx) || !this.rows[idx]) return;
         const v = e.target.value;
-        const newAmount = v === '' || v == null ? null : parseFloat(v);
+        const newAmount = v === '' || v == null || isNaN(parseFloat(v)) ? null : parseFloat(v);
+        // Idempotent — same handler is wired to onchange, oninput, AND onblur so we don't
+        // miss a value commit. Skip work if the value hasn't actually changed.
+        if (this.rows[idx].amount === newAmount) return;
         this.rows = this.rows.map((r, i) => (i === idx ? { ...r, amount: newAmount } : r));
         this.fireChange();
     }
