@@ -1,22 +1,19 @@
 //create debug DebugLevel
 sf data create record --use-tooling-api --sobject DebugLevel --values "DeveloperName=PlaceOrder_Debug MasterLabel=PlaceOrder_Debug ApexCode=FINEST ApexProfiling=INFO Callout=FINEST Database=INFO System=DEBUG Validation=INFO Visualforce=INFO Workflow=INFO" --json 2>&1
 
-//create TraceFlag
-sf data create record --use-tooling-api --sobject DebugLevel --values "DeveloperName=PlaceOrder_Debug MasterLabel=PlaceOrder_Debug ApexCode=FINEST ApexProfiling=INFO Callout=FINEST Database=INFO System=DEBUG Validation=INFO Visualforce=INFO Workflow=INFO" --json 2>&1
-
+//create trace flag 
+START=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z"); EXP=$(date -u -v+23H -v+55M +"%Y-%m-%dT%H:%M:%S.000Z"); echo "Start: $START"; echo "Expiration: $EXP"; sf data create record --use-tooling-api --sobject TraceFlag --values "TracedEntityId=005Nq00000drk4fIAA DebugLevelId=7dlNq000000wxJ3IAI LogType=USER_DEBUG StartDate=$START ExpirationDate=$EXP" --json 2>&1
+/*
 //verify trace flag
 sf data query --use-tooling-api --query "SELECT Id, TracedEntityId, DebugLevel.DeveloperName, LogType, StartDate, ExpirationDate FROM TraceFlag WHERE Id = '7tfNq000002x9SjIAI'" --json 2>&1
 
 cat <<'EOF'
-sf data query --use-tooling-api --query "SELECT Id, StartTime, Operation, Status, DurationMilliseconds, LogLength, Request, Application FROM ApexLog WHERE LogUserId = '005Nq00000drk4fIAA' AND StartTime = TODAY ORDER BY StartTime DESC LIMIT 20"
+sf data query --use-tooling-api --query "SELECT Id, StartTime, Operation, Status, DurationMilliseconds, LogLength, Request, Application FROM ApexLog WHERE LogUserId = '005Nq00000drk4fIAA' AND StartTime = TODAY ORDER BY StartTime DESC LIMIT 50"
 EOF
 
 
-//create trace flag 
-START=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z"); EXP=$(date -u -v+23H -v+55M +"%Y-%m-%dT%H:%M:%S.000Z"); echo "Start: $START"; echo "Expiration: $EXP"; sf data create record --use-tooling-api --sobject TraceFlag --values "TracedEntityId=005Nq00000drk4fIAA DebugLevelId=7dlNq000000wxJ3IAI LogType=USER_DEBUG StartDate=$START ExpirationDate=$EXP" --json 2>&1
-/*
-sf data query --use-tooling-api \
-  --query "SELECT Id, StartTime, Operation, Status, DurationMilliseconds, LogLength, Request, Application FROM ApexLog WHERE LogUserId = '005Nq00000drk4fIAA' AND StartTime = TODAY ORDER BY StartTime DESC LIMIT 20"
+
+sf data query --use-tooling-api --query "SELECT Id, StartTime, Operation, Status, DurationMilliseconds, LogLength, Request, Application FROM ApexLog WHERE LogUserId = '005Nq00000drk4fIAA' AND Status != 'Success' AND StartTime = TODAY ORDER BY StartTime DESC LIMIT 20"
 */
 Then fetch the log body for the relevant ID:
 

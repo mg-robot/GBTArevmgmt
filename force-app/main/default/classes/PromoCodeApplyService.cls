@@ -376,6 +376,94 @@ public with sharing class PromoCodeApplyService {
     return out;
   }
 
+  /**
+   * Loads the currently-applied promo codes on an Order so a host LWC can populate its UI
+   * without re-running the apply flow. Returns an `ApplyResult`-shaped payload that mirrors
+   * the response of `apply()` — same field names, same structure — so the LWC can consume it
+   * with no extra mapping. Each `CodeResult` is `valid=true` with `appliedAmount` equal to the
+   * sum of `Applied_Discount_Amount__c` across all Pending PCIs tied to that parent code on
+   * this Order. `applicationGroupId` is the most-recent group on the Order.
+   *
+   * Used by the `promoCodeEntry` LWC on `connectedCallback` when placed on an Order record
+   * page (internal Lightning Experience) so that staff can see + manage codes the same way
+   * members do in checkout.
+   *
+   * @param orderId the Order being inspected.
+   * @return ApplyResult with codeResults populated for all currently-Pending codes.
+   */
+  @AuraEnabled
+  public static ApplyResult getCurrentlyApplied(Id orderId) {
+    ApplyResult result = new ApplyResult();
+    result.codeResults = new List<CodeResult>();
+    result.totalAdjustment = 0;
+    result.repriceRequired = false;
+    if (orderId == null) {
+      return result;
+    }
+
+    List<Promo_Code_Item__c> pendingPcis = [
+      SELECT
+        Id,
+        Promo_Code__c,
+        Promo_Code__r.Code__c,
+        Promo_Code__r.Display_Name__c,
+        Promo_Code__r.CurrencyIsoCode,
+        Applied_Discount_Amount__c,
+        Application_Group_Id__c,
+        Order_Item__c,
+        Applied_Date__c
+      FROM Promo_Code_Item__c
+      WHERE Order_Item__r.OrderId = :orderId AND Status__c = 'Pending'
+      ORDER BY Applied_Date__c ASC
+    ];
+    if (pendingPcis.isEmpty()) {
+      return result;
+    }
+
+    // Aggregate by parent code: sum applied amounts and collect OrderItem Ids. Preserve the
+    // first-seen ordering so the LWC renders codes in the order they were applied.
+    Map<Id, CodeResult> byParent = new Map<Id, CodeResult>();
+    List<Id> parentOrder = new List<Id>();
+    Datetime mostRecentAppliedDate;
+    String mostRecentGroupId;
+
+    for (Promo_Code_Item__c pci : pendingPcis) {
+      Id parentId = pci.Promo_Code__c;
+      CodeResult cr = byParent.get(parentId);
+      if (cr == null) {
+        cr = new CodeResult();
+        cr.code = pci.Promo_Code__r.Code__c;
+        cr.displayName = pci.Promo_Code__r.Display_Name__c;
+        cr.currencyIsoCode = (String) pci.Promo_Code__r.get('CurrencyIsoCode');
+        cr.valid = true;
+        cr.appliedAmount = 0;
+        cr.appliedToOrderItemIds = new List<Id>();
+        byParent.put(parentId, cr);
+        parentOrder.add(parentId);
+      }
+      Decimal amt = pci.Applied_Discount_Amount__c == null
+        ? 0
+        : pci.Applied_Discount_Amount__c;
+      cr.appliedAmount += amt;
+      cr.appliedToOrderItemIds.add(pci.Order_Item__c);
+      result.totalAdjustment += amt;
+
+      if (
+        mostRecentAppliedDate == null ||
+        pci.Applied_Date__c > mostRecentAppliedDate
+      ) {
+        mostRecentAppliedDate = pci.Applied_Date__c;
+        mostRecentGroupId = pci.Application_Group_Id__c;
+      }
+    }
+
+    for (Id parentId : parentOrder) {
+      result.codeResults.add(byParent.get(parentId));
+    }
+    result.applicationGroupId = mostRecentGroupId;
+    return result;
+  }
+
   // ============================================================
   // Internals
   // ============================================================

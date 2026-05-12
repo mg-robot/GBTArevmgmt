@@ -1,21 +1,23 @@
-import LightningModal from 'lightning/modal';
-import createBulk from '@salesforce/apex/PromoCodeService.createBulk';
-import getActiveCurrencies from '@salesforce/apex/PromoCodeService.getActiveCurrencies';
-import getDocumentImageUrl from '@salesforce/apex/PromoDocumentIconHelper.getDocumentImageUrl';
+import LightningModal from "lightning/modal";
+import createBulk from "@salesforce/apex/PromoCodeService.createBulk";
+import getActiveCurrencies from "@salesforce/apex/PromoCodeService.getActiveCurrencies";
+import loadDefinition from "@salesforce/apex/PromoCodeService.loadDefinition";
+import activateBulk from "@salesforce/apex/PromoCodeService.activateBulk";
+import getDocumentImageUrl from "@salesforce/apex/PromoDocumentIconHelper.getDocumentImageUrl";
 
-import LBL_ModalTitle from '@salesforce/label/c.PromoCodeWizard_Modal_Title';
-import LBL_BtnCancel from '@salesforce/label/c.PromoCodeWizard_Btn_Cancel';
-import LBL_BtnBack from '@salesforce/label/c.PromoCodeWizard_Btn_Back';
-import LBL_BtnNext from '@salesforce/label/c.PromoCodeWizard_Btn_Next';
-import LBL_BtnSaveAsDraft from '@salesforce/label/c.PromoCodeWizard_Btn_SaveAsDraft';
-import LBL_BtnActivateNow from '@salesforce/label/c.PromoCodeWizard_Btn_ActivateNow';
-import LBL_Saving from '@salesforce/label/c.PromoCodeWizard_Saving';
-import LBL_CancelConfirm from '@salesforce/label/c.PromoCodeWizard_CancelConfirm';
-import LBL_SaveFailed from '@salesforce/label/c.PromoCodeWizard_SaveFailed';
-import LBL_StepDefinition from '@salesforce/label/c.PromoCodeWizard_Step_Definition';
-import LBL_StepScopeEligibility from '@salesforce/label/c.PromoCodeWizard_Step_ScopeEligibility';
-import LBL_StepLimitsBehavior from '@salesforce/label/c.PromoCodeWizard_Step_LimitsBehavior';
-import LBL_StepReviewActivate from '@salesforce/label/c.PromoCodeWizard_Step_ReviewActivate';
+import LBL_ModalTitle from "@salesforce/label/c.PromoCodeWizard_Modal_Title";
+import LBL_BtnCancel from "@salesforce/label/c.PromoCodeWizard_Btn_Cancel";
+import LBL_BtnBack from "@salesforce/label/c.PromoCodeWizard_Btn_Back";
+import LBL_BtnNext from "@salesforce/label/c.PromoCodeWizard_Btn_Next";
+import LBL_BtnSaveAsDraft from "@salesforce/label/c.PromoCodeWizard_Btn_SaveAsDraft";
+import LBL_BtnActivateNow from "@salesforce/label/c.PromoCodeWizard_Btn_ActivateNow";
+import LBL_Saving from "@salesforce/label/c.PromoCodeWizard_Saving";
+import LBL_CancelConfirm from "@salesforce/label/c.PromoCodeWizard_CancelConfirm";
+import LBL_SaveFailed from "@salesforce/label/c.PromoCodeWizard_SaveFailed";
+import LBL_StepDefinition from "@salesforce/label/c.PromoCodeWizard_Step_Definition";
+import LBL_StepScopeEligibility from "@salesforce/label/c.PromoCodeWizard_Step_ScopeEligibility";
+import LBL_StepLimitsBehavior from "@salesforce/label/c.PromoCodeWizard_Step_LimitsBehavior";
+import LBL_StepReviewActivate from "@salesforce/label/c.PromoCodeWizard_Step_ReviewActivate";
 
 /**
  * Promo Code creation wizard modal. Opened via PromoCodeWizard.open() from a launcher.
@@ -26,221 +28,382 @@ import LBL_StepReviewActivate from '@salesforce/label/c.PromoCodeWizard_Step_Rev
  * All user-facing text is sourced from Custom Labels for translation via Translation Workbench.
  */
 export default class PromoCodeWizard extends LightningModal {
-    currentStep = 1;
-    isSubmitting = false;
-    errorMessage = '';
-    availableCurrencies = [];
-    iconUrl;
+  currentStep = 1;
+  isSubmitting = false;
+  errorMessage = "";
+  availableCurrencies = [];
+  iconUrl;
 
-    // NOTE: must NOT be named `label` — LightningModal already exposes a `label` property
-    // (set via .open({ label: ... })) which would shadow our labels object.
-    labels = {
-        modalTitle: LBL_ModalTitle,
-        btnCancel: LBL_BtnCancel,
-        btnBack: LBL_BtnBack,
-        btnNext: LBL_BtnNext,
-        btnSaveAsDraft: LBL_BtnSaveAsDraft,
-        btnActivateNow: LBL_BtnActivateNow,
-        saving: LBL_Saving,
-        stepDefinition: LBL_StepDefinition,
-        stepScopeEligibility: LBL_StepScopeEligibility,
-        stepLimitsBehavior: LBL_StepLimitsBehavior,
-        stepReviewActivate: LBL_StepReviewActivate
-    };
+  // Edit-mode state — populated when opened from an existing Promo_Code__c record via the
+  // "Open in Setup Wizard" Quick Action. When `sourceRecordId` is passed into .open(),
+  // the modal jumps to the Review step pre-filled with the record's values (+ currency
+  // siblings) and Activate Now flips the existing records to Active rather than creating.
+  sourceRecordId; // set via .open({ sourceRecordId })
+  sourceRecordIds = []; // populated by loadDefinition; covers all currency siblings
+  mode = "create"; // 'create' | 'edit'
+  loadedStatus; // 'Draft' | 'Active' etc., from the source record
 
-    wizardData = {
-        code: '',
-        displayName: '',
-        terms: '',
-        discountType: '',
-        percentValue: null,
-        percentCurrencies: [],
-        amounts: [],
-        effectiveStart: '',
-        effectiveEnd: '',
-        memberTypeScope: [],
-        regionScope: [],
-        applicationLevel: 'Per Order',
-        productScopeType: 'All Items',
-        productFamilyScope: [],
-        specificProducts: '',
-        accountId: null,
-        totalLimit: null,
-        perMemberLimit: null,
-        combinable: false,
-        combinationGroup: '',
-        approvalRequired: false
-    };
+  // NOTE: must NOT be named `label` — LightningModal already exposes a `label` property
+  // (set via .open({ label: ... })) which would shadow our labels object.
+  labels = {
+    modalTitle: LBL_ModalTitle,
+    btnCancel: LBL_BtnCancel,
+    btnBack: LBL_BtnBack,
+    btnNext: LBL_BtnNext,
+    btnSaveAsDraft: LBL_BtnSaveAsDraft,
+    btnActivateNow: LBL_BtnActivateNow,
+    saving: LBL_Saving,
+    stepDefinition: LBL_StepDefinition,
+    stepScopeEligibility: LBL_StepScopeEligibility,
+    stepLimitsBehavior: LBL_StepLimitsBehavior,
+    stepReviewActivate: LBL_StepReviewActivate
+  };
 
-    stepValidationStatus = { 1: false, 2: false, 3: false, 4: true };
+  wizardData = {
+    code: "",
+    displayName: "",
+    terms: "",
+    discountType: "",
+    percentValue: null,
+    percentCurrencies: [],
+    amounts: [],
+    effectiveStart: "",
+    effectiveEnd: "",
+    memberTypeScope: [],
+    regionScope: [],
+    applicationLevel: "Per Order",
+    productScopeType: "All Items",
+    productFamilyScope: [],
+    specificProducts: "",
+    accountId: null,
+    totalLimit: null,
+    perMemberLimit: null,
+    combinable: false,
+    combinationGroup: "",
+    approvalRequired: false
+  };
 
-    connectedCallback() {
-        getActiveCurrencies()
-            .then((r) => {
-                this.availableCurrencies = r || [];
-                if (this.wizardData.percentCurrencies.length === 0 && this.availableCurrencies.length) {
-                    this.wizardData = { ...this.wizardData, percentCurrencies: [...this.availableCurrencies] };
-                }
-            })
-            .catch(() => {});
-        // Same Document-sourced icon used by the Promo_Code__c tab style.
-        getDocumentImageUrl({ documentName: 'promo_svg' })
-            .then((url) => { this.iconUrl = url || null; })
-            .catch(() => { this.iconUrl = null; });
-    }
+  stepValidationStatus = { 1: false, 2: false, 3: false, 4: true };
 
-    handleIconError() { this.iconUrl = null; }
+  connectedCallback() {
+    getActiveCurrencies()
+      .then((r) => {
+        this.availableCurrencies = r || [];
+        if (
+          this.mode === "create" &&
+          this.wizardData.percentCurrencies.length === 0 &&
+          this.availableCurrencies.length
+        ) {
+          this.wizardData = {
+            ...this.wizardData,
+            percentCurrencies: [...this.availableCurrencies]
+          };
+        }
+      })
+      .catch(() => {});
+    // Same Document-sourced icon used by the Promo_Code__c tab style.
+    getDocumentImageUrl({ documentName: "promo_svg" })
+      .then((url) => {
+        this.iconUrl = url || null;
+      })
+      .catch(() => {
+        this.iconUrl = null;
+      });
 
-    get hasIconUrl() { return !!this.iconUrl; }
-
-    get isStep1() { return this.currentStep === 1; }
-    get isStep2() { return this.currentStep === 2; }
-    get isStep3() { return this.currentStep === 3; }
-    get isStep4() { return this.currentStep === 4; }
-    get isFirstStep() { return this.currentStep === 1; }
-    get isReviewStep() { return this.currentStep === 4; }
-    get nextDisabled() { return !this.stepValidationStatus[this.currentStep]; }
-
-    get progressSteps() {
-        const defs = [
-            { step: 1, label: this.labels.stepDefinition },
-            { step: 2, label: this.labels.stepScopeEligibility },
-            { step: 3, label: this.labels.stepLimitsBehavior },
-            { step: 4, label: this.labels.stepReviewActivate }
-        ];
-        return defs.map((d, idx) => {
-            const isCompleted = d.step < this.currentStep;
-            const isActive = d.step === this.currentStep;
-            const isLast = idx === defs.length - 1;
-            let cls = 'pcw-step';
-            if (isCompleted) cls += ' pcw-step--completed';
-            else if (isActive) cls += ' pcw-step--active';
-            else cls += ' pcw-step--upcoming';
-            if (isLast) cls += ' pcw-step--last';
-            return {
-                step: d.step,
-                label: d.label,
-                containerClass: cls,
-                ariaCurrent: isActive ? 'step' : null
-            };
+    // Edit mode: load the existing record (+ currency siblings) and jump to Review.
+    if (this.sourceRecordId) {
+      this.mode = "edit";
+      this.isSubmitting = true;
+      loadDefinition({ recordId: this.sourceRecordId })
+        .then((def) => {
+          if (!def || !def.input) {
+            this.errorMessage = "Unable to load promo code definition.";
+            return;
+          }
+          this.wizardData = this.mapInputToWizardData(def.input);
+          this.sourceRecordIds = def.sourceRecordIds || [this.sourceRecordId];
+          this.loadedStatus = def.currentStatus;
+          // All steps are valid in edit mode — values came from a previously-saved record.
+          this.stepValidationStatus = { 1: true, 2: true, 3: true, 4: true };
+          this.currentStep = 4;
+        })
+        .catch((err) => {
+          this.errorMessage =
+            (err && err.body && err.body.message) ||
+            (err && err.message) ||
+            "Failed to load promo code.";
+        })
+        .finally(() => {
+          this.isSubmitting = false;
         });
     }
+  }
 
-    handleStepClick(event) {
-        const stepNum = parseInt(event.currentTarget.dataset.step, 10);
-        if (!isNaN(stepNum) && stepNum < this.currentStep) {
-            this.currentStep = stepNum;
-            this.errorMessage = '';
-        }
+  mapInputToWizardData(inp) {
+    return {
+      code: inp.code || "",
+      displayName: inp.displayName || "",
+      terms: inp.terms || "",
+      discountType: inp.discountType || "",
+      percentValue: inp.percentValue == null ? null : inp.percentValue,
+      percentCurrencies: inp.percentCurrencies || [],
+      amounts: inp.amounts || [],
+      effectiveStart: inp.effectiveStart || "",
+      effectiveEnd: inp.effectiveEnd || "",
+      memberTypeScope: inp.memberTypeScope || [],
+      regionScope: inp.regionScope || [],
+      applicationLevel: inp.applicationLevel || "Per Order",
+      productScopeType: inp.productScopeType || "All Items",
+      productFamilyScope: inp.productFamilyScope || [],
+      specificProducts: inp.specificProducts || "",
+      accountId: inp.accountId || null,
+      totalLimit: inp.totalLimit == null ? null : inp.totalLimit,
+      perMemberLimit: inp.perMemberLimit == null ? null : inp.perMemberLimit,
+      combinable: inp.combinable === true,
+      combinationGroup: inp.combinationGroup || "",
+      approvalRequired: inp.approvalRequired === true
+    };
+  }
+
+  get isEditMode() {
+    return this.mode === "edit";
+  }
+  get isCreateMode() {
+    return this.mode === "create";
+  }
+  get showSaveAsDraft() {
+    return this.mode === "create";
+  }
+
+  handleIconError() {
+    this.iconUrl = null;
+  }
+
+  get hasIconUrl() {
+    return !!this.iconUrl;
+  }
+
+  get isStep1() {
+    return this.currentStep === 1;
+  }
+  get isStep2() {
+    return this.currentStep === 2;
+  }
+  get isStep3() {
+    return this.currentStep === 3;
+  }
+  get isStep4() {
+    return this.currentStep === 4;
+  }
+  get isFirstStep() {
+    return this.currentStep === 1;
+  }
+  get isReviewStep() {
+    return this.currentStep === 4;
+  }
+  get nextDisabled() {
+    return !this.stepValidationStatus[this.currentStep];
+  }
+
+  get progressSteps() {
+    const defs = [
+      { step: 1, label: this.labels.stepDefinition },
+      { step: 2, label: this.labels.stepScopeEligibility },
+      { step: 3, label: this.labels.stepLimitsBehavior },
+      { step: 4, label: this.labels.stepReviewActivate }
+    ];
+    return defs.map((d, idx) => {
+      const isCompleted = d.step < this.currentStep;
+      const isActive = d.step === this.currentStep;
+      const isLast = idx === defs.length - 1;
+      let cls = "pcw-step";
+      if (isCompleted) cls += " pcw-step--completed";
+      else if (isActive) cls += " pcw-step--active";
+      else cls += " pcw-step--upcoming";
+      if (isLast) cls += " pcw-step--last";
+      return {
+        step: d.step,
+        label: d.label,
+        containerClass: cls,
+        ariaCurrent: isActive ? "step" : null
+      };
+    });
+  }
+
+  handleStepClick(event) {
+    const stepNum = parseInt(event.currentTarget.dataset.step, 10);
+    if (!isNaN(stepNum) && stepNum < this.currentStep) {
+      this.currentStep = stepNum;
+      this.errorMessage = "";
     }
+  }
 
-    handleFieldChange(event) {
-        const { field, value } = event.detail;
-        this.wizardData = { ...this.wizardData, [field]: value };
+  handleFieldChange(event) {
+    const { field, value } = event.detail;
+    this.wizardData = { ...this.wizardData, [field]: value };
+  }
+
+  handleStepValidate(event) {
+    this.stepValidationStatus = {
+      ...this.stepValidationStatus,
+      [this.currentStep]: !!event.detail.valid
+    };
+  }
+
+  handleNext() {
+    if (!this.stepValidationStatus[this.currentStep]) return;
+    if (this.currentStep < 4) {
+      this.currentStep += 1;
+      this.errorMessage = "";
     }
+  }
 
-    handleStepValidate(event) {
-        this.stepValidationStatus = { ...this.stepValidationStatus, [this.currentStep]: !!event.detail.valid };
+  handleBack() {
+    if (this.currentStep > 1) {
+      this.currentStep -= 1;
+      this.errorMessage = "";
     }
+  }
 
-    handleNext() {
-        if (!this.stepValidationStatus[this.currentStep]) return;
-        if (this.currentStep < 4) {
-            this.currentStep += 1;
-            this.errorMessage = '';
-        }
+  handleProgressClick(event) {
+    const value = event && event.detail && event.detail.value;
+    if (!value) return;
+    const targetStep = parseInt(String(value).replace("step", ""), 10);
+    if (!isNaN(targetStep) && targetStep < this.currentStep) {
+      this.currentStep = targetStep;
+      this.errorMessage = "";
     }
+  }
 
-    handleBack() {
-        if (this.currentStep > 1) {
-            this.currentStep -= 1;
-            this.errorMessage = '';
-        }
+  handleJumpTo(event) {
+    const targetStep = parseInt(event.detail.step, 10);
+    if (!isNaN(targetStep) && targetStep >= 1 && targetStep <= 4) {
+      this.currentStep = targetStep;
     }
+  }
 
-    handleProgressClick(event) {
-        const value = event && event.detail && event.detail.value;
-        if (!value) return;
-        const targetStep = parseInt(String(value).replace('step', ''), 10);
-        if (!isNaN(targetStep) && targetStep < this.currentStep) {
-            this.currentStep = targetStep;
-            this.errorMessage = '';
-        }
+  handleCancel() {
+    const hasData =
+      this.wizardData.code ||
+      this.wizardData.displayName ||
+      this.wizardData.discountType;
+    if (hasData) {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(LBL_CancelConfirm)) {
+        return;
+      }
     }
+    this.close({ result: "cancelled" });
+  }
 
-    handleJumpTo(event) {
-        const targetStep = parseInt(event.detail.step, 10);
-        if (!isNaN(targetStep) && targetStep >= 1 && targetStep <= 4) {
-            this.currentStep = targetStep;
-        }
+  handleSaveDraft() {
+    this.submit(false);
+  }
+  handleActivateNow() {
+    if (this.mode === "edit") {
+      this.activateExisting();
+    } else {
+      this.submit(true);
     }
+  }
 
-    handleCancel() {
-        const hasData = this.wizardData.code || this.wizardData.displayName || this.wizardData.discountType;
-        if (hasData) {
-            // eslint-disable-next-line no-alert
-            if (!window.confirm(LBL_CancelConfirm)) {
-                return;
+  activateExisting() {
+    if (!this.sourceRecordIds || !this.sourceRecordIds.length) {
+      this.errorMessage = "No records to activate.";
+      return;
+    }
+    this.isSubmitting = true;
+    this.errorMessage = "";
+    activateBulk({ recordIds: this.sourceRecordIds })
+      .then((res) => {
+        if (res && res.success) {
+          try {
+            this.close("activated");
+          } catch {
+            try {
+              this.close();
+            } catch {
+              /* swallow */
             }
+          }
+        } else {
+          this.errorMessage = (res && res.errorMessage) || LBL_SaveFailed;
         }
-        this.close({ result: 'cancelled' });
-    }
+      })
+      .catch((err) => {
+        this.errorMessage =
+          (err && err.body && err.body.message) ||
+          (err && err.message) ||
+          LBL_SaveFailed;
+      })
+      .finally(() => {
+        this.isSubmitting = false;
+      });
+  }
 
-    handleSaveDraft() { this.submit(false); }
-    handleActivateNow() { this.submit(true); }
+  submit(activate) {
+    this.isSubmitting = true;
+    this.errorMessage = "";
+    const w = this.wizardData || {};
+    const isPercent = w.discountType === "Percent";
+    const isAmount = w.discountType === "Amount";
+    const input = {
+      code: w.code,
+      displayName: w.displayName,
+      terms: w.terms,
+      discountType: w.discountType,
+      percentValue: isPercent ? w.percentValue : null,
+      percentCurrencies: isPercent ? w.percentCurrencies : null,
+      amounts: isAmount ? w.amounts : null,
+      effectiveStart: w.effectiveStart || null,
+      effectiveEnd: w.effectiveEnd || null,
+      totalLimit:
+        w.totalLimit === "" || w.totalLimit == null ? null : w.totalLimit,
+      perMemberLimit:
+        w.perMemberLimit === "" || w.perMemberLimit == null
+          ? null
+          : w.perMemberLimit,
+      memberTypeScope: w.memberTypeScope,
+      regionScope: w.regionScope,
+      applicationLevel: w.applicationLevel,
+      productScopeType: w.productScopeType,
+      productFamilyScope: w.productFamilyScope,
+      specificProducts: w.specificProducts,
+      accountId: w.accountId,
+      combinable: w.combinable,
+      combinationGroup: w.combinationGroup,
+      approvalRequired: w.approvalRequired,
+      activateImmediately: activate
+    };
 
-    submit(activate) {
-        this.isSubmitting = true;
-        this.errorMessage = '';
-        const w = this.wizardData || {};
-        const isPercent = w.discountType === 'Percent';
-        const isAmount = w.discountType === 'Amount';
-        const input = {
-            code: w.code,
-            displayName: w.displayName,
-            terms: w.terms,
-            discountType: w.discountType,
-            percentValue: isPercent ? w.percentValue : null,
-            percentCurrencies: isPercent ? w.percentCurrencies : null,
-            amounts: isAmount ? w.amounts : null,
-            effectiveStart: w.effectiveStart || null,
-            effectiveEnd: w.effectiveEnd || null,
-            totalLimit: w.totalLimit === '' || w.totalLimit == null ? null : w.totalLimit,
-            perMemberLimit: w.perMemberLimit === '' || w.perMemberLimit == null ? null : w.perMemberLimit,
-            memberTypeScope: w.memberTypeScope,
-            regionScope: w.regionScope,
-            applicationLevel: w.applicationLevel,
-            productScopeType: w.productScopeType,
-            productFamilyScope: w.productFamilyScope,
-            specificProducts: w.specificProducts,
-            accountId: w.accountId,
-            combinable: w.combinable,
-            combinationGroup: w.combinationGroup,
-            approvalRequired: w.approvalRequired,
-            activateImmediately: activate
-        };
-
-        const cleanInput = JSON.parse(JSON.stringify(input));
-        createBulk({ input: cleanInput })
-            .then((r) => {
-                if (r && r.success) {
-                    try {
-                        this.close('created');
-                    } catch (closeErr) {
-                        try { this.close(); } catch (e2) { /* swallow */ }
-                    }
-                } else {
-                    this.errorMessage = (r && r.errorMessage) || LBL_SaveFailed;
-                    if (r && r.conflictCurrencies && r.conflictCurrencies.length) {
-                        this.currentStep = 1;
-                    }
-                }
-            })
-            .catch((err) => {
-                this.errorMessage = (err && err.body && err.body.message) || (err && err.message) || LBL_SaveFailed;
-            })
-            .finally(() => {
-                this.isSubmitting = false;
-            });
-    }
+    const cleanInput = JSON.parse(JSON.stringify(input));
+    createBulk({ input: cleanInput })
+      .then((r) => {
+        if (r && r.success) {
+          try {
+            this.close("created");
+          } catch {
+            try {
+              this.close();
+            } catch {
+              /* swallow */
+            }
+          }
+        } else {
+          this.errorMessage = (r && r.errorMessage) || LBL_SaveFailed;
+          if (r && r.conflictCurrencies && r.conflictCurrencies.length) {
+            this.currentStep = 1;
+          }
+        }
+      })
+      .catch((err) => {
+        this.errorMessage =
+          (err && err.body && err.body.message) ||
+          (err && err.message) ||
+          LBL_SaveFailed;
+      })
+      .finally(() => {
+        this.isSubmitting = false;
+      });
+  }
 }

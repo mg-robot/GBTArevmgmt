@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Open Promo Code in Setup Wizard</masterLabel>
+    <description
+  >Headless Lightning Quick Action — opens the Promo Code Setup Wizard modal pre-filled with the record's values, landing on the Review &amp; Activate step.</description>
+    <targets>
+        <target>lightning__RecordAction</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordAction">
+            <actionType>Action</actionType>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
