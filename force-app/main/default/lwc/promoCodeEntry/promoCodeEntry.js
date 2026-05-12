@@ -53,6 +53,18 @@ export default class PromoCodeEntry extends LightningElement {
   // -----------------------------------------------------------
 
   connectedCallback() {
+    // Diagnostic — confirms which version is running + whether the framework injected
+    // recordId on this page. Remove once Order-page integration is verified.
+    console.log(
+      "[promoCodeEntry] mounted",
+      "orderId=",
+      this.orderId,
+      "recordId=",
+      this.recordId,
+      "effective=",
+      this.effectiveOrderId
+    );
+
     // Auto-load currently-applied codes when mounted on a record page. The parent
     // Checkout LWC sets `orderId` and drives state via setAppliedCodes() — for that flow
     // we skip the auto-load (no recordId is injected outside record pages). For Order
