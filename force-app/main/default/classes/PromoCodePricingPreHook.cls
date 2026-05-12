@@ -30,22 +30,15 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
   global RevSignaling.TransactionResponse execute(
     RevSignaling.TransactionRequest request
   ) {
-    System.debug(
-      LoggingLevel.INFO,
-      '=== PromoCodePricingPreHook: execute() entered ==='
-    );
+    System.debug('Statrting prehook here');
     String contextId = request == null ? null : request.ctxInstanceId;
-    System.debug(LoggingLevel.INFO, 'ctxInstanceId=' + contextId);
     if (String.isBlank(contextId)) {
-      System.debug(
-        LoggingLevel.WARN,
-        'PromoCodePricingPreHook: missing context instance Id — returning FAILED.'
-      );
       return buildResponse(
         RevSignaling.TransactionStatus.FAILED,
         'PromoCodePricingPreHook: missing context instance Id.'
       );
     }
+    System.debug(contextId);
 
     Context.IndustriesContext industriesContext = new Context.IndustriesContext();
     try {
@@ -53,86 +46,42 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
         industriesContext,
         contextId
       );
-      System.debug(
-        LoggingLevel.INFO,
-        'queryTransactionItems → ' +
-          (itemDataList == null
-            ? 'null'
-            : String.valueOf(itemDataList.size())) +
-          ' raw SalesTransactionItem node(s)'
-      );
-      Map<Id, List<Object>> orderItemToDataPath = extractOrderItemPaths(
+      System.debug(itemDataList);
+      Map<String, List<Object>> orderItemToDataPath = extractOrderItemPaths(
         itemDataList
       );
-      Set<Id> orderItemIds = orderItemToDataPath.keySet();
-      System.debug(
-        LoggingLevel.INFO,
-        'extractOrderItemPaths → ' +
-          orderItemIds.size() +
-          ' OrderItem(s): ' +
-          orderItemIds
-      );
+      System.debug('past extractOderItems Paths');
+      System.debug(orderItemToDataPath);
+      Set<String> orderItemIds = orderItemToDataPath.keySet();
+      System.debug(orderItemIds);
 
       if (orderItemIds.isEmpty()) {
-        System.debug(
-          LoggingLevel.INFO,
-          'PromoCodePricingPreHook: no OrderItems in pricing context — returning SUCCESS no-op.'
-        );
         return buildResponse(
           RevSignaling.TransactionStatus.SUCCESS,
           'PromoCodePricingPreHook: no OrderItems in pricing context.'
         );
       }
 
-      Map<Id, Decimal> adjustmentByOrderItem = aggregateAdjustments(
+      Map<String, Decimal> adjustmentByOrderItem = aggregateAdjustments(
         orderItemIds
       );
-      System.debug(
-        LoggingLevel.INFO,
-        'aggregateAdjustments → ' + adjustmentByOrderItem
-      );
+      System.debug(adjustmentByOrderItem);
       List<Map<String, Object>> nodeUpdates = buildNodeUpdates(
         orderItemIds,
         orderItemToDataPath,
         adjustmentByOrderItem
       );
-      System.debug(
-        LoggingLevel.INFO,
-        'buildNodeUpdates → ' + nodeUpdates.size() + ' node update(s)'
-      );
-      System.debug(
-        LoggingLevel.DEBUG,
-        'nodeUpdates payload: ' + JSON.serializePretty(nodeUpdates)
-      );
+      System.debug(nodeUpdates);
       submitContextUpdates(industriesContext, contextId, nodeUpdates);
 
-      String summary = summarizeResult(
-        adjustmentByOrderItem.size(),
-        nodeUpdates.size()
+      return buildResponse(
+        RevSignaling.TransactionStatus.SUCCESS,
+        summarizeResult(adjustmentByOrderItem.size(), nodeUpdates.size())
       );
-      System.debug(
-        LoggingLevel.INFO,
-        '=== PromoCodePricingPreHook: SUCCESS — ' + summary + ' ==='
-      );
-      return buildResponse(RevSignaling.TransactionStatus.SUCCESS, summary);
     } catch (Exception e) {
-      System.debug(
-        LoggingLevel.ERROR,
-        '=== PromoCodePricingPreHook: EXCEPTION === ' +
-          e.getTypeName() +
-          ': ' +
-          e.getMessage() +
-          '\nLine: ' +
-          e.getLineNumber() +
-          '\nStack:\n' +
-          e.getStackTraceString()
-      );
       return buildResponse(
         RevSignaling.TransactionStatus.FAILED,
-        'PromoCodePricingPreHook error: ' +
-          e.getTypeName() +
-          ' — ' +
-          e.getMessage()
+        'PromoCodePricingPreHook error: ' + e.getMessage()
       );
     }
   }
@@ -141,23 +90,13 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
     Context.IndustriesContext industriesContext,
     String contextId
   ) {
-    Map<String, Object> queryInput = new Map<String, Object>{
-      'contextId' => contextId,
-      'tags' => new List<String>{ 'SalesTransactionItem' }
-    };
-    System.debug(
-      LoggingLevel.DEBUG,
-      'queryTags input: ' + JSON.serialize(queryInput)
-    );
-    Map<String, Object> rawResponse = industriesContext.queryTags(queryInput);
-    System.debug(
-      LoggingLevel.DEBUG,
-      'queryTags raw response: ' +
-      (rawResponse == null ? 'null' : JSON.serializePretty(rawResponse))
-    );
-    Map<String, Object> queryResult = rawResponse == null
-      ? null
-      : (Map<String, Object>) rawResponse.get('queryResult');
+    Map<String, Object> queryResult = (Map<String, Object>) industriesContext.queryTags(
+        new Map<String, Object>{
+          'contextId' => contextId,
+          'tags' => new List<String>{ 'SalesTransactionItem' }
+        }
+      )
+      .get('queryResult');
     return queryResult == null
       ? null
       : (List<Object>) queryResult.get('SalesTransactionItem');
@@ -169,31 +108,13 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
     String contextId,
     List<Map<String, Object>> nodeUpdates
   ) {
-    if (nodeUpdates == null || nodeUpdates.isEmpty()) {
-      System.debug(
-        LoggingLevel.INFO,
-        'submitContextUpdates: nothing to submit (null/empty list) — no-op.'
-      );
+    if (nodeUpdates == null || nodeUpdates.isEmpty())
       return;
-    }
-    Map<String, Object> updateInput = new Map<String, Object>{
-      'contextId' => contextId,
-      'nodePathAndAttributes' => nodeUpdates
-    };
-    System.debug(
-      LoggingLevel.INFO,
-      '--- PromoCodePricingPreHook: SUBMITTING CONTEXT UPDATE (' +
-        nodeUpdates.size() +
-        ' nodes) ---'
-    );
-    System.debug(
-      LoggingLevel.DEBUG,
-      'updateContextAttributes input: ' + JSON.serializePretty(updateInput)
-    );
-    industriesContext.updateContextAttributes(updateInput);
-    System.debug(
-      LoggingLevel.INFO,
-      'updateContextAttributes call returned without exception.'
+    industriesContext.updateContextAttributes(
+      new Map<String, Object>{
+        'contextId' => contextId,
+        'nodePathAndAttributes' => nodeUpdates
+      }
     );
   }
 
@@ -233,100 +154,40 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
    * in queryTags output but should not receive context updates).
    */
   @TestVisible
-  private static Map<Id, List<Object>> extractOrderItemPaths(
+  private static Map<String, List<Object>> extractOrderItemPaths(
     List<Object> itemDataList
   ) {
-    Map<Id, List<Object>> result = new Map<Id, List<Object>>();
-    if (itemDataList == null) {
-      System.debug(
-        LoggingLevel.WARN,
-        'extractOrderItemPaths: itemDataList is null — returning empty map.'
-      );
+    Map<String, List<Object>> result = new Map<String, List<Object>>();
+    if (itemDataList == null)
       return result;
-    }
-    Integer idx = -1;
     for (Object itemObj : itemDataList) {
-      idx++;
       Map<String, Object> itemNode = (Map<String, Object>) itemObj;
-      List<Object> dataPath = (List<Object>) itemNode.get('dataPath');
-      System.debug(
-        LoggingLevel.DEBUG,
-        'node[' +
-          idx +
-          '] dataPath=' +
-          dataPath +
-          ' tagValue=' +
-          itemNode.get('tagValue')
-      );
+      System.debug('itemNode: ' + itemNode);
       Map<String, Object> tags = (Map<String, Object>) itemNode.get('tagValue');
-      if (tags == null || !tags.containsKey('LineItem')) {
-        System.debug(
-          LoggingLevel.DEBUG,
-          'node[' + idx + '] skipped: no LineItem tag.'
-        );
+      System.debug('tags: ' + tags);
+      if (tags == null || !tags.containsKey('LineItem'))
         continue;
-      }
       Object lineItemEntry = tags.get('LineItem');
-      if (!(lineItemEntry instanceof Map<String, Object>)) {
-        System.debug(
-          LoggingLevel.WARN,
-          'node[' +
-            idx +
-            '] skipped: LineItem entry not a Map — actual=' +
-            lineItemEntry
-        );
+      System.debug('LineItem: ' + lineItemEntry);
+      if (!(lineItemEntry instanceof Map<String, Object>))
         continue;
-      }
       Map<String, Object> lineItemTag = (Map<String, Object>) lineItemEntry;
+      System.debug('lineItemTag: ' + lineItemTag);
       Object dmlStatus = lineItemTag.get('dmlStatus');
       if (
         dmlStatus != null &&
         String.valueOf(dmlStatus).equalsIgnoreCase('DELETED')
-      ) {
-        System.debug(
-          LoggingLevel.INFO,
-          'node[' + idx + '] skipped: dmlStatus=DELETED.'
-        );
+      )
         continue;
-      }
       Object oiIdObj = lineItemTag.get('tagValue');
-      if (oiIdObj == null) {
-        System.debug(
-          LoggingLevel.DEBUG,
-          'node[' + idx + '] skipped: LineItem.tagValue is null.'
-        );
+      if (oiIdObj == null)
         continue;
-      }
-      // In-flight pricing context can carry LineItem.tagValue as a reference string
-      // (e.g., 'refChapterItem0') before items are committed to OrderItem records.
-      // Casting that to Id throws; skip and rely on the post-commit pricing pass.
-      String oiIdStr = String.valueOf(oiIdObj);
-      if (oiIdStr.startsWith('ref')) {
-        System.debug(
-          LoggingLevel.INFO,
-          'node[' +
-            idx +
-            '] skipped: unresolved ref tagValue=' +
-            oiIdStr +
-            ' (item not yet committed).'
-        );
-        continue;
-      }
-      Id orderItemId = (Id) oiIdStr;
-      System.debug(
-        LoggingLevel.INFO,
-        'node[' + idx + '] kept: OrderItem=' + orderItemId
-      );
-      result.put(orderItemId, dataPath);
+      System.debug('oiIdObj: ' + oiIdObj);
+      String orderItemId = String.valueOf(oiIdObj);
+      System.debug('orderItemId: ' + orderItemId);
+      result.put(orderItemId, (List<Object>) itemNode.get('dataPath'));
+      System.debug(result);
     }
-    System.debug(
-      LoggingLevel.INFO,
-      'extractOrderItemPaths: kept ' +
-        result.size() +
-        ' of ' +
-        itemDataList.size() +
-        ' raw nodes.'
-    );
     return result;
   }
 
@@ -336,36 +197,24 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
    * returned map (callers MUST treat absence as 0 for the reset behavior).
    */
   @TestVisible
-  private static Map<Id, Decimal> aggregateAdjustments(Set<Id> orderItemIds) {
-    Map<Id, Decimal> result = new Map<Id, Decimal>();
-    if (orderItemIds == null || orderItemIds.isEmpty()) {
-      System.debug(
-        LoggingLevel.DEBUG,
-        'aggregateAdjustments: empty/null orderItemIds — skipping SOQL.'
-      );
+  private static Map<String, Decimal> aggregateAdjustments(
+    Set<String> orderItemIds
+  ) {
+    Map<String, Decimal> result = new Map<String, Decimal>();
+    if (orderItemIds == null || orderItemIds.isEmpty())
       return result;
-    }
-    List<Promo_Code_Item__c> pcis = [
+    for (Promo_Code_Item__c pci : [
       SELECT Order_Item__c, Applied_Discount_Amount__c
       FROM Promo_Code_Item__c
       WHERE Order_Item__c IN :orderItemIds AND Status__c = 'Pending'
-    ];
-    System.debug(
-      LoggingLevel.INFO,
-      'aggregateAdjustments: SOQL returned ' +
-        pcis.size() +
-        ' Pending PCI(s) for ' +
-        orderItemIds.size() +
-        ' OrderItem(s).'
-    );
-    for (Promo_Code_Item__c pci : pcis) {
-      Decimal current = result.get(pci.Order_Item__c);
+    ]) {
+      String oiKey = String.valueOf(pci.Order_Item__c);
+      Decimal current = result.get(oiKey);
       Decimal amount = pci.Applied_Discount_Amount__c == null
         ? 0
         : pci.Applied_Discount_Amount__c;
-      result.put(pci.Order_Item__c, (current == null ? 0 : current) + amount);
+      result.put(oiKey, (current == null ? 0 : current) + amount);
     }
-    System.debug(LoggingLevel.DEBUG, 'aggregateAdjustments result: ' + result);
     return result;
   }
 
@@ -383,27 +232,19 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
    */
   @TestVisible
   private static List<Map<String, Object>> buildNodeUpdates(
-    Set<Id> orderItemIds,
-    Map<Id, List<Object>> orderItemToDataPath,
-    Map<Id, Decimal> adjustmentByOrderItem
+    Set<String> orderItemIds,
+    Map<String, List<Object>> orderItemToDataPath,
+    Map<String, Decimal> adjustmentByOrderItem
   ) {
     List<Map<String, Object>> nodeUpdates = new List<Map<String, Object>>();
     if (orderItemIds == null)
       return nodeUpdates;
-    for (Id oiId : orderItemIds) {
+    for (String oiId : orderItemIds) {
       List<Object> fullPath = orderItemToDataPath == null
         ? null
         : orderItemToDataPath.get(oiId);
-      if (fullPath == null || fullPath.size() < 2) {
-        System.debug(
-          LoggingLevel.WARN,
-          'buildNodeUpdates: skipping OrderItem ' +
-            oiId +
-            ' — malformed dataPath ' +
-            fullPath
-        );
+      if (fullPath == null || fullPath.size() < 2)
         continue;
-      }
       // Copy then strip the leading contextId — don't mutate the caller's list.
       List<Object> nodePath = new List<Object>(fullPath);
       nodePath.remove(0);
@@ -412,15 +253,6 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
         adjustmentByOrderItem.containsKey(oiId)
         ? adjustmentByOrderItem.get(oiId)
         : 0;
-      System.debug(
-        LoggingLevel.DEBUG,
-        'buildNodeUpdates: OrderItem=' +
-          oiId +
-          ' Promotion_Value__c=' +
-          adjustment +
-          ' nodePath=' +
-          nodePath
-      );
 
       nodeUpdates.add(
         new Map<String, Object>{
