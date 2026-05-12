@@ -43,6 +43,10 @@ export default class PromoCodeEntry extends LightningElement {
   isLoading = false;
   applicationGroupId;
   _autoLoaded = false;
+  // Set by `setAppliedCodes`. Once true, an in-flight auto-load won't clobber the
+  // caller's seed when it eventually resolves. Guards both Experience Cloud checkout
+  // (parent calls setAppliedCodes after navigate-back) and unit tests.
+  _externallySeeded = false;
 
   // -----------------------------------------------------------
   // Lifecycle
@@ -84,6 +88,8 @@ export default class PromoCodeEntry extends LightningElement {
    */
   @api
   setAppliedCodes(codes) {
+    this._autoLoaded = true;
+    this._externallySeeded = true;
     this.appliedCodes = Array.isArray(codes) ? codes.slice() : [];
     this.failedCodes = [];
   }
@@ -199,6 +205,9 @@ export default class PromoCodeEntry extends LightningElement {
     this.isLoading = true;
     try {
       const result = await getCurrentlyApplied({ orderId });
+      // If a caller already seeded state (via setAppliedCodes) while we were awaiting,
+      // don't clobber their data.
+      if (this._externallySeeded) return;
       if (!result || !result.codeResults) return;
       const applied = result.codeResults
         .filter((cr) => cr.valid)

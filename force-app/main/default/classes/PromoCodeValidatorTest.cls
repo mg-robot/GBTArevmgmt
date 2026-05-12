@@ -403,7 +403,7 @@ private class PromoCodeValidatorTest {
       'Percent',
       10
     );
-    pc.Region_Scope__c = 'EMEA;APAC';
+    pc.Region_Scope__c = 'France;Italy';
     insert pc;
     pc = [
       SELECT
