@@ -289,6 +289,14 @@ export default class PromoCodeWizard extends LightningModal {
   }
 
   handleStepValidate(event) {
+    // In edit mode the wizard trusts the loaded record's data and keeps every step
+    // marked valid (the parent set stepValidationStatus = {1..4: true} after load).
+    // Client-side step validation is intentionally strict — a code with characters
+    // outside [A-Z0-9], a combinable flag without a group, etc. — and would block
+    // navigation away from a step that holds a valid-at-save-time legacy value the
+    // user isn't even editing. Apex (createBulk / updateBulk) re-validates on the
+    // server, which is the real gate.
+    if (this.mode === "edit") return;
     this.stepValidationStatus = {
       ...this.stepValidationStatus,
       [this.currentStep]: !!event.detail.valid

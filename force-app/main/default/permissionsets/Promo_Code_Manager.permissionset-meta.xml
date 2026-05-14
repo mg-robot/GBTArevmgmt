@@ -9,6 +9,10 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>PromoCodeListViewService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>PromoCodePricingPreHook</apexClass>
         <enabled>true</enabled>
     </classAccesses>

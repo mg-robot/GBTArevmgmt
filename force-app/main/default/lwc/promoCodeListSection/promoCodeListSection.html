@@ -1,0 +1,113 @@
+<template>
+  <lightning-card>
+    <div
+      slot="title"
+      class="slds-grid slds-grid_vertical-align-center slds-wrap"
+    >
+      <lightning-icon
+        icon-name="standard:promotions"
+        size="small"
+        class="slds-m-right_x-small promo-codes-brand-icon"
+      ></lightning-icon>
+      <span class="slds-text-heading_small">Promo Codes</span>
+    </div>
+
+    <div
+      slot="actions"
+      class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
+    >
+      <template if:true={hasViews}>
+        <div class="slds-col">
+          <lightning-combobox
+            name="viewPicker"
+            label="List View"
+            variant="label-hidden"
+            value={selectedView}
+            options={viewOptions}
+            onchange={handleViewChange}
+            class="view-picker"
+          >
+          </lightning-combobox>
+        </div>
+      </template>
+      <div class="slds-col">
+        <lightning-button-icon
+          icon-name="utility:refresh"
+          alternative-text="Refresh"
+          title="Refresh"
+          onclick={handleRefresh}
+          class="slds-m-right_xx-small"
+        >
+        </lightning-button-icon>
+      </div>
+      <div class="slds-col">
+        <lightning-button
+          label="Manage List Views"
+          icon-name="utility:list"
+          onclick={handleManageViews}
+        >
+        </lightning-button>
+      </div>
+    </div>
+
+    <div class="slds-p-horizontal_small">
+      <template if:true={isLoading}>
+        <div class="slds-p-vertical_large slds-align_absolute-center">
+          <lightning-spinner
+            alternative-text="Loading"
+            size="small"
+          ></lightning-spinner>
+        </div>
+      </template>
+
+      <template if:true={hasRecords}>
+        <lightning-datatable
+          key-field="Id"
+          data={records}
+          columns={columns}
+          hide-checkbox-column
+          resize-column-disabled
+        >
+        </lightning-datatable>
+
+        <div
+          class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-vertical_small slds-p-horizontal_x-small"
+        >
+          <div class="slds-text-body_small slds-text-color_weak">
+            {paginationLabel}
+          </div>
+          <div class="slds-grid slds-gutters_xx-small">
+            <div class="slds-col">
+              <lightning-button
+                label="Previous"
+                icon-name="utility:chevronleft"
+                icon-position="left"
+                disabled={isPreviousDisabled}
+                onclick={handlePrevious}
+              >
+              </lightning-button>
+            </div>
+            <div class="slds-col">
+              <lightning-button
+                label="Next"
+                icon-name="utility:chevronright"
+                icon-position="right"
+                disabled={isNextDisabled}
+                onclick={handleNext}
+              >
+              </lightning-button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template if:true={showEmptyState}>
+        <div
+          class="slds-p-vertical_large slds-align_absolute-center slds-text-color_weak"
+        >
+          No promo codes match this list view.
+        </div>
+      </template>
+    </div>
+  </lightning-card>
+</template>
