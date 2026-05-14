@@ -26,7 +26,9 @@
     ISCHANGED(Combination_Group__c),
     ISCHANGED(Display_Name__c),
     ISCHANGED(Terms__c),
-    ISCHANGED(Approval_Required__c)
+    ISCHANGED(Approval_Required__c),
+    ISCHANGED(Applicable_To__c),
+    ISCHANGED(Min_Months_Since_Last_Active__c)
   )
 )</errorConditionFormula>
     <errorMessage

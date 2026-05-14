@@ -96,7 +96,9 @@ export default class PromoCodeWizard extends LightningModal {
     perMemberLimit: null,
     combinable: false,
     combinationGroup: "",
-    approvalRequired: false
+    approvalRequired: false,
+    applicableTo: "Both",
+    minMonthsSinceLastActive: null
   };
 
   stepValidationStatus = { 1: false, 2: false, 3: false, 4: true };
@@ -184,7 +186,12 @@ export default class PromoCodeWizard extends LightningModal {
       perMemberLimit: inp.perMemberLimit == null ? null : inp.perMemberLimit,
       combinable: inp.combinable === true,
       combinationGroup: inp.combinationGroup || "",
-      approvalRequired: inp.approvalRequired === true
+      approvalRequired: inp.approvalRequired === true,
+      applicableTo: inp.applicableTo || "Both",
+      minMonthsSinceLastActive:
+        inp.minMonthsSinceLastActive == null
+          ? null
+          : inp.minMonthsSinceLastActive
     };
   }
 
@@ -381,6 +388,11 @@ export default class PromoCodeWizard extends LightningModal {
       combinable: w.combinable,
       combinationGroup: w.combinationGroup,
       approvalRequired: w.approvalRequired,
+      applicableTo: w.applicableTo || "Both",
+      minMonthsSinceLastActive:
+        w.minMonthsSinceLastActive === "" || w.minMonthsSinceLastActive == null
+          ? null
+          : w.minMonthsSinceLastActive,
       activateImmediately: activate
     };
     return JSON.parse(JSON.stringify(input));

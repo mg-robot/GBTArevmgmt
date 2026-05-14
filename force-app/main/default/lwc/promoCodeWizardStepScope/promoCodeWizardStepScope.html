@@ -1,109 +1,155 @@
 <template>
-    <!-- Section 1: Validity Window -->
-    <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.validityHeading}</h3>
-        <p class="helper-text">{label.validityHelper}</p>
-        <div class="slds-grid slds-gutters slds-wrap">
-            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-                <lightning-input
-                    type="datetime"
-                    label={label.effectiveStart}
-                    value={wizardData.effectiveStart}
-                    onchange={handleStartChange}>
-                </lightning-input>
-            </div>
-            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-                <lightning-input
-                    type="datetime"
-                    label={label.effectiveEnd}
-                    value={wizardData.effectiveEnd}
-                    onchange={handleEndChange}>
-                </lightning-input>
-            </div>
-        </div>
+  <!-- Section 1: Validity Window -->
+  <div class="slds-m-bottom_medium">
+    <h3 class="section-heading">{label.validityHeading}</h3>
+    <p class="helper-text">{label.validityHelper}</p>
+    <div class="slds-grid slds-gutters slds-wrap">
+      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+        <lightning-input
+          type="datetime"
+          label={label.effectiveStart}
+          value={wizardData.effectiveStart}
+          onchange={handleStartChange}
+        >
+        </lightning-input>
+      </div>
+      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+        <lightning-input
+          type="datetime"
+          label={label.effectiveEnd}
+          value={wizardData.effectiveEnd}
+          onchange={handleEndChange}
+        >
+        </lightning-input>
+      </div>
     </div>
+  </div>
 
-    <!-- Section 2: Application Level (left) | Region Scope (right) -->
-    <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.regionAppLevelHeading}</h3>
-        <p class="helper-text">{label.regionAppLevelHelper}</p>
-        <div class="slds-grid slds-gutters slds-wrap">
-            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-                <lightning-radio-group
-                    label={label.applicationLevelLabel}
-                    options={applicationLevelOptions}
-                    value={wizardData.applicationLevel}
-                    type="radio"
-                    required
-                    onchange={handleApplicationLevelChange}>
-                </lightning-radio-group>
-            </div>
-            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-                <lightning-checkbox-group
-                    label={label.regionScope}
-                    options={regionOptions}
-                    value={wizardData.regionScope}
-                    onchange={handleRegionScopeChange}>
-                </lightning-checkbox-group>
-            </div>
-        </div>
+  <!-- Section 2: Application Level (left) | Region Scope (right) -->
+  <div class="slds-m-bottom_medium">
+    <h3 class="section-heading">{label.regionAppLevelHeading}</h3>
+    <p class="helper-text">{label.regionAppLevelHelper}</p>
+    <div class="slds-grid slds-gutters slds-wrap">
+      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+        <lightning-radio-group
+          label={label.applicationLevelLabel}
+          options={applicationLevelOptions}
+          value={wizardData.applicationLevel}
+          type="radio"
+          required
+          onchange={handleApplicationLevelChange}
+        >
+        </lightning-radio-group>
+      </div>
+      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+        <lightning-checkbox-group
+          label={label.regionScope}
+          options={regionOptions}
+          value={wizardData.regionScope}
+          onchange={handleRegionScopeChange}
+        >
+        </lightning-checkbox-group>
+      </div>
     </div>
+  </div>
 
-    <!-- Section 3: Product Applicability -->
-    <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.productAppHeading}</h3>
-        <p class="helper-text">{label.productAppHelper}</p>
-        <div class="slds-grid slds-gutters slds-wrap">
-            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-                <lightning-radio-group
-                    label={label.productScope}
-                    options={productScopeTypeOptions}
-                    value={wizardData.productScopeType}
-                    type="radio"
-                    required
-                    onchange={handleProductScopeTypeChange}>
-                </lightning-radio-group>
-            </div>
-            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-                <template if:true={isAllItems}>
-                    <p class="helper-text slds-text-color_weak">{label.allItemsMessage}</p>
-                </template>
-                <template if:true={isProductFamily}>
-                    <lightning-checkbox-group
-                        label={label.productFamily}
-                        options={productFamilyOptions}
-                        value={wizardData.productFamilyScope}
-                        onchange={handleProductFamilyScopeChange}>
-                    </lightning-checkbox-group>
-                </template>
-                <template if:true={isSpecificMembershipTypes}>
-                    <lightning-checkbox-group
-                        label={label.memberTypeScope}
-                        options={memberTypeOptions}
-                        value={wizardData.memberTypeScope}
-                        onchange={handleMemberTypeScopeChange}>
-                    </lightning-checkbox-group>
-                </template>
-                <template if:true={isSpecificProducts}>
-                    <c-promo-specific-product-picker
-                        initial-csv={wizardData.specificProducts}
-                        onchange={handleSpecificProductsChange}>
-                    </c-promo-specific-product-picker>
-                </template>
-            </div>
-        </div>
-        <p class="helper-text slds-m-top_small slds-text-color_weak">{combinationHelpText}</p>
+  <!-- Section 3: Product Applicability -->
+  <div class="slds-m-bottom_medium">
+    <h3 class="section-heading">{label.productAppHeading}</h3>
+    <p class="helper-text">{label.productAppHelper}</p>
+    <div class="slds-grid slds-gutters slds-wrap">
+      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+        <lightning-radio-group
+          label={label.productScope}
+          options={productScopeTypeOptions}
+          value={wizardData.productScopeType}
+          type="radio"
+          required
+          onchange={handleProductScopeTypeChange}
+        >
+        </lightning-radio-group>
+      </div>
+      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+        <template if:true={isAllItems}>
+          <p class="helper-text slds-text-color_weak">
+            {label.allItemsMessage}
+          </p>
+        </template>
+        <template if:true={isProductFamily}>
+          <lightning-checkbox-group
+            label={label.productFamily}
+            options={productFamilyOptions}
+            value={wizardData.productFamilyScope}
+            onchange={handleProductFamilyScopeChange}
+          >
+          </lightning-checkbox-group>
+        </template>
+        <template if:true={isSpecificMembershipTypes}>
+          <lightning-checkbox-group
+            label={label.memberTypeScope}
+            options={memberTypeOptions}
+            value={wizardData.memberTypeScope}
+            onchange={handleMemberTypeScopeChange}
+          >
+          </lightning-checkbox-group>
+        </template>
+        <template if:true={isSpecificProducts}>
+          <c-promo-specific-product-picker
+            initial-csv={wizardData.specificProducts}
+            onchange={handleSpecificProductsChange}
+          >
+          </c-promo-specific-product-picker>
+        </template>
+      </div>
     </div>
+    <p class="helper-text slds-m-top_small slds-text-color_weak">
+      {combinationHelpText}
+    </p>
+  </div>
 
-    <!-- Section 4: Account Scope -->
-    <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.accountScopeHeading}</h3>
-        <p class="helper-text">{label.accountScopeHelper}</p>
-        <lightning-record-picker
-            label={label.account}
-            object-api-name="Account"
-            value={wizardData.accountId}
-            onchange={handleAccountChange}>
-        </lightning-record-picker>
+  <!-- Section 4: Account Scope -->
+  <div class="slds-m-bottom_medium">
+    <h3 class="section-heading">{label.accountScopeHeading}</h3>
+    <p class="helper-text">{label.accountScopeHelper}</p>
+    <lightning-record-picker
+      label={label.account}
+      object-api-name="Account"
+      value={wizardData.accountId}
+      onchange={handleAccountChange}
+    >
+    </lightning-record-picker>
+  </div>
+
+  <!-- Section 5: Flow Applicability (Join / Renew / Both + optional lookback) -->
+  <div class="slds-m-bottom_medium">
+    <h3 class="section-heading">{label.flowAppHeading}</h3>
+    <p class="helper-text">{label.flowAppHelper}</p>
+    <div class="slds-grid slds-gutters slds-wrap">
+      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+        <lightning-radio-group
+          label={label.applicableTo}
+          options={applicableToOptions}
+          value={wizardData.applicableTo}
+          type="radio"
+          required
+          onchange={handleApplicableToChange}
+        >
+        </lightning-radio-group>
+      </div>
+      <template if:true={minMonthsApplies}>
+        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
+          <lightning-input
+            type="number"
+            label={label.minMonths}
+            min="0"
+            step="1"
+            value={wizardData.minMonthsSinceLastActive}
+            field-level-help={label.minMonthsHelper}
+            onchange={handleMinMonthsChange}
+          >
+          </lightning-input>
+        </div>
+      </template>
     </div>
+  </div>
 </template>

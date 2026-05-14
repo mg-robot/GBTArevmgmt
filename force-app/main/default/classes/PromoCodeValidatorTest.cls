@@ -1042,11 +1042,236 @@ private class PromoCodeValidatorTest {
         PromoCodeApplyService.ERR_ACCOUNT_INELIGIBLE,
         PromoCodeApplyService.ERR_NOT_APPLICABLE_TO_CART,
         PromoCodeApplyService.ERR_NOT_COMBINABLE,
+        PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE,
+        PromoCodeApplyService.ERR_MEMBER_RECENTLY_ACTIVE,
         'UNKNOWN_CODE'
       }
     ) {
       String msg = PromoCodeValidator.messageFor(code, null, ctx, 'TESTCODE');
       System.assertNotEquals(null, msg, 'messageFor returned null for ' + code);
     }
+  }
+
+  // -----------------------------------------------------------
+  // Validation rule 7a: FLOW_NOT_APPLICABLE
+  // -----------------------------------------------------------
+
+  @IsTest
+  static void validate_renewFlow_joinOnlyCode_returnsFlowNotApplicable() {
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('JOINONLY');
+    pc.Applicable_To__c = 'Join';
+    update pc;
+
+    PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+    ctx.flowType = PromoCodeApplyService.FLOW_RENEW;
+
+    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
+      'JOINONLY',
+      pc,
+      ctx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+
+    System.assertEquals(false, cr.valid);
+    System.assertEquals(
+      PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE,
+      cr.errorCode
+    );
+  }
+
+  @IsTest
+  static void validate_joinFlow_renewOnlyCode_returnsFlowNotApplicable() {
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('RENEWONLY');
+    pc.Applicable_To__c = 'Renew';
+    update pc;
+
+    PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+    ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
+
+    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
+      'RENEWONLY',
+      pc,
+      ctx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+
+    System.assertEquals(false, cr.valid);
+    System.assertEquals(
+      PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE,
+      cr.errorCode
+    );
+  }
+
+  @IsTest
+  static void validate_bothCode_matchesEitherFlow() {
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('BOTHCODE');
+    // Applicable_To defaults to 'Both' via the picklist default.
+
+    PromoCodeApplyService.OrderContext joinCtx = buildContext(a.Id, null, 'NA');
+    joinCtx.flowType = PromoCodeApplyService.FLOW_JOIN;
+    PromoCodeApplyService.CodeResult joinResult = PromoCodeValidator.validate(
+      'BOTHCODE',
+      pc,
+      joinCtx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+    System.assertEquals(true, joinResult.valid, joinResult.errorMessage);
+
+    PromoCodeApplyService.OrderContext renewCtx = buildContext(
+      a.Id,
+      null,
+      'NA'
+    );
+    renewCtx.flowType = PromoCodeApplyService.FLOW_RENEW;
+    PromoCodeApplyService.CodeResult renewResult = PromoCodeValidator.validate(
+      'BOTHCODE',
+      pc,
+      renewCtx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+    System.assertEquals(true, renewResult.valid, renewResult.errorMessage);
+  }
+
+  @IsTest
+  static void validate_blankFlowType_treatedAsJoin() {
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('JOINBLANK');
+    pc.Applicable_To__c = 'Renew';
+    update pc;
+
+    PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+    ctx.flowType = null; // null -> default Join inside validator
+
+    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
+      'JOINBLANK',
+      pc,
+      ctx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+
+    System.assertEquals(false, cr.valid);
+    System.assertEquals(
+      PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE,
+      cr.errorCode
+    );
+  }
+
+  // -----------------------------------------------------------
+  // Validation rule 7b: MEMBER_RECENTLY_ACTIVE
+  // -----------------------------------------------------------
+
+  @IsTest
+  static void validate_join_lookback_recentMember_returnsRecentlyActive() {
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('LAPSED12');
+    pc.Min_Months_Since_Last_Active__c = 12;
+    pc.Applicable_To__c = 'Join';
+    update pc;
+
+    PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+    ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
+    ctx.lastActiveMembershipDate = Date.today().addMonths(-3); // 3 months ago
+
+    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
+      'LAPSED12',
+      pc,
+      ctx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+
+    System.assertEquals(false, cr.valid);
+    System.assertEquals(
+      PromoCodeApplyService.ERR_MEMBER_RECENTLY_ACTIVE,
+      cr.errorCode
+    );
+  }
+
+  @IsTest
+  static void validate_join_lookback_lapsedMember_passes() {
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('LAPSED12OK');
+    pc.Min_Months_Since_Last_Active__c = 12;
+    pc.Applicable_To__c = 'Join';
+    update pc;
+
+    PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+    ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
+    ctx.lastActiveMembershipDate = Date.today().addMonths(-18); // 18 months ago
+
+    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
+      'LAPSED12OK',
+      pc,
+      ctx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+
+    System.assertEquals(true, cr.valid, cr.errorMessage);
+  }
+
+  @IsTest
+  static void validate_join_lookback_neverActiveMember_passes() {
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('NEVERACTIVE');
+    pc.Min_Months_Since_Last_Active__c = 12;
+    pc.Applicable_To__c = 'Join';
+    update pc;
+
+    PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+    ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
+    ctx.lastActiveMembershipDate = null; // no prior membership on file
+
+    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
+      'NEVERACTIVE',
+      pc,
+      ctx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+
+    System.assertEquals(
+      true,
+      cr.valid,
+      'null Last_Active should be treated as never-active and pass'
+    );
+  }
+
+  @IsTest
+  static void validate_renewFlow_lookbackIgnored() {
+    // Min Months only applies to Join. A Renew cart should never hit this check even
+    // if the code's lookback is set (and a Both code is the only way the renew cart
+    // would survive the FLOW_NOT_APPLICABLE rule when Min Months is set).
+    Account a = ensureAccount();
+    Promo_Code__c pc = insertActiveCode('BOTHLAPSE');
+    pc.Min_Months_Since_Last_Active__c = 12;
+    pc.Applicable_To__c = 'Both';
+    update pc;
+
+    PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
+    ctx.flowType = PromoCodeApplyService.FLOW_RENEW;
+    ctx.lastActiveMembershipDate = Date.today().addMonths(-2); // very recent
+
+    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
+      'BOTHLAPSE',
+      pc,
+      ctx,
+      new List<Promo_Code__c>(),
+      emptyUsage()
+    );
+
+    System.assertEquals(
+      true,
+      cr.valid,
+      'Lookback should be skipped for Renew carts: ' + cr.errorMessage
+    );
   }
 }

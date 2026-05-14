@@ -900,6 +900,116 @@ private class PromoCodeServiceTest {
   }
 
   @IsTest
+  static void createBulk_persistsApplicableToAndMinMonths() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'FLOWPERSIST';
+    inp.applicableTo = 'Join';
+    inp.minMonthsSinceLastActive = 12;
+
+    Test.startTest();
+    PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
+    Test.stopTest();
+
+    System.assertEquals(true, r.success, r.errorMessage);
+    Promo_Code__c saved = [
+      SELECT Applicable_To__c, Min_Months_Since_Last_Active__c
+      FROM Promo_Code__c
+      WHERE Id = :r.createdRecordIds[0]
+    ];
+    System.assertEquals('Join', saved.Applicable_To__c);
+    System.assertEquals(12, saved.Min_Months_Since_Last_Active__c);
+  }
+
+  @IsTest
+  static void createBulk_defaultsApplicableToBothWhenBlank() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'FLOWBLANK';
+    inp.applicableTo = null;
+
+    PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, r.success, r.errorMessage);
+    Promo_Code__c saved = [
+      SELECT Applicable_To__c
+      FROM Promo_Code__c
+      WHERE Id = :r.createdRecordIds[0]
+    ];
+    System.assertEquals(
+      'Both',
+      saved.Applicable_To__c,
+      'Service must default Applicable_To to Both when input is blank'
+    );
+  }
+
+  @IsTest
+  static void vr_minMonthsRequiresJoin_blocksRenewWithLookback() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'RENEWLOOK';
+    inp.applicableTo = 'Renew';
+    inp.minMonthsSinceLastActive = 6;
+
+    Test.startTest();
+    PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
+    Test.stopTest();
+
+    System.assertEquals(false, r.success);
+    System.assert(
+      r.errorMessage != null &&
+      r.errorMessage.contains('Min Months Since Last Active'),
+      'Expected VR_PromoCode_MinMonths_Requires_Join; got: ' + r.errorMessage
+    );
+  }
+
+  @IsTest
+  static void loadDefinition_returnsApplicableToAndMinMonths() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'LOADFLOW';
+    inp.applicableTo = 'Join';
+    inp.minMonthsSinceLastActive = 24;
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    Test.startTest();
+    PromoCodeService.LoadedDefinition def = PromoCodeService.loadDefinition(
+      create.createdRecordIds[0]
+    );
+    Test.stopTest();
+
+    System.assertEquals('Join', def.input.applicableTo);
+    System.assertEquals(24, def.input.minMonthsSinceLastActive);
+  }
+
+  @IsTest
+  static void updateBulk_persistsApplicableToAndMinMonthsEdits() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'UPDFLOW';
+    inp.applicableTo = 'Both';
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    PromoCodeService.PromoCodeInput edited = baseInput();
+    edited.code = 'UPDFLOW';
+    edited.applicableTo = 'Join';
+    edited.minMonthsSinceLastActive = 18;
+
+    Test.startTest();
+    PromoCodeService.CreateResult res = PromoCodeService.updateBulk(
+      edited,
+      create.createdRecordIds,
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals(true, res.success, res.errorMessage);
+    Promo_Code__c reloaded = [
+      SELECT Applicable_To__c, Min_Months_Since_Last_Active__c
+      FROM Promo_Code__c
+      WHERE Id = :create.createdRecordIds[0]
+    ];
+    System.assertEquals('Join', reloaded.Applicable_To__c);
+    System.assertEquals(18, reloaded.Min_Months_Since_Last_Active__c);
+  }
+
+  @IsTest
   static void getRecordStatus_returnsCurrentStatus() {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'STATUSPROBE';

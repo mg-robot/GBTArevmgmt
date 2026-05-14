@@ -71,6 +71,10 @@ public with sharing class PromoCodeService {
     @AuraEnabled
     public Boolean approvalRequired { get; set; }
     @AuraEnabled
+    public String applicableTo { get; set; }
+    @AuraEnabled
+    public Decimal minMonthsSinceLastActive { get; set; }
+    @AuraEnabled
     public Boolean activateImmediately { get; set; }
   }
 
@@ -303,7 +307,11 @@ public with sharing class PromoCodeService {
         Combination_Group__c = input.combinationGroup,
         Display_Name__c = input.displayName,
         Terms__c = input.terms,
-        Approval_Required__c = input.approvalRequired == true
+        Approval_Required__c = input.approvalRequired == true,
+        Applicable_To__c = String.isBlank(input.applicableTo)
+          ? 'Both'
+          : input.applicableTo,
+        Min_Months_Since_Last_Active__c = input.minMonthsSinceLastActive
       );
       if (isMultiCurrency) {
         rec.put('CurrencyIsoCode', iso);
@@ -409,7 +417,9 @@ public with sharing class PromoCodeService {
           Account__c,
           Combinable__c,
           Combination_Group__c,
-          Approval_Required__c
+          Approval_Required__c,
+          Applicable_To__c,
+          Min_Months_Since_Last_Active__c
         FROM Promo_Code__c
         WHERE Id = :recordId
         LIMIT 1
@@ -454,6 +464,10 @@ public with sharing class PromoCodeService {
     inp.combinable = source.Combinable__c;
     inp.combinationGroup = source.Combination_Group__c;
     inp.approvalRequired = source.Approval_Required__c;
+    inp.applicableTo = String.isBlank(source.Applicable_To__c)
+      ? 'Both'
+      : source.Applicable_To__c;
+    inp.minMonthsSinceLastActive = source.Min_Months_Since_Last_Active__c;
     inp.activateImmediately = false; // unused on this code path; activateBulk handles it
 
     // Re-status check across all siblings to set allDraft correctly. The wizard uses
@@ -702,7 +716,11 @@ public with sharing class PromoCodeService {
         Combination_Group__c = input.combinationGroup,
         Display_Name__c = input.displayName,
         Terms__c = input.terms,
-        Approval_Required__c = input.approvalRequired == true
+        Approval_Required__c = input.approvalRequired == true,
+        Applicable_To__c = String.isBlank(input.applicableTo)
+          ? 'Both'
+          : input.applicableTo,
+        Min_Months_Since_Last_Active__c = input.minMonthsSinceLastActive
       );
       if (existingByCurrency.containsKey(iso)) {
         rec.Id = existingByCurrency.get(iso);

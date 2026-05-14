@@ -58,6 +58,49 @@
         <value>Save Changes</value>
     </labels>
     <labels>
+        <fullName>PromoCodeWizard_S2_FlowApp_Heading</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Flow Applicability section heading</shortDescription>
+        <value>Flow Applicability</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_FlowApp_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Flow Applicability helper text</shortDescription>
+        <value
+    >Choose which checkout flow this code is valid in. Both = the code applies to either new memberships or renewals. The optional Min Months lookback is enforced for Join only.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_ApplicableTo_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Applicable To radio label</shortDescription>
+        <value>Applicable To</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_MinMonths_Label</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Min Months Since Last Active label</shortDescription>
+        <value>Min Months Since Last Active</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_S2_MinMonths_Helper</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Min Months Since Last Active helper text</shortDescription>
+        <value
+    >Optional. The code is valid only for members whose last active membership ended at least this many months ago. Leave blank to skip the check.</value>
+    </labels>
+    <labels>
         <fullName>PromoCodeWizard_EditLocked_Active</fullName>
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>

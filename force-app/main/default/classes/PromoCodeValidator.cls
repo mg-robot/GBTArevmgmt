@@ -1,5 +1,5 @@
 /**
- * Stateless validator for promo codes at apply time. Implements the 9 ordered validation rules
+ * Stateless validator for promo codes at apply time. Implements the ordered validation rules
  * from docs/promo-code/checkout-apply-flow.md §4.4. Each call returns a structured CodeResult
  * with an explicit errorCode + member-facing errorMessage; the first failing check short-circuits.
  *
@@ -11,6 +11,10 @@
  *   5. MEMBER_LIMIT_EXCEEDED   — Per_Member_Usage_Limit__c hit for the current Member.
  *   6. REGION_INELIGIBLE       — Cart's Order.Region__c not in Region_Scope__c.
  *   7. ACCOUNT_INELIGIBLE      — Order.AccountId != Promo_Code__c.Account__c.
+ *   7a. FLOW_NOT_APPLICABLE    — Cart flow type (Join/Renew) not in parent.Applicable_To__c.
+ *   7b. MEMBER_RECENTLY_ACTIVE — Join flow with Min_Months_Since_Last_Active__c set and the
+ *                                Account's Last_Active_Membership_Date__c is more recent than
+ *                                the configured lookback (member is too-recently active).
  *   8. NOT_APPLICABLE_TO_CART  — No OrderItem matches Product_Scope_Type__c rules (§5.2).
  *   9. NOT_COMBINABLE          — Conflict with already-validated codes in this Apply set.
  *
@@ -158,6 +162,46 @@ public with sharing class PromoCodeValidator {
       );
     }
 
+    // 7a. FLOW_NOT_APPLICABLE — cart's flow type must be accepted by the code.
+    if (!flowMatches(parent.Applicable_To__c, ctx.flowType)) {
+      return fail(
+        cr,
+        PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE,
+        messageFor(
+          PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE,
+          parent,
+          ctx,
+          cr.code
+        )
+      );
+    }
+
+    // 7b. MEMBER_RECENTLY_ACTIVE — Join + lookback configured + member is too recently active.
+    if (
+      isJoinFlow(ctx.flowType) &&
+      parent.Min_Months_Since_Last_Active__c != null &&
+      parent.Min_Months_Since_Last_Active__c > 0 &&
+      ctx.lastActiveMembershipDate != null
+    ) {
+      Integer requiredMonths = parent.Min_Months_Since_Last_Active__c.intValue();
+      Integer monthsSince = monthsBetween(
+        ctx.lastActiveMembershipDate,
+        Date.today()
+      );
+      if (monthsSince < requiredMonths) {
+        return fail(
+          cr,
+          PromoCodeApplyService.ERR_MEMBER_RECENTLY_ACTIVE,
+          messageFor(
+            PromoCodeApplyService.ERR_MEMBER_RECENTLY_ACTIVE,
+            parent,
+            ctx,
+            cr.code
+          )
+        );
+      }
+    }
+
     // 8. NOT_APPLICABLE_TO_CART
     if (!hasEligibleLine(parent, ctx.orderItems)) {
       return fail(
@@ -303,6 +347,29 @@ public with sharing class PromoCodeValidator {
     if (errorCode == PromoCodeApplyService.ERR_NOT_COMBINABLE) {
       return 'This code can\'t be combined with the codes already applied. Remove the others to apply this one.';
     }
+    if (errorCode == PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE) {
+      String allowed = parent == null ? '' : parent.Applicable_To__c;
+      String flow = ctx == null ? '' : ctx.flowType;
+      if ('Join'.equalsIgnoreCase(allowed)) {
+        return 'This code is only valid for new memberships, not renewals.';
+      }
+      if ('Renew'.equalsIgnoreCase(allowed)) {
+        return 'This code is only valid for renewals, not new memberships.';
+      }
+      // Should be unreachable when allowed='Both', but keep a safe fallback.
+      return 'This code is not valid for the ' +
+        (String.isBlank(flow) ? 'current' : flow.toLowerCase()) +
+        ' flow.';
+    }
+    if (errorCode == PromoCodeApplyService.ERR_MEMBER_RECENTLY_ACTIVE) {
+      Integer months = (parent != null &&
+        parent.Min_Months_Since_Last_Active__c != null)
+        ? parent.Min_Months_Since_Last_Active__c.intValue()
+        : 0;
+      return 'This code is only available to members whose last active membership ended more than ' +
+        months +
+        ' months ago.';
+    }
     return 'This code could not be applied.';
   }
 
@@ -445,6 +512,49 @@ public with sharing class PromoCodeValidator {
       }
     }
     return true;
+  }
+
+  /**
+   * Flow-type acceptance check. Null/blank Applicable_To__c is treated as 'Both' so legacy
+   * records (created before the field existed) keep working until backfilled.
+   */
+  private static Boolean flowMatches(String applicableTo, String flowType) {
+    String allowed = String.isBlank(applicableTo)
+      ? 'Both'
+      : applicableTo.trim();
+    String flow = String.isBlank(flowType)
+      ? PromoCodeApplyService.FLOW_JOIN
+      : flowType.trim();
+    if ('Both'.equalsIgnoreCase(allowed)) {
+      return true;
+    }
+    return allowed.equalsIgnoreCase(flow);
+  }
+
+  private static Boolean isJoinFlow(String flowType) {
+    String flow = String.isBlank(flowType)
+      ? PromoCodeApplyService.FLOW_JOIN
+      : flowType.trim();
+    return PromoCodeApplyService.FLOW_JOIN.equalsIgnoreCase(flow);
+  }
+
+  /**
+   * Full calendar months between two dates (start..end). E.g., Jan 15 -> Feb 14 = 0 months,
+   * Jan 15 -> Feb 15 = 1 month. Uses Date.monthsBetween() and adjusts for the day-of-month
+   * boundary so "12 or more months ago" lines up with intuitive reading.
+   */
+  private static Integer monthsBetween(Date start, Date endDate) {
+    if (start == null || endDate == null) {
+      return 0;
+    }
+    Integer raw = start.monthsBetween(endDate);
+    if (raw <= 0) {
+      return raw;
+    }
+    if (endDate.day() < start.day()) {
+      raw -= 1;
+    }
+    return raw;
   }
 
   private static String effectiveWindowSuffix(Promo_Code__c parent) {

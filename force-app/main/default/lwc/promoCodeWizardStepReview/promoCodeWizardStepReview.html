@@ -1,66 +1,90 @@
 <template>
-    <p class="slds-m-bottom_small">{previewText}</p>
-    <div class="record-list">
-        <template for:each={recordPreview} for:item="r">
-            <div key={r.label}>{r.label}</div>
-        </template>
-    </div>
+  <p class="slds-m-bottom_small">{previewText}</p>
+  <div class="record-list">
+    <template for:each={recordPreview} for:item="r">
+      <div key={r.label}>{r.label}</div>
+    </template>
+  </div>
 
-    <!-- Definition summary -->
-    <div class="summary-card">
-        <div class="summary-section-title">
-            <span class="summary-section-name">{label.sectionDefinition}</span>
-            <a href="#" data-step="1" class="summary-section-edit" onclick={handleEditClick}>{label.edit}</a>
-        </div>
-        <dl class="slds-dl_horizontal slds-text-body_small">
-            <dt class="slds-dl_horizontal__label">{label.code}</dt>
-            <dd class="slds-dl_horizontal__detail">{wizardData.code}</dd>
-            <dt class="slds-dl_horizontal__label">{label.displayName}</dt>
-            <dd class="slds-dl_horizontal__detail">{wizardData.displayName}</dd>
-            <dt class="slds-dl_horizontal__label">{label.discType}</dt>
-            <dd class="slds-dl_horizontal__detail">{wizardData.discountType}</dd>
-            <dt class="slds-dl_horizontal__label">{label.discValue}</dt>
-            <dd class="slds-dl_horizontal__detail">{discountValueDisplay}</dd>
-        </dl>
+  <!-- Definition summary -->
+  <div class="summary-card">
+    <div class="summary-section-title">
+      <span class="summary-section-name">{label.sectionDefinition}</span>
+      <a
+        href="#"
+        data-step="1"
+        class="summary-section-edit"
+        onclick={handleEditClick}
+        >{label.edit}</a
+      >
     </div>
+    <dl class="slds-dl_horizontal slds-text-body_small">
+      <dt class="slds-dl_horizontal__label">{label.code}</dt>
+      <dd class="slds-dl_horizontal__detail">{wizardData.code}</dd>
+      <dt class="slds-dl_horizontal__label">{label.displayName}</dt>
+      <dd class="slds-dl_horizontal__detail">{wizardData.displayName}</dd>
+      <dt class="slds-dl_horizontal__label">{label.discType}</dt>
+      <dd class="slds-dl_horizontal__detail">{wizardData.discountType}</dd>
+      <dt class="slds-dl_horizontal__label">{label.discValue}</dt>
+      <dd class="slds-dl_horizontal__detail">{discountValueDisplay}</dd>
+    </dl>
+  </div>
 
-    <!-- Scope summary -->
-    <div class="summary-card">
-        <div class="summary-section-title">
-            <span class="summary-section-name">{label.sectionScope}</span>
-            <a href="#" data-step="2" class="summary-section-edit" onclick={handleEditClick}>{label.edit}</a>
-        </div>
-        <dl class="slds-dl_horizontal slds-text-body_small">
-            <dt class="slds-dl_horizontal__label">{label.effective}</dt>
-            <dd class="slds-dl_horizontal__detail">{effectiveDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">{label.applicationLevel}</dt>
-            <dd class="slds-dl_horizontal__detail">{applicationLevelDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">{label.regions}</dt>
-            <dd class="slds-dl_horizontal__detail">{regionDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">{label.products}</dt>
-            <dd class="slds-dl_horizontal__detail">{productScopeDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">{label.account}</dt>
-            <dd class="slds-dl_horizontal__detail">{accountDisplay}</dd>
-        </dl>
+  <!-- Scope summary -->
+  <div class="summary-card">
+    <div class="summary-section-title">
+      <span class="summary-section-name">{label.sectionScope}</span>
+      <a
+        href="#"
+        data-step="2"
+        class="summary-section-edit"
+        onclick={handleEditClick}
+        >{label.edit}</a
+      >
     </div>
+    <dl class="slds-dl_horizontal slds-text-body_small">
+      <dt class="slds-dl_horizontal__label">{label.effective}</dt>
+      <dd class="slds-dl_horizontal__detail">{effectiveDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.applicationLevel}</dt>
+      <dd class="slds-dl_horizontal__detail">{applicationLevelDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.regions}</dt>
+      <dd class="slds-dl_horizontal__detail">{regionDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.products}</dt>
+      <dd class="slds-dl_horizontal__detail">{productScopeDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.account}</dt>
+      <dd class="slds-dl_horizontal__detail">{accountDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.applicableTo}</dt>
+      <dd class="slds-dl_horizontal__detail">{applicableToDisplay}</dd>
+      <template if:true={showMinMonths}>
+        <dt class="slds-dl_horizontal__label">{label.minMonths}</dt>
+        <dd class="slds-dl_horizontal__detail">{minMonthsDisplay}</dd>
+      </template>
+    </dl>
+  </div>
 
-    <!-- Limits summary -->
-    <div class="summary-card">
-        <div class="summary-section-title">
-            <span class="summary-section-name">{label.sectionLimits}</span>
-            <a href="#" data-step="3" class="summary-section-edit" onclick={handleEditClick}>{label.edit}</a>
-        </div>
-        <dl class="slds-dl_horizontal slds-text-body_small">
-            <dt class="slds-dl_horizontal__label">{label.totalLimit}</dt>
-            <dd class="slds-dl_horizontal__detail">{totalLimitDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">{label.perMemberLimit}</dt>
-            <dd class="slds-dl_horizontal__detail">{perMemberLimitDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">{label.combinable}</dt>
-            <dd class="slds-dl_horizontal__detail">{combinableDisplay}</dd>
-            <dt class="slds-dl_horizontal__label">{label.approvalRequired}</dt>
-            <dd class="slds-dl_horizontal__detail">{approvalDisplay}</dd>
-        </dl>
+  <!-- Limits summary -->
+  <div class="summary-card">
+    <div class="summary-section-title">
+      <span class="summary-section-name">{label.sectionLimits}</span>
+      <a
+        href="#"
+        data-step="3"
+        class="summary-section-edit"
+        onclick={handleEditClick}
+        >{label.edit}</a
+      >
     </div>
+    <dl class="slds-dl_horizontal slds-text-body_small">
+      <dt class="slds-dl_horizontal__label">{label.totalLimit}</dt>
+      <dd class="slds-dl_horizontal__detail">{totalLimitDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.perMemberLimit}</dt>
+      <dd class="slds-dl_horizontal__detail">{perMemberLimitDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.combinable}</dt>
+      <dd class="slds-dl_horizontal__detail">{combinableDisplay}</dd>
+      <dt class="slds-dl_horizontal__label">{label.approvalRequired}</dt>
+      <dd class="slds-dl_horizontal__detail">{approvalDisplay}</dd>
+    </dl>
+  </div>
 
-    <div class="activation-banner">{label.activationBanner}</div>
+  <div class="activation-banner">{label.activationBanner}</div>
 </template>

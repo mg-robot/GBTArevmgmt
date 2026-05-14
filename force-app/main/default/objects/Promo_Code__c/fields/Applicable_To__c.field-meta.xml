@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Applicable_To__c</fullName>
+    <description
+  >Which transactional flows the code is valid for. Apply-time validation rejects codes whose Applicable To doesn&apos;t include the cart&apos;s flow type. Both = code is valid in both Join and Renew carts.</description>
+    <inlineHelpText
+  >Pick which checkout flow this code is valid in: Join (new memberships), Renew (renewals), or Both.</inlineHelpText>
+    <label>Applicable To</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Both</fullName>
+                <default>true</default>
+                <label>Both</label>
+            </value>
+            <value>
+                <fullName>Join</fullName>
+                <default>false</default>
+                <label>Join</label>
+            </value>
+            <value>
+                <fullName>Renew</fullName>
+                <default>false</default>
+                <label>Renew</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -46,6 +46,13 @@ public with sharing class PromoCodeApplyService {
   public static final String ERR_ACCOUNT_INELIGIBLE = 'ACCOUNT_INELIGIBLE';
   public static final String ERR_NOT_APPLICABLE_TO_CART = 'NOT_APPLICABLE_TO_CART';
   public static final String ERR_NOT_COMBINABLE = 'NOT_COMBINABLE';
+  public static final String ERR_FLOW_NOT_APPLICABLE = 'FLOW_NOT_APPLICABLE';
+  public static final String ERR_MEMBER_RECENTLY_ACTIVE = 'MEMBER_RECENTLY_ACTIVE';
+
+  // Canonical flow-type tokens. Order.Flow_Type__c picklist mirrors these. The validator
+  // treats null/blank as FLOW_JOIN — the design doc records this as a backward-compat default.
+  public static final String FLOW_JOIN = 'Join';
+  public static final String FLOW_RENEW = 'Renew';
 
   // ============================================================
   // DTOs
@@ -91,6 +98,9 @@ public with sharing class PromoCodeApplyService {
     public String currencyIsoCode;
     public String region;
     public List<OrderItem> orderItems;
+    // Flow context for Applicable_To__c + Min_Months_Since_Last_Active__c validation rules.
+    public String flowType; // 'Join' | 'Renew'; null/blank treated as 'Join'.
+    public Date lastActiveMembershipDate; // Account.Last_Active_Membership_Date__c at apply time.
 
     public Boolean isMultiCurrency() {
       return currencyIsoCode != null;
@@ -113,6 +123,22 @@ public with sharing class PromoCodeApplyService {
    */
   @AuraEnabled
   public static ApplyResult apply(Id orderId, List<String> codes) {
+    return apply(orderId, codes, null);
+  }
+
+  /**
+   * Apply overload that lets the caller explicitly declare the cart's flow type. Resolution
+   * order for the flow context used by the validator:
+   *   1. flowTypeOverride parameter (when non-blank)
+   *   2. Order.Flow_Type__c (set by the originating LWC at cart create)
+   *   3. Default to FLOW_JOIN ('Join') — current Phase-1 reality is Join-only.
+   */
+  @AuraEnabled
+  public static ApplyResult apply(
+    Id orderId,
+    List<String> codes,
+    String flowTypeOverride
+  ) {
     if (orderId == null) {
       throw new AuraHandledException('Order Id is required.');
     }
@@ -128,6 +154,7 @@ public with sharing class PromoCodeApplyService {
     }
 
     OrderContext ctx = loadOrderContext(orderId);
+    ctx.flowType = resolveFlowType(flowTypeOverride, ctx.flowType);
 
     Map<String, Promo_Code__c> codeToParent = fetchPromoCodes(
       normalizedCodes,
@@ -307,11 +334,20 @@ public with sharing class PromoCodeApplyService {
    */
   @AuraEnabled
   public static List<CodeResult> revalidateAll(Id orderId) {
+    return revalidateAll(orderId, null);
+  }
+
+  @AuraEnabled
+  public static List<CodeResult> revalidateAll(
+    Id orderId,
+    String flowTypeOverride
+  ) {
     if (orderId == null) {
       throw new AuraHandledException('Order Id is required.');
     }
 
     OrderContext ctx = loadOrderContext(orderId);
+    ctx.flowType = resolveFlowType(flowTypeOverride, ctx.flowType);
 
     // Collect unique parent codes from current Pending PCIs.
     List<Promo_Code_Item__c> pendingPcis = [
@@ -349,7 +385,9 @@ public with sharing class PromoCodeApplyService {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id IN :parentIds
     ];
@@ -486,13 +524,29 @@ public with sharing class PromoCodeApplyService {
     return out;
   }
 
+  /**
+   * Resolves the cart's flow type for promo validation. Precedence:
+   *   explicit caller value > stored Order.Flow_Type__c > default FLOW_JOIN.
+   * Returns one of FLOW_JOIN / FLOW_RENEW; never null/blank.
+   */
+  private static String resolveFlowType(String overrideValue, String stored) {
+    if (!String.isBlank(overrideValue)) {
+      return overrideValue.trim();
+    }
+    if (!String.isBlank(stored)) {
+      return stored.trim();
+    }
+    return FLOW_JOIN;
+  }
+
   private static OrderContext loadOrderContext(Id orderId) {
     Boolean isMultiCurrency =
       Schema.getGlobalDescribe().containsKey('CurrencyType') &&
       Schema.SObjectType.Order.fields.getMap().containsKey('currencyisocode');
 
     String orderSoql =
-      'SELECT Id, AccountId, Region__c' +
+      'SELECT Id, AccountId, Region__c, Flow_Type__c, ' +
+      'Account.Last_Active_Membership_Date__c' +
       (isMultiCurrency ? ', CurrencyIsoCode' : '') +
       ' FROM Order WHERE Id = :orderId LIMIT 1';
     List<SObject> orders = Database.query(orderSoql);
@@ -507,6 +561,11 @@ public with sharing class PromoCodeApplyService {
     ctx.orderId = orderId;
     ctx.accountId = (Id) ord.get('AccountId');
     ctx.region = (String) ord.get('Region__c');
+    ctx.flowType = (String) ord.get('Flow_Type__c');
+    SObject acct = ord.getSObject('Account');
+    ctx.lastActiveMembershipDate = acct == null
+      ? null
+      : (Date) acct.get('Last_Active_Membership_Date__c');
     ctx.currencyIsoCode = isMultiCurrency
       ? (String) ord.get('CurrencyIsoCode')
       : null;
@@ -548,7 +607,8 @@ public with sharing class PromoCodeApplyService {
       'Product_Scope_Type__c, Product_Family_Scope__c, Specific_Products__c, ' +
       'Application_Level__c, ' +
       'Combinable__c, Combination_Group__c, ' +
-      'Discount_Type__c, Discount_Value__c ' +
+      'Discount_Type__c, Discount_Value__c, ' +
+      'Applicable_To__c, Min_Months_Since_Last_Active__c ' +
       'FROM Promo_Code__c ' +
       'WHERE Code__c IN :upperCodes' +
       (isMultiCurrency ? ' AND CurrencyIsoCode = :currencyIso' : '');
