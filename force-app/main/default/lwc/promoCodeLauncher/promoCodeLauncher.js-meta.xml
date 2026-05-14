@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Promo Code Launcher</masterLabel>
-    <description>Header card with a New Promo Code button that expands the creation wizard inline. Drop above the Promo Code list view on the Object Home page.</description>
+    <description
+  >Header card with a New Promo Code button that expands the creation wizard inline. Drop above the Promo Code list view on the Object Home page.</description>
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>

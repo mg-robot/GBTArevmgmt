@@ -1,25 +1,34 @@
 <template>
-    <div class="section">
-        <div class="tiles-grid">
-            <!-- Top-left: Promo Code Setup -->
-            <a class="setup-card" onclick={handleOpen} role="button" tabindex="0" onkeydown={handleKeydown}>
-                <div class="card-icon">
-                    <lightning-icon icon-name="standard:pricing_workspace" size="medium"></lightning-icon>
-                </div>
-                <div class="card-body">
-                    <div class="card-title">{label.btnNew}</div>
-                    <div class="card-description">{label.helper}</div>
-                </div>
-            </a>
-
-            <!-- Top-right: Quick Find -->
-            <c-promo-code-quick-find></c-promo-code-quick-find>
-
-            <!-- Bottom-left: Pending Activation (report link) -->
-            <c-promo-code-pending-activation></c-promo-code-pending-activation>
-
-            <!-- Bottom-right: High Usage (report link) -->
-            <c-promo-code-high-usage-watch></c-promo-code-high-usage-watch>
+  <div class="section">
+    <div class="tiles-grid">
+      <!-- Top-left: Promo Code Setup -->
+      <a
+        class="setup-card"
+        onclick={handleOpen}
+        role="button"
+        tabindex="0"
+        onkeydown={handleKeydown}
+      >
+        <div class="card-icon">
+          <lightning-icon
+            icon-name="standard:pricing_workspace"
+            size="medium"
+          ></lightning-icon>
         </div>
+        <div class="card-body">
+          <div class="card-title">{label.btnNew}</div>
+          <div class="card-description">{label.helper}</div>
+        </div>
+      </a>
+
+      <!-- Top-right: Quick Find -->
+      <c-promo-code-quick-find></c-promo-code-quick-find>
+
+      <!-- Bottom-left: Pending Activation (report link) -->
+      <c-promo-code-pending-activation></c-promo-code-pending-activation>
+
+      <!-- Bottom-right: High Usage (report link) -->
+      <c-promo-code-high-usage-watch></c-promo-code-high-usage-watch>
     </div>
+  </div>
 </template>

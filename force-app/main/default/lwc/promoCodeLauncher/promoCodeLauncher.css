@@ -1,20 +1,20 @@
 :host {
-    --gbta-action-orange: #f28c15;
-    --gbta-card-border: #d8dde6;
-    --gbta-card-border-hover: #b0b8c4;
-    --gbta-card-title: #0176d3;
-    --gbta-text-muted: #444444;
+  --gbta-action-orange: #f28c15;
+  --gbta-card-border: #d8dde6;
+  --gbta-card-border-hover: #b0b8c4;
+  --gbta-card-title: #0176d3;
+  --gbta-text-muted: #444444;
 
-    display: block;
-    padding: 1rem 1.25rem 0.5rem 1.25rem;
-    background: #ffffff;
-    /* Reserve scrollbar space so the viewport width doesn't oscillate when the async-loading
+  display: block;
+  padding: 1rem 1.25rem 0.5rem 1.25rem;
+  background: #ffffff;
+  /* Reserve scrollbar space so the viewport width doesn't oscillate when the async-loading
        related list below makes the page taller. Prevents the 2-col → 1-col grid bounce. */
-    scrollbar-gutter: stable;
+  scrollbar-gutter: stable;
 }
 
 .section {
-    display: block;
+  display: block;
 }
 
 /*
@@ -23,54 +23,56 @@
  * caused.
  */
 .tiles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
 }
 
 /* The Setup tile is rendered inline; the other three are LWCs that provide their own card chrome. */
 .setup-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: #ffffff;
-    border: 1px solid var(--gbta-card-border);
-    border-radius: 0.25rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    cursor: pointer;
-    text-decoration: none;
-    transition: border-color 120ms ease, box-shadow 120ms ease;
-    box-sizing: border-box;
-    height: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid var(--gbta-card-border);
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+  box-sizing: border-box;
+  height: 100%;
 }
 
 .setup-card:hover,
 .setup-card:focus {
-    border-color: var(--gbta-card-border-hover);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-    outline: none;
+  border-color: var(--gbta-card-border-hover);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  outline: none;
 }
 
 .card-icon {
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 .card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .card-title {
-    color: var(--gbta-card-title);
-    font-size: 0.9375rem;
-    font-weight: 600;
-    line-height: 1.25rem;
+  color: var(--gbta-card-title);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25rem;
 }
 
 .card-description {
-    color: var(--gbta-text-muted);
-    font-size: 0.8125rem;
-    line-height: 1.125rem;
+  color: var(--gbta-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
 }
