@@ -100,6 +100,314 @@
         <value
     >Optional. The code is valid only for members whose last active membership ended at least this many months ago. Leave blank to skip the check.</value>
     </labels>
+    <!-- Member-facing apply-time validation messages (PromoCodeValidator.messageFor + apply service). -->
+    <labels>
+        <fullName>PromoCodeApply_Err_NotFound</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>NOT_FOUND error (no currency known)</shortDescription>
+        <value>Code "{0}" was not found.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_NotFoundForCurrency</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>NOT_FOUND error (currency known)</shortDescription>
+        <value>Code "{0}" was not found for currency {1}.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_NotActive</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>NOT_ACTIVE error</shortDescription>
+        <value>This code is not currently active.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_OutOfWindow</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >OUT_OF_WINDOW error (no window suffix)</shortDescription>
+        <value>This code is not valid right now.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_OutOfWindow_WithWindow</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >OUT_OF_WINDOW error (window dates appended)</shortDescription>
+        <value>This code is not valid right now (effective {0} – {1}).</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_EffectiveWindow_AnyTime</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Effective-window suffix: missing start</shortDescription>
+        <value>any time</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_EffectiveWindow_NoEnd</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Effective-window suffix: missing end</shortDescription>
+        <value>no end</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_UsageExceeded</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>USAGE_EXCEEDED error</shortDescription>
+        <value>This code has reached its usage limit.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_MemberLimitExceeded</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>MEMBER_LIMIT_EXCEEDED error</shortDescription>
+        <value
+    >You&apos;ve already used this code the maximum number of times.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_RegionIneligible</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>REGION_INELIGIBLE error</shortDescription>
+        <value>This code is not available in your region.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_AccountIneligible</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>ACCOUNT_INELIGIBLE error</shortDescription>
+        <value>This code is restricted to a specific account.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_NotApplicableToCart</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>NOT_APPLICABLE_TO_CART error</shortDescription>
+        <value>This code doesn&apos;t apply to any items in your cart.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_NotCombinable</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>NOT_COMBINABLE error</shortDescription>
+        <value
+    >This code can&apos;t be combined with the codes already applied. Remove the others to apply this one.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_DroppedNonCombinable</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>DROPPED_NON_COMBINABLE info message</shortDescription>
+        <value
+    >This code is not combinable, but other codes in your cart can stack. We removed this one so the others could apply.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_FlowNotApplicable_JoinOnly</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >FLOW_NOT_APPLICABLE error: code is Join-only</shortDescription>
+        <value
+    >This code is only valid for new memberships, not renewals.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_FlowNotApplicable_RenewOnly</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >FLOW_NOT_APPLICABLE error: code is Renew-only</shortDescription>
+        <value
+    >This code is only valid for renewals, not new memberships.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_FlowNotApplicable_Other</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >FLOW_NOT_APPLICABLE fallback (current flow word)</shortDescription>
+        <value>This code is not valid for the {0} flow.</value>
+    </labels>
+    <labels>
+        <fullName
+    >PromoCodeApply_Err_FlowNotApplicable_DefaultFlowWord</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >FLOW_NOT_APPLICABLE fallback: word used when flow type is unknown</shortDescription>
+        <value>current</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_MemberRecentlyActive</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >MEMBER_RECENTLY_ACTIVE error (months as {0})</shortDescription>
+        <value
+    >This code is only available to members whose last active membership ended more than {0} months ago.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_Generic</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic apply-time failure message</shortDescription>
+        <value>This code could not be applied.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_OrderIdRequired</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >AuraHandledException: missing Order Id</shortDescription>
+        <value>Order Id is required.</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeApply_Err_AppGroupIdRequired</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >AuraHandledException: missing Application Group Id</shortDescription>
+        <value>Application Group Id is required.</value>
+    </labels>
+    <!-- promoCodeEntry LWC strings (Experience Cloud checkout). -->
+    <labels>
+        <fullName>PromoCodeEntry_Title</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Section heading on the checkout entry panel</shortDescription>
+        <value>Promo Codes</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_AddBtn</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Add Promo Code button label</shortDescription>
+        <value>Add Promo Code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_CodeFieldLabel</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Accessible label for the code input (visually hidden)</shortDescription>
+        <value>Promo code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_CodePlaceholder</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Placeholder text inside the code input</shortDescription>
+        <value>Enter a code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_ApplyBtn</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Apply button</shortDescription>
+        <value>Apply</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_CancelBtn</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Cancel button next to Apply</shortDescription>
+        <value>Cancel</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_Working</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Spinner alternative text while applying</shortDescription>
+        <value>Working</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_RemoveCode</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Remove applied code icon-button alt + title</shortDescription>
+        <value>Remove code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_DismissFailed</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Dismiss failed code icon-button alt text</shortDescription>
+        <value>Dismiss failed code</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_DismissNotice</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Dismiss dropped-code notice icon-button alt text</shortDescription>
+        <value>Dismiss notice</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_Dismiss</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Dismiss icon-button title (short)</shortDescription>
+        <value>Dismiss</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_TotalSavings</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Total savings summary label</shortDescription>
+        <value>Total savings</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeEntry_RetryMessage</fullName>
+        <categories>Promo Code Apply</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Fallback message when apply call throws on the client</shortDescription>
+        <value>Could not apply right now. Please try again.</value>
+    </labels>
     <labels>
         <fullName>PromoCodeWizard_EditLocked_Active</fullName>
         <categories>Promo Code Wizard</categories>

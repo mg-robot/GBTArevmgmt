@@ -216,22 +216,128 @@ public with sharing class PromoCodeValidator {
       );
     }
 
-    // 9. NOT_COMBINABLE
-    if (!isCombinableWith(parent, alreadyValid)) {
-      return fail(
-        cr,
-        PromoCodeApplyService.ERR_NOT_COMBINABLE,
-        messageFor(
+    // Rule 9 (combinability) is no longer evaluated here — it's a cart-wide resolution
+    // that runs as a single post-pass in PromoCodeValidator.resolveCombinability() after
+    // every code has gone through rules 1-8b. The `alreadyValid` parameter is retained for
+    // ABI stability but unused.
+
+    cr.valid = true;
+    return cr;
+  }
+
+  /**
+   * Cart-wide combinability resolution. Runs once after every code has been validated by
+   * `validate()`. Mutates the supplied CodeResults in place:
+   *
+   *   - If 2+ valid codes are Combinable and at least one valid code is non-combinable, the
+   *     non-combinables are dropped with errorCode DROPPED_NON_COMBINABLE. The remaining
+   *     combinables must share the same Combination_Group__c (first wins; mismatches get
+   *     errorCode NOT_COMBINABLE).
+   *   - Otherwise (0 or 1 valid combinable), the cart degrades to original "exclusive"
+   *     semantics: the first-submitted valid code wins, every subsequent valid code is
+   *     marked NOT_COMBINABLE.
+   *
+   * Codes already failing earlier rules are left alone — combinability only re-classifies
+   * codes that are otherwise valid.
+   */
+  public static void resolveCombinability(
+    List<PromoCodeApplyService.CodeResult> codeResults,
+    Map<String, Promo_Code__c> codeToParent,
+    PromoCodeApplyService.OrderContext ctx
+  ) {
+    if (codeResults == null || codeResults.isEmpty()) {
+      return;
+    }
+    if (codeToParent == null) {
+      codeToParent = new Map<String, Promo_Code__c>();
+    }
+
+    List<PromoCodeApplyService.CodeResult> validResults = new List<PromoCodeApplyService.CodeResult>();
+    Integer combinableCount = 0;
+    for (PromoCodeApplyService.CodeResult cr : codeResults) {
+      if (!cr.valid) {
+        continue;
+      }
+      Promo_Code__c parent = parentFor(cr, codeToParent);
+      if (parent == null) {
+        continue;
+      }
+      validResults.add(cr);
+      if (parent.Combinable__c == true) {
+        combinableCount += 1;
+      }
+    }
+    if (validResults.size() <= 1) {
+      return; // Nothing to resolve with 0 or 1 valid codes.
+    }
+
+    if (combinableCount >= 2) {
+      // Drop every non-combinable; enforce group match among the combinables.
+      String anchorGroup = null;
+      Promo_Code__c anchorCombinable = null;
+      for (PromoCodeApplyService.CodeResult cr : validResults) {
+        Promo_Code__c parent = parentFor(cr, codeToParent);
+        if (parent.Combinable__c != true) {
+          cr.valid = false;
+          cr.errorCode = PromoCodeApplyService.ERR_DROPPED_NON_COMBINABLE;
+          cr.errorMessage = messageFor(
+            PromoCodeApplyService.ERR_DROPPED_NON_COMBINABLE,
+            parent,
+            ctx,
+            cr.code
+          );
+          continue;
+        }
+        if (anchorCombinable == null) {
+          anchorCombinable = parent;
+          anchorGroup = parent.Combination_Group__c;
+          continue;
+        }
+        String thisGroup = parent.Combination_Group__c;
+        Boolean groupsMatch = (anchorGroup != null &&
+        thisGroup != null &&
+        anchorGroup.equalsIgnoreCase(thisGroup));
+        if (!groupsMatch) {
+          cr.valid = false;
+          cr.errorCode = PromoCodeApplyService.ERR_NOT_COMBINABLE;
+          cr.errorMessage = messageFor(
+            PromoCodeApplyService.ERR_NOT_COMBINABLE,
+            parent,
+            ctx,
+            cr.code
+          );
+        }
+      }
+    } else {
+      // 0 or 1 combinables in the valid set: original exclusive behavior — first valid
+      // wins; everything after it is NOT_COMBINABLE.
+      Boolean firstClaimed = false;
+      for (PromoCodeApplyService.CodeResult cr : validResults) {
+        if (!firstClaimed) {
+          firstClaimed = true;
+          continue;
+        }
+        Promo_Code__c parent = parentFor(cr, codeToParent);
+        cr.valid = false;
+        cr.errorCode = PromoCodeApplyService.ERR_NOT_COMBINABLE;
+        cr.errorMessage = messageFor(
           PromoCodeApplyService.ERR_NOT_COMBINABLE,
           parent,
           ctx,
           cr.code
-        )
-      );
+        );
+      }
     }
+  }
 
-    cr.valid = true;
-    return cr;
+  private static Promo_Code__c parentFor(
+    PromoCodeApplyService.CodeResult cr,
+    Map<String, Promo_Code__c> codeToParent
+  ) {
+    if (cr.code == null) {
+      return null;
+    }
+    return codeToParent.get(cr.code.toUpperCase());
   }
 
   /**
@@ -302,6 +408,12 @@ public with sharing class PromoCodeValidator {
     );
   }
 
+  /**
+   * Renders the member-facing message for an error code. Every string is sourced from
+   * a Custom Label so the entire member-facing surface area is translatable via the
+   * Translation Workbench. Placeholder substitution uses `{0}`/`{1}` style and
+   * String.format() to keep variable text out of the label values themselves.
+   */
   public static String messageFor(
     String errorCode,
     Promo_Code__c parent,
@@ -313,64 +425,98 @@ public with sharing class PromoCodeValidator {
         ctx.currencyIsoCode == null
         ? ''
         : ctx.currencyIsoCode;
+      String code = submittedCode == null ? '' : submittedCode;
       return String.isBlank(iso)
-        ? 'Code "' + submittedCode + '" was not found.'
-        : 'Code "' +
-          submittedCode +
-          '" was not found for currency ' +
-          iso +
-          '.';
+        ? String.format(
+            System.Label.PromoCodeApply_Err_NotFound,
+            new List<String>{ code }
+          )
+        : String.format(
+            System.Label.PromoCodeApply_Err_NotFoundForCurrency,
+            new List<String>{ code, iso }
+          );
     }
     if (errorCode == PromoCodeApplyService.ERR_NOT_ACTIVE) {
-      return 'This code is not currently active.';
+      return System.Label.PromoCodeApply_Err_NotActive;
     }
     if (errorCode == PromoCodeApplyService.ERR_OUT_OF_WINDOW) {
-      return 'This code is not valid right now' +
-        effectiveWindowSuffix(parent) +
-        '.';
+      return outOfWindowMessage(parent);
     }
     if (errorCode == PromoCodeApplyService.ERR_USAGE_EXCEEDED) {
-      return 'This code has reached its usage limit.';
+      return System.Label.PromoCodeApply_Err_UsageExceeded;
     }
     if (errorCode == PromoCodeApplyService.ERR_MEMBER_LIMIT_EXCEEDED) {
-      return 'You\'ve already used this code the maximum number of times.';
+      return System.Label.PromoCodeApply_Err_MemberLimitExceeded;
     }
     if (errorCode == PromoCodeApplyService.ERR_REGION_INELIGIBLE) {
-      return 'This code is not available in your region.';
+      return System.Label.PromoCodeApply_Err_RegionIneligible;
     }
     if (errorCode == PromoCodeApplyService.ERR_ACCOUNT_INELIGIBLE) {
-      return 'This code is restricted to a specific account.';
+      return System.Label.PromoCodeApply_Err_AccountIneligible;
     }
     if (errorCode == PromoCodeApplyService.ERR_NOT_APPLICABLE_TO_CART) {
-      return 'This code doesn\'t apply to any items in your cart.';
+      return System.Label.PromoCodeApply_Err_NotApplicableToCart;
     }
     if (errorCode == PromoCodeApplyService.ERR_NOT_COMBINABLE) {
-      return 'This code can\'t be combined with the codes already applied. Remove the others to apply this one.';
+      return System.Label.PromoCodeApply_Err_NotCombinable;
+    }
+    if (errorCode == PromoCodeApplyService.ERR_DROPPED_NON_COMBINABLE) {
+      return System.Label.PromoCodeApply_Err_DroppedNonCombinable;
     }
     if (errorCode == PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE) {
       String allowed = parent == null ? '' : parent.Applicable_To__c;
       String flow = ctx == null ? '' : ctx.flowType;
       if ('Join'.equalsIgnoreCase(allowed)) {
-        return 'This code is only valid for new memberships, not renewals.';
+        return System.Label.PromoCodeApply_Err_FlowNotApplicable_JoinOnly;
       }
       if ('Renew'.equalsIgnoreCase(allowed)) {
-        return 'This code is only valid for renewals, not new memberships.';
+        return System.Label.PromoCodeApply_Err_FlowNotApplicable_RenewOnly;
       }
       // Should be unreachable when allowed='Both', but keep a safe fallback.
-      return 'This code is not valid for the ' +
-        (String.isBlank(flow) ? 'current' : flow.toLowerCase()) +
-        ' flow.';
+      String flowWord = String.isBlank(flow)
+        ? System.Label.PromoCodeApply_Err_FlowNotApplicable_DefaultFlowWord
+        : flow.toLowerCase();
+      return String.format(
+        System.Label.PromoCodeApply_Err_FlowNotApplicable_Other,
+        new List<String>{ flowWord }
+      );
     }
     if (errorCode == PromoCodeApplyService.ERR_MEMBER_RECENTLY_ACTIVE) {
       Integer months = (parent != null &&
         parent.Min_Months_Since_Last_Active__c != null)
         ? parent.Min_Months_Since_Last_Active__c.intValue()
         : 0;
-      return 'This code is only available to members whose last active membership ended more than ' +
-        months +
-        ' months ago.';
+      return String.format(
+        System.Label.PromoCodeApply_Err_MemberRecentlyActive,
+        new List<String>{ String.valueOf(months) }
+      );
     }
-    return 'This code could not be applied.';
+    return System.Label.PromoCodeApply_Err_Generic;
+  }
+
+  /**
+   * Pretty-prints the OUT_OF_WINDOW message. If the parent has an effective window
+   * defined (either bound set), the date-bearing variant is used; otherwise the
+   * bare label fires. Date formatting respects the running user's locale.
+   */
+  private static String outOfWindowMessage(Promo_Code__c parent) {
+    if (
+      parent == null ||
+      (parent.Effective_Start_Date__c == null &&
+      parent.Effective_End_Date__c == null)
+    ) {
+      return System.Label.PromoCodeApply_Err_OutOfWindow;
+    }
+    String startDisplay = parent.Effective_Start_Date__c == null
+      ? System.Label.PromoCodeApply_EffectiveWindow_AnyTime
+      : parent.Effective_Start_Date__c.format();
+    String endDisplay = parent.Effective_End_Date__c == null
+      ? System.Label.PromoCodeApply_EffectiveWindow_NoEnd
+      : parent.Effective_End_Date__c.format();
+    return String.format(
+      System.Label.PromoCodeApply_Err_OutOfWindow_WithWindow,
+      new List<String>{ startDisplay, endDisplay }
+    );
   }
 
   // ============================================================
@@ -555,22 +701,5 @@ public with sharing class PromoCodeValidator {
       raw -= 1;
     }
     return raw;
-  }
-
-  private static String effectiveWindowSuffix(Promo_Code__c parent) {
-    if (parent == null)
-      return '';
-    if (
-      parent.Effective_Start_Date__c == null &&
-      parent.Effective_End_Date__c == null
-    )
-      return '';
-    String startDisplay = parent.Effective_Start_Date__c == null
-      ? 'any time'
-      : parent.Effective_Start_Date__c.format();
-    String endDisplay = parent.Effective_End_Date__c == null
-      ? 'no end'
-      : parent.Effective_End_Date__c.format();
-    return ' (effective ' + startDisplay + ' – ' + endDisplay + ')';
   }
 }

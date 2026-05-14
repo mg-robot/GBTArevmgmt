@@ -795,164 +795,172 @@ private class PromoCodeValidatorTest {
   }
 
   // -----------------------------------------------------------
-  // Rule 9: NOT_COMBINABLE
+  // Combinability resolution — runs as a cart-wide post-pass in
+  // PromoCodeValidator.resolveCombinability(). Each helper here builds
+  // in-memory CodeResult + Promo_Code__c records (no DML) so we can exercise
+  // the resolution logic in isolation.
   // -----------------------------------------------------------
 
-  @IsTest
-  static void validate_notCombinable_nonCombinableInSet_returnsNotCombinable() {
-    Account a = ensureAccount();
-    // Existing valid set already has a non-combinable code.
-    Promo_Code__c existing = new Promo_Code__c(
-      Id = null, // simulated in-memory parent — Apex allows building without insert here
-      Combinable__c = false,
-      Combination_Group__c = null,
-      Code__c = 'EXCLUSIVE'
-    );
-    existing = PromoCodeTestDataFactory.buildBase(
-      'EXCLUSIVE',
-      CURRENCY_ISO,
-      'Percent',
-      10
-    );
-    existing.Combinable__c = false;
-    existing.Combination_Group__c = null;
-    // Inserting a non-combinable code requires bypassing VR_PromoCode_RequireCombinationGroup
-    // which only fires when Combinable__c = true. With Combinable__c = false, the VR allows
-    // a blank Combination_Group__c — clean.
-    insert existing;
-    existing = [
-      SELECT
-        Id,
-        Code__c,
-        Status__c,
-        Display_Name__c,
-        Effective_Start_Date__c,
-        Effective_End_Date__c,
-        Total_Usage_Limit__c,
-        Per_Member_Usage_Limit__c,
-        Member_Type_Scope__c,
-        Region_Scope__c,
-        Account__c,
-        Product_Scope_Type__c,
-        Specific_Products__c,
-        Combinable__c,
-        Combination_Group__c,
-        Discount_Type__c,
-        Discount_Value__c
-      FROM Promo_Code__c
-      WHERE Id = :existing.Id
-    ];
+  private static PromoCodeApplyService.CodeResult fakeValid(String code) {
+    PromoCodeApplyService.CodeResult cr = new PromoCodeApplyService.CodeResult();
+    cr.code = code;
+    cr.valid = true;
+    cr.appliedToOrderItemIds = new List<Id>();
+    return cr;
+  }
 
-    Promo_Code__c candidate = PromoCodeTestDataFactory.buildBase(
-      'TRYING',
-      CURRENCY_ISO,
-      'Percent',
-      5
+  private static Promo_Code__c fakeParent(
+    String code,
+    Boolean combinable,
+    String groupName
+  ) {
+    return new Promo_Code__c(
+      Code__c = code,
+      Combinable__c = combinable,
+      Combination_Group__c = groupName,
+      Discount_Type__c = 'Percent',
+      Discount_Value__c = 10
     );
-    insert candidate;
-    candidate = [
-      SELECT
-        Id,
-        Code__c,
-        Status__c,
-        Display_Name__c,
-        Effective_Start_Date__c,
-        Effective_End_Date__c,
-        Total_Usage_Limit__c,
-        Per_Member_Usage_Limit__c,
-        Member_Type_Scope__c,
-        Region_Scope__c,
-        Account__c,
-        Product_Scope_Type__c,
-        Specific_Products__c,
-        Combinable__c,
-        Combination_Group__c,
-        Discount_Type__c,
-        Discount_Value__c
-      FROM Promo_Code__c
-      WHERE Id = :candidate.Id
-    ];
-
-    PromoCodeApplyService.OrderContext ctx = buildContext(
-      a.Id,
-      'Direct Membership',
-      'NA'
-    );
-    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
-      'TRYING',
-      candidate,
-      ctx,
-      new List<Promo_Code__c>{ existing },
-      emptyUsage()
-    );
-
-    System.assertEquals(false, cr.valid);
-    System.assertEquals(PromoCodeApplyService.ERR_NOT_COMBINABLE, cr.errorCode);
   }
 
   @IsTest
-  static void validate_notCombinable_differentGroups_returnsNotCombinable() {
-    Account a = ensureAccount();
-    Promo_Code__c existing = PromoCodeTestDataFactory.buildBase(
-      'GROUPA',
-      CURRENCY_ISO,
-      'Percent',
-      10
-    );
-    existing.Combination_Group__c = 'Group A';
-    insert existing;
-    existing = [
-      SELECT Id, Code__c, Status__c, Combinable__c, Combination_Group__c
-      FROM Promo_Code__c
-      WHERE Id = :existing.Id
-    ];
+  static void resolveCombinability_dropsNonCombinable_whenTwoPlusCombinablesExist() {
+    PromoCodeApplyService.CodeResult a = fakeValid('A');
+    PromoCodeApplyService.CodeResult b = fakeValid('B');
+    PromoCodeApplyService.CodeResult c = fakeValid('C');
+    List<PromoCodeApplyService.CodeResult> results = new List<PromoCodeApplyService.CodeResult>{
+      a,
+      b,
+      c
+    };
+    Map<String, Promo_Code__c> parents = new Map<String, Promo_Code__c>{
+      'A' => fakeParent('A', true, 'General'),
+      'B' => fakeParent('B', true, 'General'),
+      'C' => fakeParent('C', false, null)
+    };
 
-    Promo_Code__c candidate = PromoCodeTestDataFactory.buildBase(
-      'GROUPB',
-      CURRENCY_ISO,
-      'Percent',
-      5
+    Test.startTest();
+    PromoCodeValidator.resolveCombinability(
+      results,
+      parents,
+      buildContext(null, null, 'NA')
     );
-    candidate.Combination_Group__c = 'Group B';
-    insert candidate;
-    candidate = [
-      SELECT
-        Id,
-        Code__c,
-        Status__c,
-        Display_Name__c,
-        Effective_Start_Date__c,
-        Effective_End_Date__c,
-        Total_Usage_Limit__c,
-        Per_Member_Usage_Limit__c,
-        Member_Type_Scope__c,
-        Region_Scope__c,
-        Account__c,
-        Product_Scope_Type__c,
-        Specific_Products__c,
-        Combinable__c,
-        Combination_Group__c,
-        Discount_Type__c,
-        Discount_Value__c
-      FROM Promo_Code__c
-      WHERE Id = :candidate.Id
-    ];
+    Test.stopTest();
 
-    PromoCodeApplyService.OrderContext ctx = buildContext(
-      a.Id,
-      'Direct Membership',
-      'NA'
+    System.assertEquals(true, a.valid, 'Combinable A should remain valid');
+    System.assertEquals(true, b.valid, 'Combinable B should remain valid');
+    System.assertEquals(false, c.valid, 'Non-combinable C should be dropped');
+    System.assertEquals(
+      PromoCodeApplyService.ERR_DROPPED_NON_COMBINABLE,
+      c.errorCode
     );
-    PromoCodeApplyService.CodeResult cr = PromoCodeValidator.validate(
-      'GROUPB',
-      candidate,
-      ctx,
-      new List<Promo_Code__c>{ existing },
-      emptyUsage()
+  }
+
+  @IsTest
+  static void resolveCombinability_singleCombinablePlusNonCombinable_firstSubmittedWins() {
+    PromoCodeApplyService.CodeResult a = fakeValid('A');
+    PromoCodeApplyService.CodeResult b = fakeValid('B');
+    List<PromoCodeApplyService.CodeResult> results = new List<PromoCodeApplyService.CodeResult>{
+      a,
+      b
+    };
+    Map<String, Promo_Code__c> parents = new Map<String, Promo_Code__c>{
+      'A' => fakeParent('A', true, 'General'),
+      'B' => fakeParent('B', false, null)
+    };
+
+    PromoCodeValidator.resolveCombinability(
+      results,
+      parents,
+      buildContext(null, null, 'NA')
     );
 
-    System.assertEquals(false, cr.valid);
-    System.assertEquals(PromoCodeApplyService.ERR_NOT_COMBINABLE, cr.errorCode);
+    System.assertEquals(true, a.valid, 'First-submitted A wins');
+    System.assertEquals(
+      false,
+      b.valid,
+      'B fails NOT_COMBINABLE: only 1 combinable in set, so original exclusive rule applies'
+    );
+    System.assertEquals(PromoCodeApplyService.ERR_NOT_COMBINABLE, b.errorCode);
+  }
+
+  @IsTest
+  static void resolveCombinability_groupMismatchAmongCombinables_firstWins() {
+    PromoCodeApplyService.CodeResult a = fakeValid('A');
+    PromoCodeApplyService.CodeResult b = fakeValid('B');
+    List<PromoCodeApplyService.CodeResult> results = new List<PromoCodeApplyService.CodeResult>{
+      a,
+      b
+    };
+    Map<String, Promo_Code__c> parents = new Map<String, Promo_Code__c>{
+      'A' => fakeParent('A', true, 'Group A'),
+      'B' => fakeParent('B', true, 'Group B')
+    };
+
+    PromoCodeValidator.resolveCombinability(
+      results,
+      parents,
+      buildContext(null, null, 'NA')
+    );
+
+    System.assertEquals(true, a.valid, 'A is the anchor; group Group A');
+    System.assertEquals(
+      false,
+      b.valid,
+      'B mismatches anchor group; should fail NOT_COMBINABLE'
+    );
+    System.assertEquals(PromoCodeApplyService.ERR_NOT_COMBINABLE, b.errorCode);
+  }
+
+  @IsTest
+  static void resolveCombinability_allSameGroup_allRemainValid() {
+    PromoCodeApplyService.CodeResult a = fakeValid('A');
+    PromoCodeApplyService.CodeResult b = fakeValid('B');
+    PromoCodeApplyService.CodeResult c = fakeValid('C');
+    List<PromoCodeApplyService.CodeResult> results = new List<PromoCodeApplyService.CodeResult>{
+      a,
+      b,
+      c
+    };
+    Map<String, Promo_Code__c> parents = new Map<String, Promo_Code__c>{
+      'A' => fakeParent('A', true, 'General'),
+      'B' => fakeParent('B', true, 'General'),
+      'C' => fakeParent('C', true, 'General')
+    };
+
+    PromoCodeValidator.resolveCombinability(
+      results,
+      parents,
+      buildContext(null, null, 'NA')
+    );
+
+    System.assertEquals(true, a.valid);
+    System.assertEquals(true, b.valid);
+    System.assertEquals(true, c.valid);
+  }
+
+  @IsTest
+  static void resolveCombinability_twoNonCombinables_firstWins() {
+    PromoCodeApplyService.CodeResult a = fakeValid('A');
+    PromoCodeApplyService.CodeResult b = fakeValid('B');
+    List<PromoCodeApplyService.CodeResult> results = new List<PromoCodeApplyService.CodeResult>{
+      a,
+      b
+    };
+    Map<String, Promo_Code__c> parents = new Map<String, Promo_Code__c>{
+      'A' => fakeParent('A', false, null),
+      'B' => fakeParent('B', false, null)
+    };
+
+    PromoCodeValidator.resolveCombinability(
+      results,
+      parents,
+      buildContext(null, null, 'NA')
+    );
+
+    System.assertEquals(true, a.valid, 'First non-combinable wins');
+    System.assertEquals(false, b.valid, 'Second non-combinable fails');
+    System.assertEquals(PromoCodeApplyService.ERR_NOT_COMBINABLE, b.errorCode);
   }
 
   // -----------------------------------------------------------
@@ -1044,6 +1052,7 @@ private class PromoCodeValidatorTest {
         PromoCodeApplyService.ERR_NOT_COMBINABLE,
         PromoCodeApplyService.ERR_FLOW_NOT_APPLICABLE,
         PromoCodeApplyService.ERR_MEMBER_RECENTLY_ACTIVE,
+        PromoCodeApplyService.ERR_DROPPED_NON_COMBINABLE,
         'UNKNOWN_CODE'
       }
     ) {

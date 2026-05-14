@@ -51,7 +51,11 @@ describe("c-promo-code-entry", () => {
     const el = buildElement();
     const addButton = el.shadowRoot.querySelector("lightning-button");
     expect(addButton).not.toBeNull();
-    expect(addButton.label).toBe("Add Promo Code");
+    // Button labels now come from Custom Labels. sfdx-lwc-jest's default mock
+    // for @salesforce/label resolves the import to the path string ("c.<name>"),
+    // so we assert against that rather than the en_US value. Translators change
+    // the value without breaking this test.
+    expect(addButton.label).toBe("c.PromoCodeEntry_AddBtn");
     const input = el.shadowRoot.querySelector(".code-input");
     expect(input).toBeNull();
   });
@@ -94,7 +98,9 @@ describe("c-promo-code-entry", () => {
 
     // Click Apply
     const buttons = el.shadowRoot.querySelectorAll("lightning-button");
-    const applyButton = Array.from(buttons).find((b) => b.label === "Apply");
+    const applyButton = Array.from(buttons).find(
+      (b) => b.label === "c.PromoCodeEntry_ApplyBtn"
+    );
     applyButton.click();
     await flushPromises();
 
@@ -148,7 +154,7 @@ describe("c-promo-code-entry", () => {
 
     const applyButton = Array.from(
       el.shadowRoot.querySelectorAll("lightning-button")
-    ).find((b) => b.label === "Apply");
+    ).find((b) => b.label === "c.PromoCodeEntry_ApplyBtn");
     applyButton.click();
     await flushPromises();
 

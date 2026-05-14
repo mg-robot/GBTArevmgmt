@@ -48,6 +48,10 @@ public with sharing class PromoCodeApplyService {
   public static final String ERR_NOT_COMBINABLE = 'NOT_COMBINABLE';
   public static final String ERR_FLOW_NOT_APPLICABLE = 'FLOW_NOT_APPLICABLE';
   public static final String ERR_MEMBER_RECENTLY_ACTIVE = 'MEMBER_RECENTLY_ACTIVE';
+  // Fired when a non-combinable code is dropped specifically because there are 2+ combinable
+  // codes in the validated set. Single combinable + non-combinable mixes still resolve via
+  // the original NOT_COMBINABLE rule (first-submitted wins).
+  public static final String ERR_DROPPED_NON_COMBINABLE = 'DROPPED_NON_COMBINABLE';
 
   // Canonical flow-type tokens. Order.Flow_Type__c picklist mirrors these. The validator
   // treats null/blank as FLOW_JOIN — the design doc records this as a backward-compat default.
@@ -140,7 +144,9 @@ public with sharing class PromoCodeApplyService {
     String flowTypeOverride
   ) {
     if (orderId == null) {
-      throw new AuraHandledException('Order Id is required.');
+      throw new AuraHandledException(
+        System.Label.PromoCodeApply_Err_OrderIdRequired
+      );
     }
 
     ApplyResult result = new ApplyResult();
@@ -182,6 +188,27 @@ public with sharing class PromoCodeApplyService {
       result.codeResults.add(cr);
       if (cr.valid) {
         validParents.add(parent);
+      }
+    }
+
+    // Cart-wide combinability resolution — re-classifies the valid set per the
+    // "drop non-combinables when 2+ combinables exist" rule, and surfaces
+    // DROPPED_NON_COMBINABLE so the LWC can remove the entry from the cart.
+    PromoCodeValidator.resolveCombinability(
+      result.codeResults,
+      codeToParent,
+      ctx
+    );
+    // Rebuild validParents from the resolved CodeResults so allocation only sees the
+    // codes that survived combinability resolution.
+    validParents = new List<Promo_Code__c>();
+    for (CodeResult cr : result.codeResults) {
+      if (!cr.valid) {
+        continue;
+      }
+      Promo_Code__c p = codeToParent.get(cr.code.toUpperCase());
+      if (p != null) {
+        validParents.add(p);
       }
     }
 
@@ -245,17 +272,26 @@ public with sharing class PromoCodeApplyService {
         finalAllocations.add(a);
     }
 
+    // Codes dropped specifically because they were non-combinable in a multi-combinable cart
+    // are removed from the persisted entered list — the LWC shouldn't re-present them after a
+    // navigation reload. Other failure modes (NOT_FOUND, OUT_OF_WINDOW, etc.) stay in the CSV
+    // so the member can see and correct their input.
+    List<String> persistedCodes = filterDroppedCombinables(
+      normalizedCodes,
+      result.codeResults
+    );
+
     if (finalAllocations.isEmpty()) {
       // No valid codes — still persist the entered list (the LWC keeps invalid codes around
       // so the member can correct them).
-      updatePromoCodesEnteredCsv(orderId, normalizedCodes);
+      updatePromoCodesEnteredCsv(orderId, persistedCodes);
       result.repriceRequired = false;
       return result;
     }
 
     String applicationGroupId = generateUuid();
     reserveUsage(orderId, applicationGroupId, finalAllocations, ctx);
-    updatePromoCodesEnteredCsv(orderId, normalizedCodes);
+    updatePromoCodesEnteredCsv(orderId, persistedCodes);
 
     result.applicationGroupId = applicationGroupId;
     result.repriceRequired = true;
@@ -274,10 +310,14 @@ public with sharing class PromoCodeApplyService {
   @AuraEnabled
   public static ApplyResult remove(Id orderId, String applicationGroupId) {
     if (orderId == null) {
-      throw new AuraHandledException('Order Id is required.');
+      throw new AuraHandledException(
+        System.Label.PromoCodeApply_Err_OrderIdRequired
+      );
     }
     if (String.isBlank(applicationGroupId)) {
-      throw new AuraHandledException('Application Group Id is required.');
+      throw new AuraHandledException(
+        System.Label.PromoCodeApply_Err_AppGroupIdRequired
+      );
     }
 
     ApplyResult result = new ApplyResult();
@@ -343,7 +383,9 @@ public with sharing class PromoCodeApplyService {
     String flowTypeOverride
   ) {
     if (orderId == null) {
-      throw new AuraHandledException('Order Id is required.');
+      throw new AuraHandledException(
+        System.Label.PromoCodeApply_Err_OrderIdRequired
+      );
     }
 
     OrderContext ctx = loadOrderContext(orderId);
@@ -398,7 +440,11 @@ public with sharing class PromoCodeApplyService {
     );
 
     List<Promo_Code__c> validSoFar = new List<Promo_Code__c>();
+    Map<String, Promo_Code__c> parentByCode = new Map<String, Promo_Code__c>();
     for (Promo_Code__c parent : parents) {
+      if (parent.Code__c != null) {
+        parentByCode.put(parent.Code__c.toUpperCase(), parent);
+      }
       CodeResult cr = PromoCodeValidator.validate(
         parent.Code__c,
         parent,
@@ -411,6 +457,7 @@ public with sharing class PromoCodeApplyService {
         validSoFar.add(parent);
       }
     }
+    PromoCodeValidator.resolveCombinability(out, parentByCode, ctx);
     return out;
   }
 
@@ -579,7 +626,8 @@ public with sharing class PromoCodeApplyService {
         Product2.Family,
         Product2.ProductCode,
         Quantity,
-        UnitPrice
+        UnitPrice,
+        Floor_Price__c
       FROM OrderItem
       WHERE OrderId = :orderId
     ];
@@ -685,6 +733,39 @@ public with sharing class PromoCodeApplyService {
    * regardless of whether codes were valid — the LWC keeps invalid codes visible so the member
    * can correct them, and we want that list to survive navigation away from the cart.
    */
+  /**
+   * Strips codes marked DROPPED_NON_COMBINABLE out of the submitted list so the persistent
+   * "entered codes" CSV doesn't keep them around. Codes that failed for other reasons stay
+   * in the CSV so the member can see and correct their input.
+   */
+  private static List<String> filterDroppedCombinables(
+    List<String> normalizedCodes,
+    List<CodeResult> codeResults
+  ) {
+    Set<String> droppedUpper = new Set<String>();
+    for (CodeResult cr : codeResults) {
+      if (cr == null || cr.errorCode == null || cr.code == null) {
+        continue;
+      }
+      if (cr.errorCode == ERR_DROPPED_NON_COMBINABLE) {
+        droppedUpper.add(cr.code.toUpperCase());
+      }
+    }
+    if (droppedUpper.isEmpty()) {
+      return normalizedCodes;
+    }
+    List<String> kept = new List<String>();
+    for (String c : normalizedCodes) {
+      if (c == null) {
+        continue;
+      }
+      if (!droppedUpper.contains(c.toUpperCase())) {
+        kept.add(c);
+      }
+    }
+    return kept;
+  }
+
   private static void updatePromoCodesEnteredCsv(
     Id orderId,
     List<String> codes

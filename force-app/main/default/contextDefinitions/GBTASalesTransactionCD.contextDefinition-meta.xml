@@ -15732,6 +15732,15 @@
                     <contextInputAttributeName
           >Promotion_Value__c</contextInputAttributeName>
                 </contextAttributeMappings>
+                <contextAttributeMappings>
+                    <contextAttrHydrationDetails>
+                        <objectName>OrderItem</objectName>
+                        <queryAttribute>Floor_Price__c</queryAttribute>
+                    </contextAttrHydrationDetails>
+                    <contextAttribute>Floor_Price__c</contextAttribute>
+                    <contextInputAttributeName
+          >Floor_Price__c</contextInputAttributeName>
+                </contextAttributeMappings>
                 <contextNode>SalesTransactionItem</contextNode>
                 <inheritedFrom
         >SalesTransactionContext__stdctx/version/OrderEntitiesMapping/SalesTransactionItem</inheritedFrom>
@@ -28751,6 +28760,18 @@
                 <fieldType>inputoutput</fieldType>
                 <key>false</key>
                 <title>Promotion_Value__c</title>
+                <transient>false</transient>
+                <value>false</value>
+            </contextAttributes>
+            <contextAttributes>
+                <contextTags>
+                    <title>Floor_Price__c</title>
+                </contextTags>
+                <customMappingAllowed>false</customMappingAllowed>
+                <dataType>currency</dataType>
+                <fieldType>inputoutput</fieldType>
+                <key>false</key>
+                <title>Floor_Price__c</title>
                 <transient>false</transient>
                 <value>false</value>
             </contextAttributes>

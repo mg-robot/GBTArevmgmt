@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Floor_Price__c</fullName>
+    <description
+  >Per-line minimum NetUnitPrice after promo adjustments on the quote side, sourced from Pricing_Matrix__c.Floor_Price__c by the Price Matrix pricing element. Used by the Apply Promotion Value formula as the lower bound when computing the final net price on a quote line. Null = no floor (effective floor of 0). Mirrors OrderItem.Floor_Price__c for symmetry between Quote and Order flows.</description>
+    <inlineHelpText
+  >Auto-populated from the Pricing Matrix entry. Read-only at the quote-line level.</inlineHelpText>
+    <label>Floor Price</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <type>Currency</type>
+</CustomField>

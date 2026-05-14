@@ -2,6 +2,20 @@ import { LightningElement, api } from "lwc";
 import applyCodes from "@salesforce/apex/PromoCodeApplyService.apply";
 import getCurrentlyApplied from "@salesforce/apex/PromoCodeApplyService.getCurrentlyApplied";
 
+import LBL_Title from "@salesforce/label/c.PromoCodeEntry_Title";
+import LBL_AddBtn from "@salesforce/label/c.PromoCodeEntry_AddBtn";
+import LBL_CodeFieldLabel from "@salesforce/label/c.PromoCodeEntry_CodeFieldLabel";
+import LBL_CodePlaceholder from "@salesforce/label/c.PromoCodeEntry_CodePlaceholder";
+import LBL_ApplyBtn from "@salesforce/label/c.PromoCodeEntry_ApplyBtn";
+import LBL_CancelBtn from "@salesforce/label/c.PromoCodeEntry_CancelBtn";
+import LBL_Working from "@salesforce/label/c.PromoCodeEntry_Working";
+import LBL_RemoveCode from "@salesforce/label/c.PromoCodeEntry_RemoveCode";
+import LBL_DismissFailed from "@salesforce/label/c.PromoCodeEntry_DismissFailed";
+import LBL_DismissNotice from "@salesforce/label/c.PromoCodeEntry_DismissNotice";
+import LBL_Dismiss from "@salesforce/label/c.PromoCodeEntry_Dismiss";
+import LBL_TotalSavings from "@salesforce/label/c.PromoCodeEntry_TotalSavings";
+import LBL_RetryMessage from "@salesforce/label/c.PromoCodeEntry_RetryMessage";
+
 /**
  * Member-facing inline panel for entering promo codes at checkout. Validates each code via Apex,
  * renders per-code error banners for failed attempts, and surfaces the total savings summary.
@@ -36,10 +50,33 @@ export default class PromoCodeEntry extends LightningElement {
   /** @type {boolean} When true, the LWC disables all interactive controls. */
   @api disabled = false;
 
+  // All user-facing strings are sourced from Custom Labels so the entire member-facing
+  // surface area is translatable via the Translation Workbench. The template binds to
+  // `label.<key>` rather than literal text.
+  label = {
+    title: LBL_Title,
+    addBtn: LBL_AddBtn,
+    codeFieldLabel: LBL_CodeFieldLabel,
+    codePlaceholder: LBL_CodePlaceholder,
+    applyBtn: LBL_ApplyBtn,
+    cancelBtn: LBL_CancelBtn,
+    working: LBL_Working,
+    removeCode: LBL_RemoveCode,
+    dismissFailed: LBL_DismissFailed,
+    dismissNotice: LBL_DismissNotice,
+    dismiss: LBL_Dismiss,
+    totalSavings: LBL_TotalSavings
+  };
+
   showInput = false;
   inputValue = "";
   appliedCodes = [];
   failedCodes = [];
+  // Codes the apply service dropped via combinability resolution (errorCode
+  // DROPPED_NON_COMBINABLE). Rendered as an info-style notice rather than an error so
+  // the user sees a clear "we removed this for you" explanation. Surfacing them
+  // separately keeps the failedCodes banner reserved for true validation failures.
+  droppedCodes = [];
   isLoading = false;
   applicationGroupId;
   _autoLoaded = false;
@@ -126,6 +163,10 @@ export default class PromoCodeEntry extends LightningElement {
     return this.failedCodes.length > 0;
   }
 
+  get hasDroppedCodes() {
+    return this.droppedCodes.length > 0;
+  }
+
   get totalAdjustment() {
     return this.appliedCodes.reduce(
       (sum, c) => sum + (Number(c.appliedAmount) || 0),
@@ -209,6 +250,13 @@ export default class PromoCodeEntry extends LightningElement {
     this.failedCodes = this.failedCodes.filter((c) => c.code !== codeToDismiss);
   }
 
+  handleDismissDropped(event) {
+    const codeToDismiss = event.currentTarget.dataset.code;
+    this.droppedCodes = this.droppedCodes.filter(
+      (c) => c.code !== codeToDismiss
+    );
+  }
+
   // -----------------------------------------------------------
   // Apex call orchestration
   // -----------------------------------------------------------
@@ -253,6 +301,7 @@ export default class PromoCodeEntry extends LightningElement {
 
       const applied = [];
       const failed = [];
+      const dropped = [];
       (result.codeResults || []).forEach((cr) => {
         if (cr.valid) {
           applied.push({
@@ -260,6 +309,16 @@ export default class PromoCodeEntry extends LightningElement {
             currencyIsoCode: cr.currencyIsoCode,
             displayName: cr.displayName,
             appliedAmount: cr.appliedAmount
+          });
+        } else if (cr.errorCode === "DROPPED_NON_COMBINABLE") {
+          // Apex's combinability resolver removed this code because the cart has 2+
+          // combinables that can stack. Surface it as an info notice rather than an
+          // error and let the user dismiss it. The code is already absent from
+          // appliedCodes, so the cart reflects the removal.
+          dropped.push({
+            code: cr.code,
+            errorCode: cr.errorCode,
+            errorMessage: cr.errorMessage
           });
         } else {
           failed.push({
@@ -272,6 +331,7 @@ export default class PromoCodeEntry extends LightningElement {
 
       this.appliedCodes = applied;
       this.failedCodes = failed;
+      this.droppedCodes = dropped;
       this.applicationGroupId = result.applicationGroupId || null;
 
       if (isAdd) {
@@ -313,7 +373,7 @@ export default class PromoCodeEntry extends LightningElement {
         {
           code: codes[codes.length - 1],
           errorCode: "UNEXPECTED_ERROR",
-          errorMessage: "Could not apply right now. Please try again."
+          errorMessage: LBL_RetryMessage
         }
       ];
     } finally {
