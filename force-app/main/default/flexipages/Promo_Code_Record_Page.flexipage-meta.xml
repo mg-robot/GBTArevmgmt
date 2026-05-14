@@ -8,6 +8,13 @@
                     <valueList>
                         <valueListItems>
                             <value>Promo_Code__c.Open_In_Setup_Wizard</value>
+                            <visibilityRule>
+                                <criteria>
+                                    <leftValue>{!Record.Status__c}</leftValue>
+                                    <operator>EQUAL</operator>
+                                    <rightValue>Draft</rightValue>
+                                </criteria>
+                            </visibilityRule>
                         </valueListItems>
                         <valueListItems>
                             <value>Edit</value>

@@ -1,3 +1,4 @@
+import { api } from "lwc";
 import LightningModal from "lightning/modal";
 import createBulk from "@salesforce/apex/PromoCodeService.createBulk";
 import updateBulk from "@salesforce/apex/PromoCodeService.updateBulk";
@@ -52,7 +53,10 @@ export default class PromoCodeWizard extends LightningModal {
   // the modal lands on the Review step pre-filled with the record's values (+ currency
   // siblings); Save Changes / Activate Now persist edits to the existing records via
   // updateBulk (no new records are created on this code path).
-  sourceRecordId; // set via .open({ sourceRecordId })
+  // LightningModal.open() only forwards values into @api-decorated properties.
+  // Without @api here, the sourceRecordId param from the record action is dropped
+  // and the wizard falls back to create mode.
+  @api sourceRecordId;
   sourceRecordIds = []; // populated by loadDefinition; covers all currency siblings
   mode = "create"; // 'create' | 'edit'
   loadedStatus; // 'Draft' | 'Active' etc., from the source record
