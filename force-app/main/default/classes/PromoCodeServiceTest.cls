@@ -315,8 +315,7 @@ private class PromoCodeServiceTest {
         );
       } catch (DmlException e) {
         System.assert(
-          e.getMessage()
-            .contains('locked once the promo code has been activated'),
+          e.getMessage().contains('locked once the promo code is Active'),
           'Unexpected error: ' + e.getMessage()
         );
       }
@@ -503,9 +502,12 @@ private class PromoCodeServiceTest {
     inp.terms = 'Test terms';
     inp.totalLimit = 100;
     inp.perMemberLimit = 5;
-    inp.memberTypeScope = new List<String>{ 'Allied', 'Direct' };
+    inp.memberTypeScope = new List<String>{
+      'Allied Membership',
+      'Direct Membership'
+    };
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
     Id sourceId = create.createdRecordIds[0];
 
     Test.startTest();
@@ -521,8 +523,8 @@ private class PromoCodeServiceTest {
     System.assertEquals('Test terms', def.input.terms);
     System.assertEquals(100, def.input.totalLimit);
     System.assertEquals(5, def.input.perMemberLimit);
-    System.assert(def.input.memberTypeScope.contains('Allied'));
-    System.assert(def.input.memberTypeScope.contains('Direct'));
+    System.assert(def.input.memberTypeScope.contains('Allied Membership'));
+    System.assert(def.input.memberTypeScope.contains('Direct Membership'));
     System.assertEquals('Draft', def.currentStatus);
     System.assertEquals(true, def.allDraft);
     System.assert(def.sourceRecordIds.contains(sourceId));
@@ -543,7 +545,7 @@ private class PromoCodeServiceTest {
     ca.amount = 25;
     inp.amounts.add(ca);
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
     Id sourceId = create.createdRecordIds[0];
 
     Test.startTest();
@@ -588,7 +590,7 @@ private class PromoCodeServiceTest {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'ACTBLK';
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     Test.startTest();
     PromoCodeService.ActivationResult res = PromoCodeService.activateBulk(
@@ -610,40 +612,12 @@ private class PromoCodeServiceTest {
   }
 
   @IsTest
-  static void zzz_debug_probe_createBulk() {
-    PromoCodeService.PromoCodeInput inp = baseInput();
-    inp.code = 'ACTBLK_SKIP';
-    inp.activateImmediately = true;
-    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.debug(
-      'PROBE_RESULT success=' +
-        create.success +
-        ' errorMessage=[' +
-        create.errorMessage +
-        '] status=' +
-        create.status +
-        ' ids=' +
-        create.createdRecordIds +
-        ' conflicts=' +
-        create.conflictCurrencies
-    );
-    System.assertEquals(
-      true,
-      create.success,
-      'PROBE_FAIL err=[' +
-        create.errorMessage +
-        '] conflicts=' +
-        create.conflictCurrencies
-    );
-  }
-
-  @IsTest
   static void activateBulk_alreadyActive_isSkipped() {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'ACTBLK_SKIP';
     inp.activateImmediately = true; // create as Active directly
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     Test.startTest();
     PromoCodeService.ActivationResult res = PromoCodeService.activateBulk(
@@ -669,7 +643,7 @@ private class PromoCodeServiceTest {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'UPDPCT';
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
     Id sourceId = create.createdRecordIds[0];
 
     PromoCodeService.PromoCodeInput edited = baseInput();
@@ -686,7 +660,7 @@ private class PromoCodeServiceTest {
     );
     Test.stopTest();
 
-    System.assertEquals(true, res.success, res.errorMessage);
+    System.assertEquals(true, res.success, 'err=' + res.errorMessage);
     System.assertEquals('Draft', res.status);
     Promo_Code__c reloaded = [
       SELECT Display_Name__c, Discount_Value__c, Terms__c, Status__c
@@ -715,7 +689,7 @@ private class PromoCodeServiceTest {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'UPDACTIVATE';
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     PromoCodeService.PromoCodeInput edited = baseInput();
     edited.code = 'UPDACTIVATE';
@@ -730,7 +704,7 @@ private class PromoCodeServiceTest {
     );
     Test.stopTest();
 
-    System.assertEquals(true, res.success, res.errorMessage);
+    System.assertEquals(true, res.success, 'err=' + res.errorMessage);
     System.assertEquals('Active', res.status);
     Promo_Code__c reloaded = [
       SELECT Status__c, Discount_Value__c, Display_Name__c
@@ -748,7 +722,7 @@ private class PromoCodeServiceTest {
     inp.code = 'NOEDITACTIVE';
     inp.activateImmediately = true;
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     PromoCodeService.PromoCodeInput edited = baseInput();
     edited.code = 'NOEDITACTIVE';
@@ -778,7 +752,7 @@ private class PromoCodeServiceTest {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'NOSELFCONFLICT';
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     PromoCodeService.PromoCodeInput edited = baseInput();
     edited.code = 'NOSELFCONFLICT'; // same code, same currency set, same values
@@ -818,7 +792,7 @@ private class PromoCodeServiceTest {
     first.amount = 10;
     inp.amounts = new List<PromoCodeService.CurrencyAmount>{ first };
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     // Now save with both currencies — the second should be inserted as a new sibling.
     PromoCodeService.PromoCodeInput edited = baseInput();
@@ -842,7 +816,7 @@ private class PromoCodeServiceTest {
     );
     Test.stopTest();
 
-    System.assertEquals(true, res.success, res.errorMessage);
+    System.assertEquals(true, res.success, 'err=' + res.errorMessage);
     Integer total = [
       SELECT COUNT()
       FROM Promo_Code__c
@@ -877,7 +851,7 @@ private class PromoCodeServiceTest {
     b.amount = 20;
     inp.amounts = new List<PromoCodeService.CurrencyAmount>{ a, b };
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     PromoCodeService.PromoCodeInput edited = baseInput();
     edited.code = 'REMCURR';
@@ -897,7 +871,7 @@ private class PromoCodeServiceTest {
     );
     Test.stopTest();
 
-    System.assertEquals(true, res.success, res.errorMessage);
+    System.assertEquals(true, res.success, 'err=' + res.errorMessage);
     Integer remaining = [
       SELECT COUNT()
       FROM Promo_Code__c
@@ -938,7 +912,7 @@ private class PromoCodeServiceTest {
     PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
     Test.stopTest();
 
-    System.assertEquals(true, r.success, r.errorMessage);
+    System.assertEquals(true, r.success, 'err=' + r.errorMessage);
     Promo_Code__c saved = [
       SELECT Applicable_To__c, Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
@@ -955,7 +929,7 @@ private class PromoCodeServiceTest {
     inp.applicableTo = null;
 
     PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, r.success, r.errorMessage);
+    System.assertEquals(true, r.success, 'err=' + r.errorMessage);
     Promo_Code__c saved = [
       SELECT Applicable_To__c
       FROM Promo_Code__c
@@ -994,7 +968,7 @@ private class PromoCodeServiceTest {
     inp.applicableTo = 'Join';
     inp.minMonthsSinceLastActive = 24;
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     Test.startTest();
     PromoCodeService.LoadedDefinition def = PromoCodeService.loadDefinition(
@@ -1012,7 +986,7 @@ private class PromoCodeServiceTest {
     inp.code = 'UPDFLOW';
     inp.applicableTo = 'Both';
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     PromoCodeService.PromoCodeInput edited = baseInput();
     edited.code = 'UPDFLOW';
@@ -1027,7 +1001,7 @@ private class PromoCodeServiceTest {
     );
     Test.stopTest();
 
-    System.assertEquals(true, res.success, res.errorMessage);
+    System.assertEquals(true, res.success, 'err=' + res.errorMessage);
     Promo_Code__c reloaded = [
       SELECT Applicable_To__c, Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
@@ -1042,7 +1016,7 @@ private class PromoCodeServiceTest {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'STATUSPROBE';
     PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
-    System.assertEquals(true, create.success, create.errorMessage);
+    System.assertEquals(true, create.success, 'err=' + create.errorMessage);
 
     Test.startTest();
     String draftStatus = PromoCodeService.getRecordStatus(

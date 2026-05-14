@@ -134,7 +134,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -191,7 +193,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -243,7 +247,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -301,7 +307,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -362,7 +370,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -423,7 +433,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -486,7 +498,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -547,7 +561,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -609,7 +625,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -663,7 +681,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -718,7 +738,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -772,7 +794,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -989,7 +1013,9 @@ private class PromoCodeValidatorTest {
         Combinable__c,
         Combination_Group__c,
         Discount_Type__c,
-        Discount_Value__c
+        Discount_Value__c,
+        Applicable_To__c,
+        Min_Months_Since_Last_Active__c
       FROM Promo_Code__c
       WHERE Id = :pc.Id
     ];
@@ -1130,7 +1156,11 @@ private class PromoCodeValidatorTest {
       new List<Promo_Code__c>(),
       emptyUsage()
     );
-    System.assertEquals(true, joinResult.valid, joinResult.errorMessage);
+    System.assertEquals(
+      true,
+      joinResult.valid,
+      'err=' + joinResult.errorMessage
+    );
 
     PromoCodeApplyService.OrderContext renewCtx = buildContext(
       a.Id,
@@ -1145,7 +1175,11 @@ private class PromoCodeValidatorTest {
       new List<Promo_Code__c>(),
       emptyUsage()
     );
-    System.assertEquals(true, renewResult.valid, renewResult.errorMessage);
+    System.assertEquals(
+      true,
+      renewResult.valid,
+      'err=' + renewResult.errorMessage
+    );
   }
 
   @IsTest
@@ -1224,7 +1258,7 @@ private class PromoCodeValidatorTest {
       emptyUsage()
     );
 
-    System.assertEquals(true, cr.valid, cr.errorMessage);
+    System.assertEquals(true, cr.valid, 'err=' + cr.errorMessage);
   }
 
   @IsTest
