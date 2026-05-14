@@ -98,8 +98,8 @@ export default class PromoCodeWizard extends LightningModal {
     accountId: null,
     totalLimit: null,
     perMemberLimit: null,
-    combinable: false,
-    combinationGroup: "",
+    combinable: true,
+    combinationGroup: "General",
     approvalRequired: false,
     applicableTo: "Both",
     minMonthsSinceLastActive: null

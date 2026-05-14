@@ -73,7 +73,15 @@ export default class PromoCodeWizardStepLimits extends LightningElement {
   handleCombinableChange(e) {
     const on = e.target.checked;
     this.dispatch("combinable", on);
-    if (!on) this.dispatch("combinationGroup", "");
+    if (on) {
+      // Toggling combinable back on after a prior off-cycle: re-seed the group so
+      // the staff user doesn't have to re-pick. General is the canonical default.
+      if (!this.wizardData?.combinationGroup) {
+        this.dispatch("combinationGroup", "General");
+      }
+    } else {
+      this.dispatch("combinationGroup", "");
+    }
   }
   handleCombinationGroupChange(e) {
     this.dispatch("combinationGroup", e.detail.value);

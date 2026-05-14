@@ -107,6 +107,14 @@ public with sharing class PromoCodeService {
     public String productCode;
   }
 
+  // ISO codes that should never appear in the wizard's currency picker. GBP is excluded
+  // because GBTA does not support GBP-denominated promo codes — they don't run
+  // GBP-denominated promos. Add to this set if other currencies need the same treatment.
+  // Custom Metadata would be the next iteration if this list grows beyond 1-2 entries.
+  private static final Set<String> EXCLUDED_PROMO_CURRENCIES = new Set<String>{
+    'GBP'
+  };
+
   @AuraEnabled(cacheable=true)
   public static List<String> getActiveCurrencies() {
     List<String> currencies = new List<String>();
@@ -116,10 +124,16 @@ public with sharing class PromoCodeService {
           'SELECT IsoCode FROM CurrencyType WHERE IsActive = true ORDER BY IsoCode'
         )
       ) {
-        currencies.add((String) ct.get('IsoCode'));
+        String iso = (String) ct.get('IsoCode');
+        if (!EXCLUDED_PROMO_CURRENCIES.contains(iso)) {
+          currencies.add(iso);
+        }
       }
     } else {
-      currencies.add(UserInfo.getDefaultCurrency());
+      String def = UserInfo.getDefaultCurrency();
+      if (!EXCLUDED_PROMO_CURRENCIES.contains(def)) {
+        currencies.add(def);
+      }
     }
     return currencies;
   }
