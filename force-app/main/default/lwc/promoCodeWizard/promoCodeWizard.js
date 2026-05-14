@@ -409,7 +409,7 @@ export default class PromoCodeWizard extends LightningModal {
     updateBulk({
       input: cleanInput,
       recordIds: this.sourceRecordIds,
-      activate: activate === true
+      activateNow: activate === true
     })
       .then((r) => {
         if (r && r.success) {

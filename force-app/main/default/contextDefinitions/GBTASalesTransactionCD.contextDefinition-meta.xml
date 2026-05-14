@@ -6679,6 +6679,15 @@
                     <inheritedFrom
           >SalesTransactionContext__stdctx/version/QuoteEntitiesMapping/SalesTransaction/AggregationStrategy__std</inheritedFrom>
                 </contextAttributeMappings>
+                <contextAttributeMappings>
+                    <contextAttrHydrationDetails>
+                        <objectName>Quote</objectName>
+                        <queryAttribute>IsPress__c</queryAttribute>
+                    </contextAttrHydrationDetails>
+                    <contextAttribute>IsPress__c</contextAttribute>
+                    <contextInputAttributeName
+          >IsPress__c</contextInputAttributeName>
+                </contextAttributeMappings>
                 <contextNode>SalesTransaction</contextNode>
                 <inheritedFrom
         >SalesTransactionContext__stdctx/version/QuoteEntitiesMapping/SalesTransaction</inheritedFrom>
@@ -13350,6 +13359,15 @@
                     <contextAttribute>Promo_Discount_Total__c</contextAttribute>
                     <contextInputAttributeName
           >Promo_Discount_Total__c</contextInputAttributeName>
+                </contextAttributeMappings>
+                <contextAttributeMappings>
+                    <contextAttrHydrationDetails>
+                        <objectName>Order</objectName>
+                        <queryAttribute>IsPress__c</queryAttribute>
+                    </contextAttrHydrationDetails>
+                    <contextAttribute>IsPress__c</contextAttribute>
+                    <contextInputAttributeName
+          >IsPress__c</contextInputAttributeName>
                 </contextAttributeMappings>
                 <contextNode>SalesTransaction</contextNode>
                 <inheritedFrom
@@ -24363,6 +24381,18 @@
                 <transient>false</transient>
                 <value>false</value>
             </contextAttributes>
+            <contextAttributes>
+                <contextTags>
+                    <title>IsPress__c</title>
+                </contextTags>
+                <customMappingAllowed>false</customMappingAllowed>
+                <dataType>boolean</dataType>
+                <fieldType>inputoutput</fieldType>
+                <key>false</key>
+                <title>IsPress__c</title>
+                <transient>false</transient>
+                <value>false</value>
+            </contextAttributes>
             <contextTags>
                 <inheritedFrom
         >SalesTransactionContext__stdctx/version/SalesTransaction/SalesTransaction</inheritedFrom>
@@ -35159,7 +35189,7 @@
         </contextNodes>
         <isActive>true</isActive>
         <startDate>2025-09-02 00:00:00</startDate>
-        <versionNumber>8</versionNumber>
+        <versionNumber>12</versionNumber>
     </contextDefinitionVersions>
     <contextTtl>10</contextTtl>
     <hasSystemTags>false</hasSystemTags>

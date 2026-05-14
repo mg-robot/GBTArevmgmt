@@ -125,17 +125,23 @@ public with sharing class PromoCodeApplyService {
    *                 ignored.
    * @return ApplyResult with one CodeResult per (deduped) submitted code plus a summary.
    */
-  @AuraEnabled
+  /**
+   * 2-arg convenience for Apex callers (tests, the harness controller, future server-side
+   * orchestration). Salesforce disallows overloading @AuraEnabled methods, so this version
+   * stays plain Apex — only the 3-arg variant below is callable from LWCs.
+   */
   public static ApplyResult apply(Id orderId, List<String> codes) {
     return apply(orderId, codes, null);
   }
 
   /**
-   * Apply overload that lets the caller explicitly declare the cart's flow type. Resolution
-   * order for the flow context used by the validator:
+   * Apply submitted codes. Optionally takes a `flowTypeOverride` so the caller can declare
+   * the cart's flow type explicitly. Resolution order:
    *   1. flowTypeOverride parameter (when non-blank)
    *   2. Order.Flow_Type__c (set by the originating LWC at cart create)
    *   3. Default to FLOW_JOIN ('Join') — current Phase-1 reality is Join-only.
+   *
+   * This is the LWC-facing entry point.
    */
   @AuraEnabled
   public static ApplyResult apply(
@@ -372,7 +378,9 @@ public with sharing class PromoCodeApplyService {
    * @return one CodeResult per unique Pending parent code. Codes whose state has changed
    *         (expired, deactivated, etc.) come back with valid=false and the relevant errorCode.
    */
-  @AuraEnabled
+  /**
+   * 2-arg Apex-only convenience (mirrors the apply pair). Not @AuraEnabled.
+   */
   public static List<CodeResult> revalidateAll(Id orderId) {
     return revalidateAll(orderId, null);
   }

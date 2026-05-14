@@ -610,6 +610,34 @@ private class PromoCodeServiceTest {
   }
 
   @IsTest
+  static void zzz_debug_probe_createBulk() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'ACTBLK_SKIP';
+    inp.activateImmediately = true;
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.debug(
+      'PROBE_RESULT success=' +
+        create.success +
+        ' errorMessage=[' +
+        create.errorMessage +
+        '] status=' +
+        create.status +
+        ' ids=' +
+        create.createdRecordIds +
+        ' conflicts=' +
+        create.conflictCurrencies
+    );
+    System.assertEquals(
+      true,
+      create.success,
+      'PROBE_FAIL err=[' +
+        create.errorMessage +
+        '] conflicts=' +
+        create.conflictCurrencies
+    );
+  }
+
+  @IsTest
   static void activateBulk_alreadyActive_isSkipped() {
     PromoCodeService.PromoCodeInput inp = baseInput();
     inp.code = 'ACTBLK_SKIP';

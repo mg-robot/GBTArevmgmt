@@ -930,21 +930,8 @@ private class PromoCodeAllocationEngineTest {
   }
 
   // ============================================================
-  // Floor Price enforcement
+  // Floor Price enforcement (second block; uses the buildLineWithFloor defined above)
   // ============================================================
-
-  private static OrderItem buildLineWithFloor(
-    String productName,
-    String family,
-    String productCode,
-    Decimal unitPrice,
-    Decimal qty,
-    Decimal floorPrice
-  ) {
-    OrderItem oi = buildLine(productName, family, productCode, unitPrice, qty);
-    oi.Floor_Price__c = floorPrice;
-    return oi;
-  }
 
   @IsTest
   static void floor_singleCode_capsAtFloorPrice() {

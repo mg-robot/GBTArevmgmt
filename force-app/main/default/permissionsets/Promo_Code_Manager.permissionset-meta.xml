@@ -106,11 +106,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Promo_Code__c.Applicable_To__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
         <field>Promo_Code__c.Approval_Required__c</field>
         <readable>true</readable>
     </fieldPermissions>

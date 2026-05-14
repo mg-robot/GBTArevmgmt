@@ -533,7 +533,7 @@ public with sharing class PromoCodeService {
    *    Bypass_Promo_Code_Lock permission and the manual record edit path.
    *  - Composite-uniqueness pre-check excludes the records we own (Id NOT IN), so a
    *    no-op save isn't reported as a self-conflict.
-   *  - When activate=true the entire batch (updated + inserted) flips to Active in the
+   *  - When activateNow=true the entire batch (updated + inserted) flips to Active in the
    *    same transaction. The Draft -> Active transition is allowed by the lock VR
    *    because the prior Status was Draft.
    */
@@ -541,7 +541,7 @@ public with sharing class PromoCodeService {
   public static CreateResult updateBulk(
     PromoCodeInput input,
     List<Id> recordIds,
-    Boolean activate
+    Boolean activateNow
   ) {
     CreateResult result = new CreateResult();
 
@@ -676,7 +676,7 @@ public with sharing class PromoCodeService {
       }
     }
 
-    String statusOnSave = activate == true ? 'Active' : 'Draft';
+    String statusOnSave = activateNow == true ? 'Active' : 'Draft';
 
     List<Promo_Code__c> toUpdate = new List<Promo_Code__c>();
     List<Promo_Code__c> toInsert = new List<Promo_Code__c>();

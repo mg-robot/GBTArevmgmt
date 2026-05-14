@@ -3,7 +3,7 @@
     <fullName>VR_PromoCode_Lock_After_Create</fullName>
     <active>true</active>
     <description
-  >Locks core fields once a promo code has been Activated. Draft records remain freely editable (via the Open in Setup Wizard quick action or direct record edits) since no redemptions exist yet. The Draft -&gt; Active transition is allowed even when core fields change in the same update (PRIORVALUE check). Bypassed by the Bypass_Promo_Code_Lock custom permission for the rare Active-edit case.</description>
+  >Locks core fields once Active. Drafts remain editable; the Draft-&gt;Active transition is allowed (PRIORVALUE). Bypass via Bypass_Promo_Code_Lock custom permission for rare Active edits.</description>
     <errorConditionFormula>AND(
   NOT(ISNEW()),
   NOT($Permission.Bypass_Promo_Code_Lock),
@@ -32,5 +32,5 @@
   )
 )</errorConditionFormula>
     <errorMessage
-  >This field is locked once the promo code has been activated. Allowed updates on an Active code: Status, Effective dates, and Confirmed Usage Count. To make a correction, an admin must grant the Bypass Promo Code Lock permission (or temporarily disable this rule).</errorMessage>
+  >This field is locked once the promo code is Active. Allowed updates: Status and Effective dates. To make a correction, an admin must grant the Bypass Promo Code Lock permission.</errorMessage>
 </ValidationRule>

@@ -57,11 +57,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Promo_Code__c.Applicable_To__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
         <field>Promo_Code__c.Min_Months_Since_Last_Active__c</field>
         <readable>true</readable>
     </fieldPermissions>
