@@ -287,12 +287,16 @@ private class PromoCodeServiceTest {
   }
 
   @IsTest
-  static void vr_lockAfterCreate_blocksCoreFieldEdit() {
+  static void vr_lockAfterCreate_blocksCoreFieldEditOnActive() {
+    // Lock VR fires only once the record is Active (PRIORVALUE check) — Drafts are
+    // freely editable so the Open in Setup Wizard quick action can persist edits
+    // without needing the Bypass permission.
     User u = createManagerUser();
     Promo_Code__c rec;
     System.runAs(u) {
       PromoCodeService.PromoCodeInput inp = baseInput();
       inp.code = 'LOCKTEST';
+      inp.activateImmediately = true; // create as Active so the lock can fire
       PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
       System.assertEquals(true, r.success, 'Setup failed: ' + r.errorMessage);
       rec = new Promo_Code__c(
@@ -307,16 +311,44 @@ private class PromoCodeServiceTest {
         update rec;
         System.assert(
           false,
-          'Expected VR_PromoCode_Lock_After_Create to block the edit'
+          'Expected VR_PromoCode_Lock_After_Create to block the edit on an Active record'
         );
       } catch (DmlException e) {
         System.assert(
-          e.getMessage().contains('locked after the promo code is created'),
+          e.getMessage()
+            .contains('locked once the promo code has been activated'),
           'Unexpected error: ' + e.getMessage()
         );
       }
     }
     Test.stopTest();
+  }
+
+  @IsTest
+  static void vr_lockAfterCreate_allowsCoreFieldEditOnDraft() {
+    // Draft codes remain editable (no lock) so the wizard edit path can save changes.
+    User u = createManagerUser();
+    Id draftId;
+    System.runAs(u) {
+      PromoCodeService.PromoCodeInput inp = baseInput();
+      inp.code = 'DRAFTEDIT';
+      PromoCodeService.CreateResult r = PromoCodeService.createBulk(inp);
+      System.assertEquals(true, r.success, 'Setup failed: ' + r.errorMessage);
+      draftId = r.createdRecordIds[0];
+    }
+
+    Test.startTest();
+    System.runAs(u) {
+      update new Promo_Code__c(Id = draftId, Display_Name__c = 'Renamed Draft');
+    }
+    Test.stopTest();
+
+    Promo_Code__c reloaded = [
+      SELECT Display_Name__c
+      FROM Promo_Code__c
+      WHERE Id = :draftId
+    ];
+    System.assertEquals('Renamed Draft', reloaded.Display_Name__c);
   }
 
   @IsTest
@@ -598,6 +630,291 @@ private class PromoCodeServiceTest {
     );
     System.assertEquals(0, res.activatedCount);
     System.assertEquals(create.createdRecordIds.size(), res.skippedCount);
+  }
+
+  // ===================================================================================
+  // updateBulk — Open in Setup Wizard edit path
+  // ===================================================================================
+
+  @IsTest
+  static void updateBulk_percentDraft_updatesExistingRecord() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'UPDPCT';
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+    Id sourceId = create.createdRecordIds[0];
+
+    PromoCodeService.PromoCodeInput edited = baseInput();
+    edited.code = 'UPDPCT';
+    edited.displayName = 'Updated Display Name';
+    edited.percentValue = 25;
+    edited.terms = 'Updated terms';
+
+    Test.startTest();
+    PromoCodeService.CreateResult res = PromoCodeService.updateBulk(
+      edited,
+      create.createdRecordIds,
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals(true, res.success, res.errorMessage);
+    System.assertEquals('Draft', res.status);
+    Promo_Code__c reloaded = [
+      SELECT Display_Name__c, Discount_Value__c, Terms__c, Status__c
+      FROM Promo_Code__c
+      WHERE Id = :sourceId
+    ];
+    System.assertEquals('Updated Display Name', reloaded.Display_Name__c);
+    System.assertEquals(25, reloaded.Discount_Value__c);
+    System.assertEquals('Updated terms', reloaded.Terms__c);
+    System.assertEquals('Draft', reloaded.Status__c);
+
+    Integer countAfter = [
+      SELECT COUNT()
+      FROM Promo_Code__c
+      WHERE Code__c = 'UPDPCT'
+    ];
+    System.assertEquals(
+      create.createdRecordIds.size(),
+      countAfter,
+      'updateBulk must not insert new records when currency set is unchanged'
+    );
+  }
+
+  @IsTest
+  static void updateBulk_activateTrue_flipsDraftToActiveAndPersistsChanges() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'UPDACTIVATE';
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    PromoCodeService.PromoCodeInput edited = baseInput();
+    edited.code = 'UPDACTIVATE';
+    edited.percentValue = 15;
+    edited.displayName = 'About to activate';
+
+    Test.startTest();
+    PromoCodeService.CreateResult res = PromoCodeService.updateBulk(
+      edited,
+      create.createdRecordIds,
+      true
+    );
+    Test.stopTest();
+
+    System.assertEquals(true, res.success, res.errorMessage);
+    System.assertEquals('Active', res.status);
+    Promo_Code__c reloaded = [
+      SELECT Status__c, Discount_Value__c, Display_Name__c
+      FROM Promo_Code__c
+      WHERE Id = :create.createdRecordIds[0]
+    ];
+    System.assertEquals('Active', reloaded.Status__c);
+    System.assertEquals(15, reloaded.Discount_Value__c);
+    System.assertEquals('About to activate', reloaded.Display_Name__c);
+  }
+
+  @IsTest
+  static void updateBulk_refusesWhenSourceIsActive() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'NOEDITACTIVE';
+    inp.activateImmediately = true;
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    PromoCodeService.PromoCodeInput edited = baseInput();
+    edited.code = 'NOEDITACTIVE';
+    edited.percentValue = 42;
+
+    Test.startTest();
+    PromoCodeService.CreateResult res = PromoCodeService.updateBulk(
+      edited,
+      create.createdRecordIds,
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals(false, res.success);
+    System.assert(
+      res.errorMessage != null &&
+      res.errorMessage.contains('Cannot edit an Active'),
+      'Expected refusal on Active source; got: ' + res.errorMessage
+    );
+  }
+
+  @IsTest
+  static void updateBulk_excludesSelfFromConflictCheck() {
+    // Re-saving the same code without changes must not flag the records as conflicts
+    // with themselves — the composite-uniqueness pre-check excludes records in the
+    // recordIds set. A regression here would block every save in edit mode.
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'NOSELFCONFLICT';
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    PromoCodeService.PromoCodeInput edited = baseInput();
+    edited.code = 'NOSELFCONFLICT'; // same code, same currency set, same values
+
+    Test.startTest();
+    PromoCodeService.CreateResult res = PromoCodeService.updateBulk(
+      edited,
+      create.createdRecordIds,
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      true,
+      res.success,
+      'No-op re-save should succeed; got: ' + res.errorMessage
+    );
+    System.assertEquals(null, res.conflictCurrencies);
+  }
+
+  @IsTest
+  static void updateBulk_addCurrencySibling_insertsRecord() {
+    // Expanding the currency set on an Amount code inserts a new sibling for the
+    // added currency and updates the existing one. Skipped on single-currency orgs.
+    List<String> isos = PromoCodeService.getActiveCurrencies();
+    if (isos.size() < 2) {
+      return;
+    }
+
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'ADDCURR';
+    inp.discountType = 'Amount';
+    inp.percentValue = null;
+    inp.percentCurrencies = null;
+    PromoCodeService.CurrencyAmount first = new PromoCodeService.CurrencyAmount();
+    first.currencyIsoCode = isos[0];
+    first.amount = 10;
+    inp.amounts = new List<PromoCodeService.CurrencyAmount>{ first };
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    // Now save with both currencies — the second should be inserted as a new sibling.
+    PromoCodeService.PromoCodeInput edited = baseInput();
+    edited.code = 'ADDCURR';
+    edited.discountType = 'Amount';
+    edited.percentValue = null;
+    edited.percentCurrencies = null;
+    PromoCodeService.CurrencyAmount keep = new PromoCodeService.CurrencyAmount();
+    keep.currencyIsoCode = isos[0];
+    keep.amount = 10;
+    PromoCodeService.CurrencyAmount add = new PromoCodeService.CurrencyAmount();
+    add.currencyIsoCode = isos[1];
+    add.amount = 20;
+    edited.amounts = new List<PromoCodeService.CurrencyAmount>{ keep, add };
+
+    Test.startTest();
+    PromoCodeService.CreateResult res = PromoCodeService.updateBulk(
+      edited,
+      create.createdRecordIds,
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals(true, res.success, res.errorMessage);
+    Integer total = [
+      SELECT COUNT()
+      FROM Promo_Code__c
+      WHERE Code__c = 'ADDCURR'
+    ];
+    System.assertEquals(
+      2,
+      total,
+      'Expected one new sibling for the added currency'
+    );
+  }
+
+  @IsTest
+  static void updateBulk_removeCurrencySibling_deletesRecord() {
+    // Dropping a currency from the new set deletes the corresponding sibling.
+    // Skipped on single-currency orgs.
+    List<String> isos = PromoCodeService.getActiveCurrencies();
+    if (isos.size() < 2) {
+      return;
+    }
+
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'REMCURR';
+    inp.discountType = 'Amount';
+    inp.percentValue = null;
+    inp.percentCurrencies = null;
+    PromoCodeService.CurrencyAmount a = new PromoCodeService.CurrencyAmount();
+    a.currencyIsoCode = isos[0];
+    a.amount = 10;
+    PromoCodeService.CurrencyAmount b = new PromoCodeService.CurrencyAmount();
+    b.currencyIsoCode = isos[1];
+    b.amount = 20;
+    inp.amounts = new List<PromoCodeService.CurrencyAmount>{ a, b };
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    PromoCodeService.PromoCodeInput edited = baseInput();
+    edited.code = 'REMCURR';
+    edited.discountType = 'Amount';
+    edited.percentValue = null;
+    edited.percentCurrencies = null;
+    PromoCodeService.CurrencyAmount keep = new PromoCodeService.CurrencyAmount();
+    keep.currencyIsoCode = isos[0];
+    keep.amount = 10;
+    edited.amounts = new List<PromoCodeService.CurrencyAmount>{ keep };
+
+    Test.startTest();
+    PromoCodeService.CreateResult res = PromoCodeService.updateBulk(
+      edited,
+      create.createdRecordIds,
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals(true, res.success, res.errorMessage);
+    Integer remaining = [
+      SELECT COUNT()
+      FROM Promo_Code__c
+      WHERE Code__c = 'REMCURR'
+    ];
+    System.assertEquals(
+      1,
+      remaining,
+      'Expected the dropped-currency sibling to be deleted'
+    );
+  }
+
+  @IsTest
+  static void updateBulk_missingInputAndRecordIds_rejected() {
+    PromoCodeService.CreateResult nullInputRes = PromoCodeService.updateBulk(
+      null,
+      new List<Id>{ '001000000000000AAA' },
+      false
+    );
+    System.assertEquals(false, nullInputRes.success);
+
+    PromoCodeService.CreateResult noIdsRes = PromoCodeService.updateBulk(
+      baseInput(),
+      new List<Id>(),
+      false
+    );
+    System.assertEquals(false, noIdsRes.success);
+  }
+
+  @IsTest
+  static void getRecordStatus_returnsCurrentStatus() {
+    PromoCodeService.PromoCodeInput inp = baseInput();
+    inp.code = 'STATUSPROBE';
+    PromoCodeService.CreateResult create = PromoCodeService.createBulk(inp);
+    System.assertEquals(true, create.success, create.errorMessage);
+
+    Test.startTest();
+    String draftStatus = PromoCodeService.getRecordStatus(
+      create.createdRecordIds[0]
+    );
+    String nullStatus = PromoCodeService.getRecordStatus(null);
+    Test.stopTest();
+
+    System.assertEquals('Draft', draftStatus);
+    System.assertEquals(null, nullStatus);
   }
 
   @IsTest

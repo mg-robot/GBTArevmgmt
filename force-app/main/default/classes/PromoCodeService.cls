@@ -360,6 +360,26 @@ public with sharing class PromoCodeService {
     public String errorMessage;
   }
 
+  /**
+   * Lightweight status fetch used by the Open in Setup Wizard quick action to gate
+   * the modal entirely when the record is already Active — avoids loading the full
+   * definition just to discover we can't edit it. Returns null if the record can't
+   * be found / accessed.
+   */
+  @AuraEnabled(cacheable=true)
+  public static String getRecordStatus(Id recordId) {
+    if (recordId == null) {
+      return null;
+    }
+    List<Promo_Code__c> rs = [
+      SELECT Status__c
+      FROM Promo_Code__c
+      WHERE Id = :recordId
+      LIMIT 1
+    ];
+    return rs.isEmpty() ? null : rs[0].Status__c;
+  }
+
   @AuraEnabled
   public static LoadedDefinition loadDefinition(Id recordId) {
     if (recordId == null) {
@@ -482,6 +502,258 @@ public with sharing class PromoCodeService {
 
     out.input = inp;
     return out;
+  }
+
+  /**
+   * Updates an existing batch of Promo_Code__c records (sharing the same Code value)
+   * driven by the wizard's edit mode (Open in Setup Wizard quick action).
+   *
+   * Strategy:
+   *  - Compare the incoming currency set against the existing per-currency siblings.
+   *    For each currency in the new set: update the matching sibling if one exists,
+   *    otherwise insert a fresh per-currency record. Currencies present today but
+   *    absent in the new set are deleted (master-detail cascades children — Drafts
+   *    have no Promo_Code_Item__c children to begin with).
+   *  - Refuses if any sibling is already Active. Active records are governed by
+   *    VR_PromoCode_Lock_After_Create; edits to Active codes still require the
+   *    Bypass_Promo_Code_Lock permission and the manual record edit path.
+   *  - Composite-uniqueness pre-check excludes the records we own (Id NOT IN), so a
+   *    no-op save isn't reported as a self-conflict.
+   *  - When activate=true the entire batch (updated + inserted) flips to Active in the
+   *    same transaction. The Draft -> Active transition is allowed by the lock VR
+   *    because the prior Status was Draft.
+   */
+  @AuraEnabled
+  public static CreateResult updateBulk(
+    PromoCodeInput input,
+    List<Id> recordIds,
+    Boolean activate
+  ) {
+    CreateResult result = new CreateResult();
+
+    if (input == null) {
+      result.success = false;
+      result.errorMessage = 'Missing input (no data received).';
+      return result;
+    }
+    if (recordIds == null || recordIds.isEmpty()) {
+      result.success = false;
+      result.errorMessage = 'No source records supplied to update.';
+      return result;
+    }
+
+    List<String> missing = new List<String>();
+    if (String.isBlank(input.code))
+      missing.add('Code');
+    if (String.isBlank(input.displayName))
+      missing.add('Display Name');
+    if (String.isBlank(input.discountType))
+      missing.add('Discount Type');
+    if (!missing.isEmpty()) {
+      result.success = false;
+      result.errorMessage =
+        'Missing required fields: ' + String.join(missing, ', ');
+      return result;
+    }
+
+    Boolean isMultiCurrency =
+      Schema.getGlobalDescribe().containsKey('CurrencyType') &&
+      Schema.SObjectType.Promo_Code__c.fields.getMap()
+        .containsKey('currencyisocode');
+
+    Map<String, Decimal> currencyAmountMap = new Map<String, Decimal>();
+    if ('Percent'.equalsIgnoreCase(input.discountType)) {
+      if (
+        input.percentValue == null ||
+        input.percentValue <= 0 ||
+        input.percentValue > 100
+      ) {
+        result.success = false;
+        result.errorMessage = 'Percent value must be between 0 and 100.';
+        return result;
+      }
+      List<String> isos = (input.percentCurrencies == null ||
+        input.percentCurrencies.isEmpty())
+        ? getActiveCurrencies()
+        : input.percentCurrencies;
+      for (String iso : isos) {
+        currencyAmountMap.put(iso, input.percentValue);
+      }
+    } else if ('Amount'.equalsIgnoreCase(input.discountType)) {
+      if (input.amounts == null || input.amounts.isEmpty()) {
+        result.success = false;
+        result.errorMessage = 'At least one currency-amount pair is required for Amount discounts.';
+        return result;
+      }
+      for (CurrencyAmount ca : input.amounts) {
+        if (
+          String.isBlank(ca.currencyIsoCode) ||
+          ca.amount == null ||
+          ca.amount <= 0
+        ) {
+          result.success = false;
+          result.errorMessage = 'Each amount row must have a currency and a value greater than zero.';
+          return result;
+        }
+        currencyAmountMap.put(ca.currencyIsoCode, ca.amount);
+      }
+    } else {
+      result.success = false;
+      result.errorMessage = 'Unknown discount type: ' + input.discountType;
+      return result;
+    }
+
+    Set<Id> recordIdSet = new Set<Id>(recordIds);
+    String trimmedCode = input.code.trim();
+
+    // Load existing per-currency siblings the wizard owns.
+    String existingSoql =
+      'SELECT Id, Status__c' +
+      (isMultiCurrency ? ', CurrencyIsoCode' : '') +
+      ' FROM Promo_Code__c WHERE Id IN :recordIdSet';
+    List<SObject> existing = Database.query(existingSoql);
+    if (existing.isEmpty()) {
+      result.success = false;
+      result.errorMessage = 'No matching promo code records found.';
+      return result;
+    }
+
+    // Active records are off-limits via this path. The quick action is meant for
+    // Draft modifications; the VR + Bypass permission govern Active-code edits.
+    for (SObject sob : existing) {
+      if ('Active'.equals((String) sob.get('Status__c'))) {
+        result.success = false;
+        result.errorMessage = 'Cannot edit an Active promo code through the wizard. Only Draft codes can be modified here.';
+        return result;
+      }
+    }
+
+    Map<String, Id> existingByCurrency = new Map<String, Id>();
+    for (SObject sob : existing) {
+      String iso = isMultiCurrency
+        ? (String) sob.get('CurrencyIsoCode')
+        : 'DEFAULT';
+      existingByCurrency.put(iso, (Id) sob.get('Id'));
+    }
+
+    // Composite-uniqueness pre-check that excludes the records we already own.
+    if (isMultiCurrency) {
+      List<String> targetCurrencyList = new List<String>(
+        currencyAmountMap.keySet()
+      );
+      String conflictSoql =
+        'SELECT CurrencyIsoCode FROM Promo_Code__c ' +
+        'WHERE Code__c = :trimmedCode ' +
+        'AND CurrencyIsoCode IN :targetCurrencyList ' +
+        'AND Id NOT IN :recordIdSet';
+      List<SObject> conflicts = Database.query(conflictSoql);
+      if (!conflicts.isEmpty()) {
+        result.success = false;
+        result.conflictCurrencies = new List<String>();
+        for (SObject c : conflicts) {
+          result.conflictCurrencies.add((String) c.get('CurrencyIsoCode'));
+        }
+        result.errorMessage =
+          'Code "' +
+          trimmedCode +
+          '" already exists for: ' +
+          String.join(result.conflictCurrencies, ', ');
+        return result;
+      }
+    }
+
+    String statusOnSave = activate == true ? 'Active' : 'Draft';
+
+    List<Promo_Code__c> toUpdate = new List<Promo_Code__c>();
+    List<Promo_Code__c> toInsert = new List<Promo_Code__c>();
+    List<Id> toDeleteIds = new List<Id>();
+
+    for (String iso : currencyAmountMap.keySet()) {
+      Promo_Code__c rec = new Promo_Code__c(
+        Code__c = trimmedCode,
+        Discount_Type__c = input.discountType,
+        Discount_Value__c = currencyAmountMap.get(iso),
+        Status__c = statusOnSave,
+        Effective_Start_Date__c = input.effectiveStart,
+        Effective_End_Date__c = input.effectiveEnd,
+        Total_Usage_Limit__c = input.totalLimit,
+        Per_Member_Usage_Limit__c = input.perMemberLimit,
+        Member_Type_Scope__c = (input.memberTypeScope == null ||
+          input.memberTypeScope.isEmpty())
+          ? null
+          : String.join(input.memberTypeScope, ';'),
+        Region_Scope__c = (input.regionScope == null ||
+          input.regionScope.isEmpty())
+          ? null
+          : String.join(input.regionScope, ';'),
+        Application_Level__c = String.isBlank(input.applicationLevel)
+          ? 'Per Order'
+          : input.applicationLevel,
+        Product_Scope_Type__c = String.isBlank(input.productScopeType)
+          ? 'All Items'
+          : input.productScopeType,
+        Product_Family_Scope__c = (input.productFamilyScope == null ||
+          input.productFamilyScope.isEmpty())
+          ? null
+          : String.join(input.productFamilyScope, ';'),
+        Specific_Products__c = input.specificProducts,
+        Account__c = input.accountId,
+        Combinable__c = input.combinable == true,
+        Combination_Group__c = input.combinationGroup,
+        Display_Name__c = input.displayName,
+        Terms__c = input.terms,
+        Approval_Required__c = input.approvalRequired == true
+      );
+      if (existingByCurrency.containsKey(iso)) {
+        rec.Id = existingByCurrency.get(iso);
+        toUpdate.add(rec);
+      } else {
+        if (isMultiCurrency) {
+          rec.put('CurrencyIsoCode', iso);
+        }
+        toInsert.add(rec);
+      }
+    }
+
+    for (String existingIso : existingByCurrency.keySet()) {
+      if (!currencyAmountMap.containsKey(existingIso)) {
+        toDeleteIds.add(existingByCurrency.get(existingIso));
+      }
+    }
+
+    Savepoint sp = Database.setSavepoint();
+    try {
+      if (!toDeleteIds.isEmpty()) {
+        List<Promo_Code__c> toDelete = new List<Promo_Code__c>();
+        for (Id delId : toDeleteIds) {
+          toDelete.add(new Promo_Code__c(Id = delId));
+        }
+        delete toDelete;
+      }
+      if (!toUpdate.isEmpty()) {
+        update toUpdate;
+      }
+      if (!toInsert.isEmpty()) {
+        insert toInsert;
+      }
+      result.success = true;
+      result.status = statusOnSave;
+      result.createdRecordIds = new List<Id>();
+      for (Promo_Code__c r : toUpdate) {
+        result.createdRecordIds.add(r.Id);
+      }
+      for (Promo_Code__c r : toInsert) {
+        result.createdRecordIds.add(r.Id);
+      }
+    } catch (DmlException e) {
+      Database.rollback(sp);
+      result.success = false;
+      result.errorMessage = e.getNumDml() > 0
+        ? e.getDmlMessage(0)
+        : e.getMessage();
+    }
+
+    return result;
   }
 
   @AuraEnabled

@@ -1,11 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
     <labels>
         <fullName>PromoCodeWizard_Modal_Title</fullName>
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Title of the Promo Code creation modal</shortDescription>
+        <shortDescription
+    >Title of the Promo Code creation modal</shortDescription>
         <value>Promo Code Setup</value>
     </labels>
     <labels>
@@ -49,6 +50,23 @@
         <value>Activate Now</value>
     </labels>
     <labels>
+        <fullName>PromoCodeWizard_Btn_SaveChanges</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Save Changes button (edit mode)</shortDescription>
+        <value>Save Changes</value>
+    </labels>
+    <labels>
+        <fullName>PromoCodeWizard_EditLocked_Active</fullName>
+        <categories>Promo Code Wizard</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Edit-locked-because-Active error</shortDescription>
+        <value
+    >This promo code is Active and cannot be edited through the wizard. To make a correction, an admin must grant the Bypass Promo Code Lock permission and edit the record directly.</value>
+    </labels>
+    <labels>
         <fullName>PromoCodeWizard_Saving</fullName>
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
@@ -61,8 +79,10 @@
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Confirm prompt when cancelling mid-wizard</shortDescription>
-        <value>Discard your in-progress promo code? All entered data will be lost.</value>
+        <shortDescription
+    >Confirm prompt when cancelling mid-wizard</shortDescription>
+        <value
+    >Discard your in-progress promo code? All entered data will be lost.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_SaveFailed</fullName>
@@ -93,7 +113,8 @@
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Toast action when Save as Draft used</shortDescription>
+        <shortDescription
+    >Toast action when Save as Draft used</shortDescription>
         <value>saved as draft</value>
     </labels>
     <labels>
@@ -142,7 +163,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Identity section helper text</shortDescription>
-        <value>Choose a code your members will type at checkout. Codes are case-insensitive and must be unique within each currency. Members will see the Display Name in their cart, not the raw code.</value>
+        <value
+    >Choose a code your members will type at checkout. Codes are case-insensitive and must be unique within each currency. Members will see the Display Name in their cart, not the raw code.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S1_Code_Label</fullName>
@@ -198,7 +220,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Terms field helper text</shortDescription>
-        <value>Describe the terms, conditions, and scope of this promo code.</value>
+        <value
+    >Describe the terms, conditions, and scope of this promo code.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S1_DiscDetails_Heading</fullName>
@@ -246,7 +269,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Percent path helper text</shortDescription>
-        <value>Percent discounts apply universally; one record is still created per currency for symmetry, but the percentage stays the same. Deselect currencies you don't want to support.</value>
+        <value
+    >Percent discounts apply universally; one record is still created per currency for symmetry, but the percentage stays the same. Deselect currencies you don't want to support.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S1_DiscValue_AmountHelper</fullName>
@@ -254,7 +278,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Amount path helper text</shortDescription>
-        <value>Each currency you select will produce one promo code record. Members in that currency will see the amount in their local currency at checkout.</value>
+        <value
+    >Each currency you select will produce one promo code record. Members in that currency will see the amount in their local currency at checkout.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S1_PercentOff_Label</fullName>
@@ -286,7 +311,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Validity Window helper text</shortDescription>
-        <value>Set when this code is valid. After the end date passes, members will see a "this code is not valid right now" message at checkout — the code stays Active in the system but won't apply.</value>
+        <value
+    >Set when this code is valid. After the end date passes, members will see a "this code is not valid right now" message at checkout — the code stays Active in the system but won't apply.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S2_EffectiveStart_Label</fullName>
@@ -309,7 +335,8 @@
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Member &amp; Region Scope section heading</shortDescription>
+        <shortDescription
+    >Member &amp; Region Scope section heading</shortDescription>
         <value>Member &amp; Region Scope</value>
     </labels>
     <labels>
@@ -318,14 +345,16 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Member &amp; Region helper text</shortDescription>
-        <value>Leave blank to make this code available to everyone. Selecting member types or regions restricts use to matching members.</value>
+        <value
+    >Leave blank to make this code available to everyone. Selecting member types or regions restricts use to matching members.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S2_MemberType_Label</fullName>
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Member Type Scope checkbox group label</shortDescription>
+        <shortDescription
+    >Member Type Scope checkbox group label</shortDescription>
         <value>Member Type Scope (blank = all)</value>
     </labels>
     <labels>
@@ -341,7 +370,8 @@
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Product Applicability section heading</shortDescription>
+        <shortDescription
+    >Product Applicability section heading</shortDescription>
         <value>Product Applicability</value>
     </labels>
     <labels>
@@ -350,7 +380,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Product Applicability helper text</shortDescription>
-        <value>Choose what this code discounts. All Items discounts the entire cart. Product Family matches against the Product's Family field (e.g., Membership, Chapter). Specific Products matches by product name.</value>
+        <value
+    >Choose what this code discounts. All Items discounts the entire cart. Product Family matches against the Product's Family field (e.g., Membership, Chapter). Specific Products matches by product name.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S2_ProductScope_Label</fullName>
@@ -382,7 +413,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Account Scope helper text</shortDescription>
-        <value>Optional. Setting an Account here restricts the code to members affiliated with that Account — useful for sponsorship deals or partner-restricted promotions.</value>
+        <value
+    >Optional. Setting an Account here restricts the code to members affiliated with that Account — useful for sponsorship deals or partner-restricted promotions.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S2_Account_Label</fullName>
@@ -406,7 +438,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Usage Limits helper text</shortDescription>
-        <value>Leave either field blank for unlimited. Total limits how many redemptions across all members. Per-Member limits how many times one member can use this code. The system reserves usage when the code is applied at checkout and confirms when the order is placed.</value>
+        <value
+    >Leave either field blank for unlimited. Total limits how many redemptions across all members. Per-Member limits how many times one member can use this code. The system reserves usage when the code is applied at checkout and confirms when the order is placed.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S3_TotalLimit_Label</fullName>
@@ -429,7 +462,8 @@
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Unlimited placeholder for usage limits</shortDescription>
+        <shortDescription
+    >Unlimited placeholder for usage limits</shortDescription>
         <value>Blank = unlimited</value>
     </labels>
     <labels>
@@ -446,7 +480,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Combinability helper text</shortDescription>
-        <value>Codes in the same Combination Group can be applied together. Codes in different groups are mutually exclusive. Non-combinable codes block any other code from being applied alongside them.</value>
+        <value
+    >Codes in the same Combination Group can be applied together. Codes in different groups are mutually exclusive. Non-combinable codes block any other code from being applied alongside them.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S3_Combinable_Label</fullName>
@@ -494,7 +529,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Runtime Approval helper text</shortDescription>
-        <value>Require Approval on Orders Using This Code — when checked, any order a member places with this code applied will be routed for approval before final placement. Use for high-value discounts that need a human check before the transaction goes through. (This does not control approval of the promo code record itself — that workflow is not enabled in this release.)</value>
+        <value
+    >Require Approval on Orders Using This Code — when checked, any order a member places with this code applied will be routed for approval before final placement. Use for high-value discounts that need a human check before the transaction goes through. (This does not control approval of the promo code record itself — that workflow is not enabled in this release.)</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S3_ApprovalRequired_Label</fullName>
@@ -510,7 +546,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Preview line. {0}=count, {1}=code</shortDescription>
-        <value>About to create {0} Promo Code record(s) sharing Code {1}:</value>
+        <value
+    >About to create {0} Promo Code record(s) sharing Code {1}:</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_S4_Edit</fullName>
@@ -653,7 +690,8 @@
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>"(no start)" effective-start display</shortDescription>
+        <shortDescription
+    >"(no start)" effective-start display</shortDescription>
         <value>(no start)</value>
     </labels>
     <labels>
@@ -693,7 +731,8 @@
         <categories>Promo Code Wizard</categories>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Combinable yes with group. {0}=group</shortDescription>
+        <shortDescription
+    >Combinable yes with group. {0}=group</shortDescription>
         <value>Yes (group: {0})</value>
     </labels>
     <labels>
@@ -718,7 +757,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Activation banner copy</shortDescription>
-        <value>This promo code will not be available for use until it has been activated. Save as Draft creates the record(s) but no member can redeem until you activate them later from the record page. Activate Now makes the code(s) immediately available.</value>
+        <value
+    >This promo code will not be available for use until it has been activated. Save as Draft creates the record(s) but no member can redeem until you activate them later from the record page. Activate Now makes the code(s) immediately available.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_Amt_Heading</fullName>
@@ -766,7 +806,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Empty state message</shortDescription>
-        <value>No rows yet. Click Add Row to specify a currency-amount pair.</value>
+        <value
+    >No rows yet. Click Add Row to specify a currency-amount pair.</value>
     </labels>
     <labels>
         <fullName>PromoCodeWizard_PP_Search_Label</fullName>
@@ -814,6 +855,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Launcher card helper text</shortDescription>
-        <value>Launches the Promo Code creation wizard. Records are created in Draft and require activation before members can apply them at checkout.</value>
+        <value
+    >Launches the Promo Code creation wizard. Records are created in Draft and require activation before members can apply them at checkout.</value>
     </labels>
 </CustomLabels>

@@ -110,18 +110,29 @@
         <lightning-button
           label={labels.btnSaveAsDraft}
           onclick={handleSaveDraft}
-          disabled={isSubmitting}
+          disabled={saveButtonsDisabled}
           class="slds-m-right_x-small"
         >
         </lightning-button>
       </template>
-      <lightning-button
-        label={labels.btnActivateNow}
-        variant="brand"
-        onclick={handleActivateNow}
-        disabled={isSubmitting}
-      >
-      </lightning-button>
+      <template if:true={showSaveChanges}>
+        <lightning-button
+          label={labels.btnSaveChanges}
+          onclick={handleSaveDraft}
+          disabled={saveButtonsDisabled}
+          class="slds-m-right_x-small"
+        >
+        </lightning-button>
+      </template>
+      <template if:true={showActivateNow}>
+        <lightning-button
+          label={labels.btnActivateNow}
+          variant="brand"
+          onclick={handleActivateNow}
+          disabled={saveButtonsDisabled}
+        >
+        </lightning-button>
+      </template>
     </template>
     <template if:false={isReviewStep}>
       <lightning-button

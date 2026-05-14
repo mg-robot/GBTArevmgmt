@@ -1,11 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>VR_PromoCode_Lock_After_Create</fullName>
     <active>true</active>
-    <description>Locks core fields against post-create change. Allowed-edit fields (Status, Effective dates, Confirmed Usage Count) are not listed. Bypassed by the Bypass_Promo_Code_Lock custom permission.</description>
+    <description
+  >Locks core fields once a promo code has been Activated. Draft records remain freely editable (via the Open in Setup Wizard quick action or direct record edits) since no redemptions exist yet. The Draft -&gt; Active transition is allowed even when core fields change in the same update (PRIORVALUE check). Bypassed by the Bypass_Promo_Code_Lock custom permission for the rare Active-edit case.</description>
     <errorConditionFormula>AND(
   NOT(ISNEW()),
   NOT($Permission.Bypass_Promo_Code_Lock),
+  ISPICKVAL(PRIORVALUE(Status__c), "Active"),
   OR(
     ISCHANGED(Code__c),
     ISCHANGED(CurrencyIsoCode),
@@ -27,5 +29,6 @@
     ISCHANGED(Approval_Required__c)
   )
 )</errorConditionFormula>
-    <errorMessage>This field is locked after the promo code is created. Allowed updates: Status, Effective dates, and Confirmed Usage Count. To make a correction, an admin must grant the Bypass Promo Code Lock permission (or temporarily disable this rule).</errorMessage>
+    <errorMessage
+  >This field is locked once the promo code has been activated. Allowed updates on an Active code: Status, Effective dates, and Confirmed Usage Count. To make a correction, an admin must grant the Bypass Promo Code Lock permission (or temporarily disable this rule).</errorMessage>
 </ValidationRule>

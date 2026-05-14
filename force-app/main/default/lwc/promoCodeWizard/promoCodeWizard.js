@@ -1,8 +1,8 @@
 import LightningModal from "lightning/modal";
 import createBulk from "@salesforce/apex/PromoCodeService.createBulk";
+import updateBulk from "@salesforce/apex/PromoCodeService.updateBulk";
 import getActiveCurrencies from "@salesforce/apex/PromoCodeService.getActiveCurrencies";
 import loadDefinition from "@salesforce/apex/PromoCodeService.loadDefinition";
-import activateBulk from "@salesforce/apex/PromoCodeService.activateBulk";
 import getDocumentImageUrl from "@salesforce/apex/PromoDocumentIconHelper.getDocumentImageUrl";
 
 import LBL_ModalTitle from "@salesforce/label/c.PromoCodeWizard_Modal_Title";
@@ -10,20 +10,33 @@ import LBL_BtnCancel from "@salesforce/label/c.PromoCodeWizard_Btn_Cancel";
 import LBL_BtnBack from "@salesforce/label/c.PromoCodeWizard_Btn_Back";
 import LBL_BtnNext from "@salesforce/label/c.PromoCodeWizard_Btn_Next";
 import LBL_BtnSaveAsDraft from "@salesforce/label/c.PromoCodeWizard_Btn_SaveAsDraft";
+import LBL_BtnSaveChanges from "@salesforce/label/c.PromoCodeWizard_Btn_SaveChanges";
 import LBL_BtnActivateNow from "@salesforce/label/c.PromoCodeWizard_Btn_ActivateNow";
 import LBL_Saving from "@salesforce/label/c.PromoCodeWizard_Saving";
 import LBL_CancelConfirm from "@salesforce/label/c.PromoCodeWizard_CancelConfirm";
 import LBL_SaveFailed from "@salesforce/label/c.PromoCodeWizard_SaveFailed";
+import LBL_EditLockedActive from "@salesforce/label/c.PromoCodeWizard_EditLocked_Active";
 import LBL_StepDefinition from "@salesforce/label/c.PromoCodeWizard_Step_Definition";
 import LBL_StepScopeEligibility from "@salesforce/label/c.PromoCodeWizard_Step_ScopeEligibility";
 import LBL_StepLimitsBehavior from "@salesforce/label/c.PromoCodeWizard_Step_LimitsBehavior";
 import LBL_StepReviewActivate from "@salesforce/label/c.PromoCodeWizard_Step_ReviewActivate";
 
 /**
- * Promo Code creation wizard modal. Opened via PromoCodeWizard.open() from a launcher.
+ * Promo Code wizard modal. Opened via PromoCodeWizard.open() from a launcher.
  * 4 steps: Definition / Scope & Eligibility / Limits & Behavior / Review & Activate.
- * On Step 4, staff choose Save as Draft (Status=Draft) or Activate Now (Status=Active).
- * Apex creates N records (one per currency) in a single transaction.
+ *
+ * Two modes:
+ *  - Create (no sourceRecordId): the original flow. Step 4 offers Save as Draft
+ *    (Status=Draft) or Activate Now (Status=Active). Apex inserts N records
+ *    (one per currency) in a single transaction via createBulk.
+ *  - Edit (sourceRecordId set via .open()): used by the "Open in Setup Wizard"
+ *    Quick Action on a Draft Promo_Code__c. Loads the record + all currency
+ *    siblings, lands on Review, and offers Save Changes (stays Draft) or
+ *    Activate Now (flips Draft -> Active). Both call updateBulk, which updates
+ *    the existing records in place (no new records created). If the source
+ *    record is already Active, the wizard surfaces an error and disables both
+ *    save buttons — Active codes are governed by VR_PromoCode_Lock_After_Create
+ *    and require the Bypass_Promo_Code_Lock permission to edit.
  *
  * All user-facing text is sourced from Custom Labels for translation via Translation Workbench.
  */
@@ -36,12 +49,14 @@ export default class PromoCodeWizard extends LightningModal {
 
   // Edit-mode state — populated when opened from an existing Promo_Code__c record via the
   // "Open in Setup Wizard" Quick Action. When `sourceRecordId` is passed into .open(),
-  // the modal jumps to the Review step pre-filled with the record's values (+ currency
-  // siblings) and Activate Now flips the existing records to Active rather than creating.
+  // the modal lands on the Review step pre-filled with the record's values (+ currency
+  // siblings); Save Changes / Activate Now persist edits to the existing records via
+  // updateBulk (no new records are created on this code path).
   sourceRecordId; // set via .open({ sourceRecordId })
   sourceRecordIds = []; // populated by loadDefinition; covers all currency siblings
   mode = "create"; // 'create' | 'edit'
   loadedStatus; // 'Draft' | 'Active' etc., from the source record
+  editLocked = false; // true when the source record is Active — disables all save buttons
 
   // NOTE: must NOT be named `label` — LightningModal already exposes a `label` property
   // (set via .open({ label: ... })) which would shadow our labels object.
@@ -51,6 +66,7 @@ export default class PromoCodeWizard extends LightningModal {
     btnBack: LBL_BtnBack,
     btnNext: LBL_BtnNext,
     btnSaveAsDraft: LBL_BtnSaveAsDraft,
+    btnSaveChanges: LBL_BtnSaveChanges,
     btnActivateNow: LBL_BtnActivateNow,
     saving: LBL_Saving,
     stepDefinition: LBL_StepDefinition,
@@ -110,7 +126,7 @@ export default class PromoCodeWizard extends LightningModal {
         this.iconUrl = null;
       });
 
-    // Edit mode: load the existing record (+ currency siblings) and jump to Review.
+    // Edit mode: load the existing record (+ currency siblings) and land on Review.
     if (this.sourceRecordId) {
       this.mode = "edit";
       this.isSubmitting = true;
@@ -123,6 +139,13 @@ export default class PromoCodeWizard extends LightningModal {
           this.wizardData = this.mapInputToWizardData(def.input);
           this.sourceRecordIds = def.sourceRecordIds || [this.sourceRecordId];
           this.loadedStatus = def.currentStatus;
+          // The quick action is meant for Draft codes only. If the record is already
+          // Active, refuse to edit through the wizard — surface the error and disable
+          // both save buttons. The lock VR also blocks the save server-side as a backstop.
+          if (this.loadedStatus === "Active") {
+            this.editLocked = true;
+            this.errorMessage = LBL_EditLockedActive;
+          }
           // All steps are valid in edit mode — values came from a previously-saved record.
           this.stepValidationStatus = { 1: true, 2: true, 3: true, 4: true };
           this.currentStep = 4;
@@ -171,8 +194,19 @@ export default class PromoCodeWizard extends LightningModal {
   get isCreateMode() {
     return this.mode === "create";
   }
+  // "Save as Draft" (create mode) and "Save Changes" (edit mode) share the same
+  // button slot in the footer. Both are hidden when the record is edit-locked (Active).
   get showSaveAsDraft() {
     return this.mode === "create";
+  }
+  get showSaveChanges() {
+    return this.mode === "edit" && !this.editLocked;
+  }
+  get showActivateNow() {
+    return !this.editLocked;
+  }
+  get saveButtonsDisabled() {
+    return this.isSubmitting || this.editLocked;
   }
 
   handleIconError() {
@@ -283,10 +317,14 @@ export default class PromoCodeWizard extends LightningModal {
   }
 
   handleCancel() {
+    // In edit mode the data was pre-loaded from the record, so a cancel is just
+    // "close without saving" — no need to prompt. The hasData guard below is for
+    // create-mode where it protects against losing freshly-entered values.
     const hasData =
-      this.wizardData.code ||
-      this.wizardData.displayName ||
-      this.wizardData.discountType;
+      this.mode === "create" &&
+      (this.wizardData.code ||
+        this.wizardData.displayName ||
+        this.wizardData.discountType);
     if (hasData) {
       // eslint-disable-next-line no-alert
       if (!window.confirm(LBL_CancelConfirm)) {
@@ -297,53 +335,23 @@ export default class PromoCodeWizard extends LightningModal {
   }
 
   handleSaveDraft() {
-    this.submit(false);
+    if (this.editLocked) return;
+    if (this.mode === "edit") {
+      this.submitUpdate(false);
+    } else {
+      this.submit(false);
+    }
   }
   handleActivateNow() {
+    if (this.editLocked) return;
     if (this.mode === "edit") {
-      this.activateExisting();
+      this.submitUpdate(true);
     } else {
       this.submit(true);
     }
   }
 
-  activateExisting() {
-    if (!this.sourceRecordIds || !this.sourceRecordIds.length) {
-      this.errorMessage = "No records to activate.";
-      return;
-    }
-    this.isSubmitting = true;
-    this.errorMessage = "";
-    activateBulk({ recordIds: this.sourceRecordIds })
-      .then((res) => {
-        if (res && res.success) {
-          try {
-            this.close("activated");
-          } catch {
-            try {
-              this.close();
-            } catch {
-              /* swallow */
-            }
-          }
-        } else {
-          this.errorMessage = (res && res.errorMessage) || LBL_SaveFailed;
-        }
-      })
-      .catch((err) => {
-        this.errorMessage =
-          (err && err.body && err.body.message) ||
-          (err && err.message) ||
-          LBL_SaveFailed;
-      })
-      .finally(() => {
-        this.isSubmitting = false;
-      });
-  }
-
-  submit(activate) {
-    this.isSubmitting = true;
-    this.errorMessage = "";
+  buildInputFromWizardData(activate) {
     const w = this.wizardData || {};
     const isPercent = w.discountType === "Percent";
     const isAmount = w.discountType === "Amount";
@@ -375,8 +383,55 @@ export default class PromoCodeWizard extends LightningModal {
       approvalRequired: w.approvalRequired,
       activateImmediately: activate
     };
+    return JSON.parse(JSON.stringify(input));
+  }
 
-    const cleanInput = JSON.parse(JSON.stringify(input));
+  submitUpdate(activate) {
+    if (!this.sourceRecordIds || !this.sourceRecordIds.length) {
+      this.errorMessage = "No records to update.";
+      return;
+    }
+    this.isSubmitting = true;
+    this.errorMessage = "";
+    const cleanInput = this.buildInputFromWizardData(activate);
+    updateBulk({
+      input: cleanInput,
+      recordIds: this.sourceRecordIds,
+      activate: activate === true
+    })
+      .then((r) => {
+        if (r && r.success) {
+          try {
+            this.close(activate ? "activated" : "updated");
+          } catch {
+            try {
+              this.close();
+            } catch {
+              /* swallow */
+            }
+          }
+        } else {
+          this.errorMessage = (r && r.errorMessage) || LBL_SaveFailed;
+          if (r && r.conflictCurrencies && r.conflictCurrencies.length) {
+            this.currentStep = 1;
+          }
+        }
+      })
+      .catch((err) => {
+        this.errorMessage =
+          (err && err.body && err.body.message) ||
+          (err && err.message) ||
+          LBL_SaveFailed;
+      })
+      .finally(() => {
+        this.isSubmitting = false;
+      });
+  }
+
+  submit(activate) {
+    this.isSubmitting = true;
+    this.errorMessage = "";
+    const cleanInput = this.buildInputFromWizardData(activate);
     createBulk({ input: cleanInput })
       .then((r) => {
         if (r && r.success) {
