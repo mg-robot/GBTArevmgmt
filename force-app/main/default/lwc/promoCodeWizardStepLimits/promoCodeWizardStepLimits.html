@@ -1,62 +1,54 @@
 <template>
-    <!-- Usage Limits -->
-    <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.usageLimitsHeading}</h3>
-        <p class="helper-text">{label.usageLimitsHelper}</p>
-        <lightning-input
-            type="number"
-            label={label.totalLimit}
-            placeholder={label.unlimitedPlaceholder}
-            step="1"
-            min="1"
-            value={wizardData.totalLimit}
-            onchange={handleTotalLimitChange}>
-        </lightning-input>
-        <lightning-input
-            type="number"
-            label={label.perMemberLimit}
-            placeholder={label.unlimitedPlaceholder}
-            step="1"
-            min="1"
-            class="slds-m-top_small"
-            value={wizardData.perMemberLimit}
-            onchange={handlePerMemberLimitChange}>
-        </lightning-input>
-    </div>
+  <!-- Usage Limits -->
+  <div class="slds-m-bottom_medium">
+    <h3 class="section-heading">{label.usageLimitsHeading}</h3>
+    <p class="helper-text">{label.usageLimitsHelper}</p>
+    <lightning-input
+      type="number"
+      label={label.totalLimit}
+      placeholder={label.unlimitedPlaceholder}
+      step="1"
+      min="1"
+      value={wizardData.totalLimit}
+      onchange={handleTotalLimitChange}
+    >
+    </lightning-input>
+    <lightning-input
+      type="number"
+      label={label.perMemberLimit}
+      placeholder={label.unlimitedPlaceholder}
+      step="1"
+      min="1"
+      class="slds-m-top_small"
+      value={wizardData.perMemberLimit}
+      onchange={handlePerMemberLimitChange}
+    >
+    </lightning-input>
+  </div>
 
-    <!-- Combinability -->
-    <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.combinabilityHeading}</h3>
-        <p class="helper-text">{label.combinabilityHelper}</p>
-        <lightning-input
-            type="toggle"
-            label={label.combinable}
-            checked={wizardData.combinable}
-            message-toggle-active={label.combinableYes}
-            message-toggle-inactive={label.combinableNo}
-            onchange={handleCombinableChange}>
-        </lightning-input>
-        <template if:true={wizardData.combinable}>
-            <lightning-combobox
-                label={label.combinationGroup}
-                required
-                options={combinationGroupOptions}
-                value={wizardData.combinationGroup}
-                class="slds-m-top_small"
-                onchange={handleCombinationGroupChange}>
-            </lightning-combobox>
-        </template>
-    </div>
-
-    <!-- Runtime Approval -->
-    <div class="slds-m-bottom_medium">
-        <h3 class="section-heading">{label.approvalHeading}</h3>
-        <p class="helper-text">{label.approvalHelper}</p>
-        <lightning-input
-            type="checkbox"
-            label={label.approvalRequired}
-            checked={wizardData.approvalRequired}
-            onchange={handleApprovalRequiredChange}>
-        </lightning-input>
-    </div>
+  <!-- Combinability -->
+  <div class="slds-m-bottom_medium">
+    <h3 class="section-heading">{label.combinabilityHeading}</h3>
+    <p class="helper-text">{label.combinabilityHelper}</p>
+    <lightning-input
+      type="toggle"
+      label={label.combinable}
+      checked={wizardData.combinable}
+      message-toggle-active={label.combinableYes}
+      message-toggle-inactive={label.combinableNo}
+      onchange={handleCombinableChange}
+    >
+    </lightning-input>
+    <template if:true={wizardData.combinable}>
+      <lightning-combobox
+        label={label.combinationGroup}
+        required
+        options={combinationGroupOptions}
+        value={wizardData.combinationGroup}
+        class="slds-m-top_small"
+        onchange={handleCombinationGroupChange}
+      >
+      </lightning-combobox>
+    </template>
+  </div>
 </template>

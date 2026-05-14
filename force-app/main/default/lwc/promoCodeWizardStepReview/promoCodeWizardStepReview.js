@@ -16,7 +16,6 @@ import LBL_Account from "@salesforce/label/c.PromoCodeWizard_S4_Account_Label";
 import LBL_TotalLimit from "@salesforce/label/c.PromoCodeWizard_S4_TotalLimit_Label";
 import LBL_PerMemberLimit from "@salesforce/label/c.PromoCodeWizard_S4_PerMemberLimit_Label";
 import LBL_Combinable from "@salesforce/label/c.PromoCodeWizard_S4_Combinable_Label";
-import LBL_ApprovalRequired from "@salesforce/label/c.PromoCodeWizard_S4_ApprovalRequired_Label";
 import LBL_All from "@salesforce/label/c.PromoCodeWizard_S4_All";
 import LBL_AllItems from "@salesforce/label/c.PromoCodeWizard_S4_AllItems";
 import LBL_Unlimited from "@salesforce/label/c.PromoCodeWizard_S4_Unlimited";
@@ -24,7 +23,6 @@ import LBL_Any from "@salesforce/label/c.PromoCodeWizard_S4_Any";
 import LBL_NoStart from "@salesforce/label/c.PromoCodeWizard_S4_NoStart";
 import LBL_NoEnd from "@salesforce/label/c.PromoCodeWizard_S4_NoEnd";
 import LBL_None from "@salesforce/label/c.PromoCodeWizard_S4_None";
-import LBL_Yes from "@salesforce/label/c.PromoCodeWizard_S4_Yes";
 import LBL_No from "@salesforce/label/c.PromoCodeWizard_S4_No";
 import LBL_CombinableYesGroup from "@salesforce/label/c.PromoCodeWizard_S4_CombinableYesGroup";
 import LBL_ProductFamilyPrefix from "@salesforce/label/c.PromoCodeWizard_S4_ProductFamilyPrefix";
@@ -56,7 +54,6 @@ export default class PromoCodeWizardStepReview extends LightningElement {
     totalLimit: LBL_TotalLimit,
     perMemberLimit: LBL_PerMemberLimit,
     combinable: LBL_Combinable,
-    approvalRequired: LBL_ApprovalRequired,
     applicableTo: "Applicable To",
     minMonths: "Min Months Since Last Active",
     activationBanner: LBL_ActivationBanner
@@ -172,10 +169,6 @@ export default class PromoCodeWizardStepReview extends LightningElement {
       this.wizardData.combinationGroup || "—"
     );
   }
-  get approvalDisplay() {
-    return this.wizardData?.approvalRequired ? LBL_Yes : LBL_No;
-  }
-
   handleEditClick(event) {
     event.preventDefault();
     const step = event.currentTarget.dataset.step;
