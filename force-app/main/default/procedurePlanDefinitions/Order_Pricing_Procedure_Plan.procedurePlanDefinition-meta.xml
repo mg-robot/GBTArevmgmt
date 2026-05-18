@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ProcedurePlanDefinition xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description
+  >Sales Transaction Procedure for Orders including Promotions</description>
+    <developerName>Order_Pricing_Procedure_Plan</developerName>
+    <masterLabel>Order Pricing Procedure Plan</masterLabel>
+    <primaryObject>Order</primaryObject>
+    <procedurePlanDefinitionVersion>
+        <contextDefinition>GBTASalesTransactionCD</contextDefinition>
+        <developerName>Order_Pricing_Procedure_Plan</developerName>
+        <effectiveFrom>2026-05-11 00:00:00</effectiveFrom>
+        <isActive>true</isActive>
+        <procedurePlanDefinition
+    >Order_Pricing_Procedure_Plan</procedurePlanDefinition>
+        <procedurePlanSection>
+            <isInherited>false</isInherited>
+            <phase>0</phase>
+            <procedurePlanOption>
+                <apexClass>PromoCodePricingPreHook</apexClass>
+                <priority>1</priority>
+                <procedurePlanSection />
+            </procedurePlanOption>
+            <procedurePlanVersion
+      >Order_Pricing_Procedure_Plan</procedurePlanVersion>
+            <resolutionType>Default</resolutionType>
+            <sectionType>Apex</sectionType>
+            <sequence>1</sequence>
+            <subSectionType>ApexPreHook</subSectionType>
+        </procedurePlanSection>
+        <procedurePlanSection>
+            <isInherited>false</isInherited>
+            <phase>0</phase>
+            <procedurePlanOption>
+                <expressionSetDefinition
+        >GBTA_Revenue_Pricing_Procedure_v9</expressionSetDefinition>
+                <priority>1</priority>
+                <procedurePlanSection />
+            </procedurePlanOption>
+            <procedurePlanVersion
+      >Order_Pricing_Procedure_Plan</procedurePlanVersion>
+            <resolutionType>Default</resolutionType>
+            <sectionType>PricingProcedure</sectionType>
+            <sequence>2</sequence>
+            <subSectionType>RevManagementPricingProcedure</subSectionType>
+        </procedurePlanSection>
+        <rank>1</rank>
+    </procedurePlanDefinitionVersion>
+    <processType>RevenueCloud</processType>
+</ProcedurePlanDefinition>
