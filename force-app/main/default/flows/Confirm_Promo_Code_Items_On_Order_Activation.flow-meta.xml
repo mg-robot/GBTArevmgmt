@@ -63,9 +63,9 @@
             <conditionLogic>and</conditionLogic>
             <conditions>
                 <leftValueReference>FailureReason</leftValueReference>
-                <operator>EqualTo</operator>
+                <operator>IsNull</operator>
                 <rightValue>
-                    <stringValue />
+                    <booleanValue>true</booleanValue>
                 </rightValue>
             </conditions>
             <connector>

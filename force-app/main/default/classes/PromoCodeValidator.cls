@@ -9,7 +9,7 @@
  *   3. OUT_OF_WINDOW           — NOW() outside Effective_Start_Date..Effective_End_Date.
  *   4. USAGE_EXCEEDED          — Total_Usage_Limit__c hit (Confirmed + Pending across all members).
  *   5. MEMBER_LIMIT_EXCEEDED   — Per_Member_Usage_Limit__c hit for the current Member.
- *   6. REGION_INELIGIBLE       — Cart's Order.Region__c not in Region_Scope__c.
+ *   6. REGION_INELIGIBLE       — Cart Account's Region__c not in Region_Scope__c.
  *   7. ACCOUNT_INELIGIBLE      — Order.AccountId != Promo_Code__c.Account__c.
  *   7a. FLOW_NOT_APPLICABLE    — Cart flow type (Join/Renew) not in parent.Applicable_To__c.
  *   7b. MEMBER_RECENTLY_ACTIVE — Join flow with Min_Months_Since_Last_Active__c set and the

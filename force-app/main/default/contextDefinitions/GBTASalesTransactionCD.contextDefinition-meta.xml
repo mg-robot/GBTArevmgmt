@@ -6278,8 +6278,12 @@
                 </contextAttributeMappings>
                 <contextAttributeMappings>
                     <contextAttrHydrationDetails>
+                        <contextAttrHydrationDetails>
+                            <objectName>Account</objectName>
+                            <queryAttribute>Region__c</queryAttribute>
+                        </contextAttrHydrationDetails>
                         <objectName>Quote</objectName>
-                        <queryAttribute>Region__c</queryAttribute>
+                        <queryAttribute>Account</queryAttribute>
                     </contextAttrHydrationDetails>
                     <contextAttribute>Region__c</contextAttribute>
                     <contextInputAttributeName
@@ -6687,6 +6691,20 @@
                     <contextAttribute>IsPress__c</contextAttribute>
                     <contextInputAttributeName
           >IsPress__c</contextInputAttributeName>
+                </contextAttributeMappings>
+                <contextAttributeMappings>
+                    <contextAttrHydrationDetails>
+                        <contextAttrHydrationDetails>
+                            <objectName>Account</objectName>
+                            <queryAttribute
+              >Primary_job_function__pc</queryAttribute>
+                        </contextAttrHydrationDetails>
+                        <objectName>Quote</objectName>
+                        <queryAttribute>Account</queryAttribute>
+                    </contextAttrHydrationDetails>
+                    <contextAttribute>JobFunction__c</contextAttribute>
+                    <contextInputAttributeName
+          >JobFunction__c</contextInputAttributeName>
                 </contextAttributeMappings>
                 <contextNode>SalesTransaction</contextNode>
                 <inheritedFrom
@@ -12978,8 +12996,12 @@
                 </contextAttributeMappings>
                 <contextAttributeMappings>
                     <contextAttrHydrationDetails>
+                        <contextAttrHydrationDetails>
+                            <objectName>Account</objectName>
+                            <queryAttribute>Region__c</queryAttribute>
+                        </contextAttrHydrationDetails>
                         <objectName>Order</objectName>
-                        <queryAttribute>Region__c</queryAttribute>
+                        <queryAttribute>Account</queryAttribute>
                     </contextAttrHydrationDetails>
                     <contextAttribute>Region__c</contextAttribute>
                     <contextInputAttributeName
@@ -13368,6 +13390,20 @@
                     <contextAttribute>IsPress__c</contextAttribute>
                     <contextInputAttributeName
           >IsPress__c</contextInputAttributeName>
+                </contextAttributeMappings>
+                <contextAttributeMappings>
+                    <contextAttrHydrationDetails>
+                        <contextAttrHydrationDetails>
+                            <objectName>Account</objectName>
+                            <queryAttribute
+              >Primary_job_function__pc</queryAttribute>
+                        </contextAttrHydrationDetails>
+                        <objectName>Order</objectName>
+                        <queryAttribute>Account</queryAttribute>
+                    </contextAttrHydrationDetails>
+                    <contextAttribute>JobFunction__c</contextAttribute>
+                    <contextInputAttributeName
+          >JobFunction__c</contextInputAttributeName>
                 </contextAttributeMappings>
                 <contextNode>SalesTransaction</contextNode>
                 <inheritedFrom
@@ -24393,6 +24429,18 @@
                 <transient>false</transient>
                 <value>false</value>
             </contextAttributes>
+            <contextAttributes>
+                <contextTags>
+                    <title>JobFunction__c</title>
+                </contextTags>
+                <customMappingAllowed>false</customMappingAllowed>
+                <dataType>string</dataType>
+                <fieldType>inputoutput</fieldType>
+                <key>false</key>
+                <title>JobFunction__c</title>
+                <transient>false</transient>
+                <value>false</value>
+            </contextAttributes>
             <contextTags>
                 <inheritedFrom
         >SalesTransactionContext__stdctx/version/SalesTransaction/SalesTransaction</inheritedFrom>
@@ -35189,7 +35237,7 @@
         </contextNodes>
         <isActive>true</isActive>
         <startDate>2025-09-02 00:00:00</startDate>
-        <versionNumber>12</versionNumber>
+        <versionNumber>16</versionNumber>
     </contextDefinitionVersions>
     <contextTtl>10</contextTtl>
     <hasSystemTags>false</hasSystemTags>

@@ -7,7 +7,7 @@
  *   revalidateAll(orderId)             — Re-validate currently-Pending codes before Place Order.
  *
  * Apply orchestration (see docs/promo-code/checkout-apply-flow.md §4.2):
- *   1. Resolve order context (Order + AccountId + Region + Primary_Type + CurrencyIsoCode +
+ *   1. Resolve order context (Order + AccountId + Account.Region__c + CurrencyIsoCode +
  *      OrderItems with Product2.Family/Name + UnitPrice + Quantity).
  *   2. Fetch Promo_Code__c records for submitted codes filtered by the cart's currency.
  *   3. Run each code through PromoCodeValidator (9 ordered checks; first failure short-circuits).
@@ -600,8 +600,8 @@ public with sharing class PromoCodeApplyService {
       Schema.SObjectType.Order.fields.getMap().containsKey('currencyisocode');
 
     String orderSoql =
-      'SELECT Id, AccountId, Region__c, Flow_Type__c, ' +
-      'Account.Last_Active_Membership_Date__c' +
+      'SELECT Id, AccountId, Flow_Type__c, ' +
+      'Account.Region__c, Account.Last_Active_Membership_Date__c' +
       (isMultiCurrency ? ', CurrencyIsoCode' : '') +
       ' FROM Order WHERE Id = :orderId LIMIT 1';
     List<SObject> orders = Database.query(orderSoql);
@@ -615,9 +615,9 @@ public with sharing class PromoCodeApplyService {
     OrderContext ctx = new OrderContext();
     ctx.orderId = orderId;
     ctx.accountId = (Id) ord.get('AccountId');
-    ctx.region = (String) ord.get('Region__c');
     ctx.flowType = (String) ord.get('Flow_Type__c');
     SObject acct = ord.getSObject('Account');
+    ctx.region = acct == null ? null : (String) acct.get('Region__c');
     ctx.lastActiveMembershipDate = acct == null
       ? null
       : (Date) acct.get('Last_Active_Membership_Date__c');
