@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Direct</fullName>
+        <default>false</default>
+        <label>Direct</label>
+    </customValue>
+    <customValue>
+        <fullName>Allied</fullName>
+        <default>false</default>
+        <label>Allied</label>
+    </customValue>
+    <customValue>
+        <fullName>Direct (Enterprise)</fullName>
+        <default>false</default>
+        <label>Direct (Enterprise)</label>
+    </customValue>
+    <customValue>
+        <fullName>Allied (Enterprise)</fullName>
+        <default>false</default>
+        <label>Allied (Enterprise)</label>
+    </customValue>
+    <masterLabel>Primary Membership Type</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

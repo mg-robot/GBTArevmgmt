@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>CAD - Canadian Dollar</fullName>
+        <default>false</default>
+        <label>CAD - Canadian Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>EUR - Euro</fullName>
+        <default>false</default>
+        <label>EUR - Euro</label>
+    </customValue>
+    <customValue>
+        <fullName>GBP - British Pound</fullName>
+        <default>false</default>
+        <label>GBP - British Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>USD - U.S. Dollar</fullName>
+        <default>false</default>
+        <label>USD - U.S. Dollar</label>
+    </customValue>
+    <masterLabel>CurrencyIso</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>
