@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
@@ -12,7 +12,8 @@
             <name>Is_Individual_Member</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record.AssetAction.Asset.Account.IsPersonAccount</leftValueReference>
+                <leftValueReference
+        >Get_Asset_For_AE.Account.IsPersonAccount</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>true</booleanValue>
@@ -32,12 +33,19 @@
         <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
         <rules>
             <name>New_or_Renewal_True</name>
-            <conditionLogic>and</conditionLogic>
+            <conditionLogic>1 OR 2</conditionLogic>
             <conditions>
-                <leftValueReference>$Record.AssetAction.Type</leftValueReference>
+                <leftValueReference>Get_AssetAction.Type</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <stringValue>Generate</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_AssetAction.Type</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Change</stringValue>
                 </rightValue>
             </conditions>
             <connector>
@@ -46,8 +54,35 @@
             <label>New or Renewal True</label>
         </rules>
     </decisions>
+    <decisions>
+        <name>RecordType</name>
+        <label>RecordType</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Get_Order_Product</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Order Product</defaultConnectorLabel>
+        <rules>
+            <name>Order_Product_Detail</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference
+        >$Record.ReferenceEntityItemId</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>14C</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Order_Product_Detail</targetReference>
+            </connector>
+            <label>Order Product Detail</label>
+        </rules>
+    </decisions>
     <environments>Default</environments>
-    <interviewLabel>Asset Action Source After Insert {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel
+  >Asset Action Source After Insert {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Asset Action Source After Insert</label>
     <processMetadataValues>
         <name>BuilderType</name>
@@ -76,19 +111,19 @@
         <inputAssignments>
             <field>Account__c</field>
             <value>
-                <elementReference>$Record.AssetAction.Asset.AccountId</elementReference>
+                <elementReference>Get_Asset_For_AE.AccountId</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Asset__c</field>
             <value>
-                <elementReference>$Record.AssetAction.AssetId</elementReference>
+                <elementReference>Get_AssetAction.AssetId</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Contact__c</field>
             <value>
-                <elementReference>$Record.AssetAction.Asset.ContactId</elementReference>
+                <elementReference>Get_Asset_For_AE.ContactId</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -106,18 +141,68 @@
         <inputAssignments>
             <field>Term_Start_Date__c</field>
             <value>
-                <elementReference>Get_Order_Product.ServiceDate</elementReference>
+                <elementReference
+        >Get_Order_Product.ServiceDate</elementReference>
             </value>
         </inputAssignments>
         <object>Entitlement__c</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordCreates>
     <recordLookups>
+        <description
+    >Explicitly loads the AssetAction record to reliably access AssetId and Type. Cross-object field traversal via $Record.AssetAction.* is unreliable for AssetActionSource in record-triggered flows.</description>
+        <name>Get_AssetAction</name>
+        <label>Get Asset Action</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Asset_For_AE</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.AssetActionId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>AssetAction</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description
+    >Loads the Asset record so AccountId and ContactId are available for the AE create without relying on multi-level cross-object traversal from $Record.</description>
+        <name>Get_Asset_For_AE</name>
+        <label>Get Asset</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>RecordType</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_AssetAction.AssetId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Asset</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
         <name>Get_Order_Product</name>
         <label>Get Order Product</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Update_Asset</targetReference>
         </connector>
@@ -126,11 +211,35 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>$Record.ReferenceEntityItemId</elementReference>
+                <elementReference
+        >$Record.ReferenceEntityItemId</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>OrderItem</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Order_Product_Detail</name>
+        <label>Get Order Product Detail</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Update_Asset_from_OPD</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference
+        >$Record.ReferenceEntityItemId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>OrderItemDetail</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordUpdates>
@@ -146,25 +255,67 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>$Record.AssetAction.AssetId</elementReference>
+                <elementReference>Get_AssetAction.AssetId</elementReference>
             </value>
         </filters>
         <inputAssignments>
             <field>Global_Partner__c</field>
             <value>
-                <elementReference>Get_Order_Product.Order.Global_Partner__c</elementReference>
+                <elementReference
+        >Get_Order_Product.Order.Global_Partner__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Primary_Chapter__c</field>
             <value>
-                <elementReference>Get_Order_Product.Primary_Chapter__c</elementReference>
+                <elementReference
+        >Get_Order_Product.Primary_Chapter__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Subtype__c</field>
             <value>
-                <elementReference>Get_Order_Product.Subtype__c</elementReference>
+                <elementReference
+        >Get_Order_Product.Subtype__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Asset</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Asset_from_OPD</name>
+        <label>Update Asset from OPD</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Create_Entitlement</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_AssetAction.AssetId</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Global_Partner__c</field>
+            <value>
+                <elementReference
+        >Get_Order_Product_Detail.OrderItem.Global_Partner__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Primary_Chapter__c</field>
+            <value>
+                <elementReference
+        >Get_Order_Product_Detail.OrderItem.Primary_Chapter__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subtype__c</field>
+            <value>
+                <elementReference
+        >Get_Order_Product_Detail.OrderItem.Subtype__c</elementReference>
             </value>
         </inputAssignments>
         <object>Asset</object>
@@ -173,7 +324,7 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Get_Order_Product</targetReference>
+            <targetReference>Get_AssetAction</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
