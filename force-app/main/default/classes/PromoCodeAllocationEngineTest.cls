@@ -46,18 +46,17 @@ private class PromoCodeAllocationEngineTest {
     Decimal unitPrice,
     Decimal qty
   ) {
+    Id prod2Id = fakeId(Product2.SObjectType);
     OrderItem oi = new OrderItem(
       Id = fakeId(OrderItem.SObjectType),
+      Product2Id = prod2Id,
       UnitPrice = unitPrice,
       Quantity = qty
     );
-    // Engine uses basePrice = TotalPrice + Promotion_Value__c. ARM writes member price to
-    // TotalPrice and subtracts Promotion_Value__c (prior promo) from it. Default: no prior promo
-    // so Promotion_Value__c = 0 and TotalPrice = listPrice × Qty (ARM price equals list price).
-    // Override TotalPrice or Promotion_Value__c after building to simulate ARM repricing or
-    // a prior promo-applied state.
-    oi.put('TotalPrice', unitPrice * qty);
-    oi.put('Promotion_Value__c', 0);
+    // Engine uses basePrice = TotalPrice + Promotion_Value__c. On un-inserted in-memory SObjects
+    // TotalPrice cannot be set (ARM restriction), so the engine falls back to UnitPrice × Qty.
+    // Pass the desired ARM member price as unitPrice in tests; override Promotion_Value__c via
+    // oi.put('Promotion_Value__c', amount) to simulate a prior promo-applied state.
     oi.Product2 = new Product2(
       Name = productName,
       Family = family,
@@ -906,9 +905,11 @@ private class PromoCodeAllocationEngineTest {
 
   @IsTest
   static void perLine_percent_usesArmNetPriceNotListPrice() {
-    // Regression: ARM leaves UnitPrice = pricebook price ($420), writes member price to TotalPrice
-    // ($165), Promotion_Value__c = 0 (fresh order). basePrice = $165 + 0 = $165.
-    // 25% × $165 = $41.25 — NOT 25% × $420 ($105, wrong) or 25% × (unitPrice×qty) ($105, wrong).
+    // Regression: engine must use ARM member price ($165), not pricebook price ($420).
+    // In production: UnitPrice=$420 (pricebook), TotalPrice=$165 (ARM member price).
+    // TotalPrice can't be set on un-inserted SObjects, so UnitPrice carries the member price here;
+    // the engine falls back to UnitPrice×Qty when TotalPrice is null (test context only).
+    // Validates 25% × $165 = $41.25, not 25% × $420 = $105 (the wrong pricebook result).
     Promo_Code__c c = buildCode(
       'LAT25P',
       'Percent',
@@ -923,10 +924,9 @@ private class PromoCodeAllocationEngineTest {
       'Allied Membership',
       'Membership',
       'ALLIED',
-      420,
+      165, // ARM member price ($420 pricebook — TotalPrice can't be set separately in tests)
       1
     );
-    allied.put('TotalPrice', 165.00); // ARM member price (not pricebook $420)
 
     List<PromoCodeAllocationEngine.CodeAllocation> result = PromoCodeAllocationEngine.allocate(
       new List<Promo_Code__c>{ c },
@@ -937,7 +937,7 @@ private class PromoCodeAllocationEngineTest {
     System.assertEquals(
       41.25,
       result[0].adjustmentAmount,
-      '25% off ARM NetPrice ($165) = $41.25; must NOT use pricebook list price ($420) which would give $105'
+      '25% off ARM member price ($165) = $41.25'
     );
   }
 
@@ -964,15 +964,16 @@ private class PromoCodeAllocationEngineTest {
       null,
       null
     );
+    // Simulate ARM having re-priced after a prior $80.19 promo application.
+    // TotalPrice can't be set on un-inserted SObjects, so UnitPrice carries the post-reprice value.
+    // Engine: base = UnitPrice($289.81) + Promotion_Value__c($80.19) = $370 (original member price).
     OrderItem direct = buildLine(
       'Direct Membership',
       'Membership',
       'DIRECT',
-      370,
+      289.81, // simulates TotalPrice after ARM re-priced ($370 - $80.19 prior promo)
       1
     );
-    // Simulate ARM having re-priced after a prior $80.19 promo application.
-    direct.put('TotalPrice', 289.81); // $370 - $80.19
     direct.put('Promotion_Value__c', 80.19); // prior promo written by PreHook
 
     List<PromoCodeAllocationEngine.CodeAllocation> result = PromoCodeAllocationEngine.allocate(

@@ -479,7 +479,13 @@ private class PromoCodeApplyServiceTest {
     if (ord == null)
       return;
 
-    Integer lineCount = [SELECT COUNT() FROM OrderItem WHERE OrderId = :ord.Id];
+    // Only count lines with a positive price — the engine guards against zero-price items
+    // (free products), so pciCount should match non-zero lines, not the raw total.
+    Integer lineCount = [
+      SELECT COUNT()
+      FROM OrderItem
+      WHERE OrderId = :ord.Id AND UnitPrice > 0
+    ];
     if (lineCount < 5)
       return; // not enough data to make the bulk assertion meaningful
 

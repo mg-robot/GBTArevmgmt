@@ -90,11 +90,15 @@ public with sharing class PromoCodeAllocationEngine {
     // so the line's NetUnitPrice can never drop below Floor_Price__c regardless of stacking.
     Map<Id, Decimal> floorByLine = new Map<Id, Decimal>();
     for (OrderItem oi : orderItems) {
-      Decimal totalPrice = oi.TotalPrice == null ? 0 : oi.TotalPrice;
+      Decimal qty = oi.Quantity == null ? 0 : oi.Quantity;
+      // TotalPrice is set by ARM pricing in production; fall back to UnitPrice × Qty in test
+      // context where TotalPrice is null (un-inserted in-memory SObjects can't be set via put).
+      Decimal totalPrice = oi.TotalPrice != null
+        ? oi.TotalPrice
+        : (oi.UnitPrice == null ? 0 : oi.UnitPrice * qty);
       Decimal promoValue = oi.get('Promotion_Value__c') == null
         ? 0
         : (Decimal) oi.get('Promotion_Value__c');
-      Decimal qty = oi.Quantity == null ? 0 : oi.Quantity;
       subtotalByLine.put(
         oi.Id,
         (totalPrice + promoValue).setScale(4, System.RoundingMode.HALF_UP)

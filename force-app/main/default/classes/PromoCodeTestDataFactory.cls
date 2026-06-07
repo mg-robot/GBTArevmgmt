@@ -269,17 +269,47 @@ public class PromoCodeTestDataFactory {
     if (count == null || count < 1)
       count = 1;
 
-    List<PricebookEntry> pbes = [
-      SELECT Id, Pricebook2Id, Product2Id, UnitPrice, Product2.Name
-      FROM PricebookEntry
-      WHERE
-        IsActive = TRUE
-        AND Product2.IsActive = TRUE
-        AND Product2.Family = 'Membership'
-        AND Pricebook2.IsActive = TRUE
-      ORDER BY Product2.Name
-      LIMIT :count
-    ];
+    // Query more than requested to allow filtering by currency in multi-currency orgs.
+    // CurrencyIsoCode doesn't exist as a field in single-currency orgs, so we use dynamic
+    // SOQL to include it only when the org supports it. All values in the SOQL string are
+    // developer-controlled constants (no user input), so string concatenation is safe here.
+    Integer queryLimit = count + 50;
+    Boolean isMultiCurrency = Schema.SObjectType.PricebookEntry.fields.getMap()
+      .containsKey('currencyisocode');
+    String fields = 'Id, Pricebook2Id, Product2Id, UnitPrice, Product2.Name';
+    if (isMultiCurrency)
+      fields += ', CurrencyIsoCode';
+    List<PricebookEntry> allPbes = Database.query(
+      'SELECT ' +
+        fields +
+        ' FROM PricebookEntry' +
+        ' WHERE IsActive = TRUE' +
+        ' AND Product2.IsActive = TRUE' +
+        ' AND Product2.Family = \'Membership\'' +
+        ' AND Pricebook2.IsActive = TRUE' +
+        ' ORDER BY Product2.Name' +
+        ' LIMIT ' +
+        queryLimit
+    );
+    if (allPbes.isEmpty())
+      return new List<OrderItem>();
+
+    // In multi-currency orgs, skip PBEs whose currency doesn't match the Order's.
+    // Inserting a mismatched PBE as an OrderItem raises FIELD_INTEGRITY_EXCEPTION.
+    String orderCurrency = isMultiCurrency
+      ? (String) o.get('CurrencyIsoCode')
+      : null;
+    List<PricebookEntry> pbes = new List<PricebookEntry>();
+    for (PricebookEntry pbe : allPbes) {
+      if (orderCurrency != null) {
+        String pbeCurrency = (String) pbe.get('CurrencyIsoCode');
+        if (pbeCurrency != null && pbeCurrency != orderCurrency)
+          continue;
+      }
+      pbes.add(pbe);
+      if (pbes.size() >= count)
+        break;
+    }
     if (pbes.isEmpty())
       return new List<OrderItem>();
 
