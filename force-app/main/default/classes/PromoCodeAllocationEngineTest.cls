@@ -51,6 +51,12 @@ private class PromoCodeAllocationEngineTest {
       UnitPrice = unitPrice,
       Quantity = qty
     );
+    // ARM writes the pricing-procedure's NetPrice to TotalPrice, leaving UnitPrice as the
+    // pricebook list price. The engine now uses TotalPrice as the discount base. For tests
+    // where the ARM price equals the list price (the common case), set TotalPrice = UnitPrice × Qty.
+    // Tests that need to simulate ARM repricing (TotalPrice ≠ UnitPrice × Qty) call
+    // oi.put('TotalPrice', armNetPrice) after building the line.
+    oi.put('TotalPrice', unitPrice * qty);
     oi.Product2 = new Product2(
       Name = productName,
       Family = family,
@@ -522,7 +528,7 @@ private class PromoCodeAllocationEngineTest {
   @IsTest
   static void stacking_twoPercentCodes_addsToTwentyPercent() {
     // Two 10% codes against one $100 line, both Per Line → $20 total (computed against the
-    // original UnitPrice × Quantity, not progressively discounted).
+    // original TotalPrice, not progressively discounted).
     Promo_Code__c c1 = buildCode(
       'PCT10A',
       'Percent',
@@ -895,6 +901,45 @@ private class PromoCodeAllocationEngineTest {
       'Amount code should be capped at remaining $30 headroom (floor $40 + already-allocated $30)'
     );
     System.assertEquals(60, sumAdjustments(result));
+  }
+
+  @IsTest
+  static void perLine_percent_usesArmNetPriceNotListPrice() {
+    // Regression test for the ARM UnitPrice vs TotalPrice discrepancy.
+    // ARM leaves UnitPrice as the pricebook list price ($420) and writes the pricing-procedure's
+    // NetPrice into TotalPrice ($165). A 25% code should discount against $165, producing $41.25 —
+    // NOT against $420 (list price), which would incorrectly produce $105.
+    Promo_Code__c c = buildCode(
+      'LAT25P',
+      'Percent',
+      25,
+      'Per Line',
+      'All Items',
+      null,
+      null,
+      null
+    );
+    OrderItem allied = buildLine(
+      'Allied Membership',
+      'Membership',
+      'ALLIED',
+      420,
+      1
+    );
+    // Override TotalPrice to simulate ARM having repriced the line to $165.
+    allied.put('TotalPrice', 165.00);
+
+    List<PromoCodeAllocationEngine.CodeAllocation> result = PromoCodeAllocationEngine.allocate(
+      new List<Promo_Code__c>{ c },
+      new List<OrderItem>{ allied }
+    );
+
+    System.assertEquals(1, result.size());
+    System.assertEquals(
+      41.25,
+      result[0].adjustmentAmount,
+      '25% off ARM NetPrice ($165) = $41.25; must NOT use pricebook list price ($420) which would give $105'
+    );
   }
 
   @IsTest
