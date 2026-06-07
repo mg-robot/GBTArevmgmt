@@ -25,32 +25,17 @@
     </div>
   </div>
 
-  <!-- Section 2: Application Level (left) | Region Scope (right) -->
+  <!-- Section 2: Region Scope -->
   <div class="slds-m-bottom_medium">
-    <h3 class="section-heading">{label.regionAppLevelHeading}</h3>
-    <p class="helper-text">{label.regionAppLevelHelper}</p>
-    <div class="slds-grid slds-gutters slds-wrap">
-      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-        <lightning-radio-group
-          label={label.applicationLevelLabel}
-          options={applicationLevelOptions}
-          value={wizardData.applicationLevel}
-          type="radio"
-          required
-          onchange={handleApplicationLevelChange}
-        >
-        </lightning-radio-group>
-      </div>
-      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-        <lightning-checkbox-group
-          label={label.regionScope}
-          options={regionOptions}
-          value={wizardData.regionScope}
-          onchange={handleRegionScopeChange}
-        >
-        </lightning-checkbox-group>
-      </div>
-    </div>
+    <h3 class="section-heading">{label.regionHeading}</h3>
+    <p class="helper-text">{label.regionHelper}</p>
+    <lightning-checkbox-group
+      label={label.regionScope}
+      options={regionOptions}
+      value={wizardData.regionScope}
+      onchange={handleRegionScopeChange}
+    >
+    </lightning-checkbox-group>
   </div>
 
   <!-- Section 3: Product Applicability -->
@@ -75,15 +60,6 @@
             {label.allItemsMessage}
           </p>
         </template>
-        <template if:true={isProductFamily}>
-          <lightning-checkbox-group
-            label={label.productFamily}
-            options={productFamilyOptions}
-            value={wizardData.productFamilyScope}
-            onchange={handleProductFamilyScopeChange}
-          >
-          </lightning-checkbox-group>
-        </template>
         <template if:true={isSpecificMembershipTypes}>
           <lightning-checkbox-group
             label={label.memberTypeScope}
@@ -93,18 +69,8 @@
           >
           </lightning-checkbox-group>
         </template>
-        <template if:true={isSpecificProducts}>
-          <c-promo-specific-product-picker
-            initial-csv={wizardData.specificProducts}
-            onchange={handleSpecificProductsChange}
-          >
-          </c-promo-specific-product-picker>
-        </template>
       </div>
     </div>
-    <p class="helper-text slds-m-top_small slds-text-color_weak">
-      {combinationHelpText}
-    </p>
   </div>
 
   <!-- Section 4: Account Scope -->

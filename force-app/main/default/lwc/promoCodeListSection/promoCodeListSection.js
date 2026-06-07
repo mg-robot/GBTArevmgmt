@@ -20,6 +20,7 @@ const COLUMNS = [
   { label: "Display Name", fieldName: "Display_Name__c" },
   { label: "Status", fieldName: "Status__c" },
   { label: "Discount Type", fieldName: "Discount_Type__c" },
+  { label: "Discount", fieldName: "discountDisplay" },
   { label: "Currency", fieldName: "CurrencyIsoCode" },
   {
     label: "Effective Start",
@@ -36,6 +37,7 @@ const FIELDS_TO_FETCH = [
   "Promo_Code__c.Display_Name__c",
   "Promo_Code__c.Status__c",
   "Promo_Code__c.Discount_Type__c",
+  "Promo_Code__c.Discount_Value__c",
   "Promo_Code__c.CurrencyIsoCode",
   "Promo_Code__c.Effective_Start_Date__c",
   "Promo_Code__c.Effective_End_Date__c"
@@ -100,13 +102,24 @@ export default class PromoCodeListSection extends NavigationMixin(
           const field = f[name];
           return field && field.value !== undefined ? field.value : "";
         };
+        const discountType = valOf("Discount_Type__c");
+        const discountValue = valOf("Discount_Value__c");
+        let discountDisplay = "";
+        if (discountValue !== "" && discountValue != null) {
+          discountDisplay =
+            discountType === "Percent"
+              ? `${discountValue}%`
+              : String(discountValue);
+        }
         return {
           Id: r.id,
           Name: valOf("Name"),
           Code__c: valOf("Code__c"),
           Display_Name__c: valOf("Display_Name__c"),
           Status__c: valOf("Status__c"),
-          Discount_Type__c: valOf("Discount_Type__c"),
+          Discount_Type__c: discountType,
+          Discount_Value__c: discountValue,
+          discountDisplay,
           CurrencyIsoCode: valOf("CurrencyIsoCode"),
           Effective_Start_Date__c: valOf("Effective_Start_Date__c"),
           Effective_End_Date__c: valOf("Effective_End_Date__c"),

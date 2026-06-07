@@ -25,8 +25,6 @@ import LBL_NoEnd from "@salesforce/label/c.PromoCodeWizard_S4_NoEnd";
 import LBL_None from "@salesforce/label/c.PromoCodeWizard_S4_None";
 import LBL_No from "@salesforce/label/c.PromoCodeWizard_S4_No";
 import LBL_CombinableYesGroup from "@salesforce/label/c.PromoCodeWizard_S4_CombinableYesGroup";
-import LBL_ProductFamilyPrefix from "@salesforce/label/c.PromoCodeWizard_S4_ProductFamilyPrefix";
-import LBL_SpecificPrefix from "@salesforce/label/c.PromoCodeWizard_S4_SpecificPrefix";
 import LBL_ActivationBanner from "@salesforce/label/c.PromoCodeWizard_S4_ActivationBanner";
 
 /**
@@ -47,7 +45,6 @@ export default class PromoCodeWizardStepReview extends LightningElement {
     discType: LBL_DiscType,
     discValue: LBL_DiscValue,
     effective: LBL_Effective,
-    applicationLevel: "Application Level",
     regions: LBL_Regions,
     products: LBL_Products,
     account: LBL_Account,
@@ -117,23 +114,13 @@ export default class PromoCodeWizardStepReview extends LightningElement {
     const arr = this.wizardData?.regionScope || [];
     return arr.length ? arr.join(", ") : LBL_All;
   }
-  get applicationLevelDisplay() {
-    return this.wizardData?.applicationLevel || "—";
-  }
   get productScopeDisplay() {
     const d = this.wizardData || {};
     const t = d.productScopeType;
     if (t === "All Items") return LBL_AllItems;
-    if (t === "Product Family") {
-      const families = d.productFamilyScope || [];
-      return `${LBL_ProductFamilyPrefix} ${families.length ? families.join(", ") : LBL_None}`;
-    }
     if (t === "Specific Membership Types") {
       const types = d.memberTypeScope || [];
       return `Specific Membership Types: ${types.length ? types.join(", ") : LBL_None}`;
-    }
-    if (t === "Specific Products") {
-      return `${LBL_SpecificPrefix} ${d.specificProducts || LBL_None}`;
     }
     return "—";
   }
