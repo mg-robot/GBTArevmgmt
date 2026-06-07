@@ -17,14 +17,17 @@
  *   Specific Products         → Specific_Products__c (CSV of ProductCodes; comma-split)
  *                                ⇒ Product2.ProductCode ∈ list (case-insensitive, trimmed)
  *
- * Step 1.5 — guards: drop eligible lines where UnitPrice × Quantity ≤ 0 or Quantity ≤ 0 (free
- * items and zero-qty lines have nothing to discount).
+ * Step 1.5 — guards: drop eligible lines where TotalPrice ≤ 0 or Quantity ≤ 0 (free items and
+ * zero-qty lines have nothing to discount).
  *
  * Step 2 — value math (Application_Level × Discount_Type):
  *   Per Line × Amount  → Discount_Value to each eligible line
- *   Per Line × Percent → UnitPrice × Quantity × pct/100 per eligible line
+ *   Per Line × Percent → TotalPrice × pct/100 per eligible line
  *   Per Order × Amount  → targetValue = Discount_Value, distributed proportionately
- *   Per Order × Percent → targetValue = Σ line subtotal × pct/100, distributed proportionately
+ *   Per Order × Percent → targetValue = Σ TotalPrice × pct/100, distributed proportionately
+ *
+ *   TotalPrice is used (not UnitPrice × Quantity) because ARM writes the pricing-procedure's
+ *   computed NetPrice to TotalPrice while leaving UnitPrice as the pricebook list price.
  *
  *   Proportionate distribution: lineAdjustment[i] = targetValue × (subtotal[i] / Σ subtotal),
  *   computed internally at 4 decimals, rounded to 2 for output. Residual cent (= targetValue −
@@ -33,7 +36,7 @@
  *
  * Stacking when multiple codes hit the same line:
  *   - Adjustments are additive
- *   - Percent codes computed against original (UnitPrice × Quantity), NOT against progressively-
+ *   - Percent codes computed against original TotalPrice (ARM NetPrice), NOT against progressively-
  *     discounted prices — so two 10% codes = 20% off, not 19%
  *   - Each line's CUMULATIVE adjustment across all codes is floored at the line's pre-discount
  *     subtotal — no negative NetPrice
@@ -72,19 +75,21 @@ public with sharing class PromoCodeAllocationEngine {
       return out;
     }
 
-    // Pre-compute per-line subtotal once (UnitPrice × Quantity), kept at full precision for
-    // proportional math and rounded only when emitting CodeAllocation amounts.
+    // Pre-compute per-line subtotal once. ARM writes the pricing-procedure's computed NetPrice
+    // into OrderItem.TotalPrice during each pricing run, leaving UnitPrice as the pricebook
+    // list/catalog price. Using TotalPrice ensures percent discounts are applied against the
+    // member's actual ARM-computed price, not the gross list price.
     Map<Id, Decimal> subtotalByLine = new Map<Id, Decimal>();
     // Per-line floor expressed as a line total: Floor_Price__c × Quantity. Null Floor_Price__c
     // is treated as 0 (no floor). The allocation cap keeps cumulative discount ≤ subtotal - floor
     // so the line's NetUnitPrice can never drop below Floor_Price__c regardless of stacking.
     Map<Id, Decimal> floorByLine = new Map<Id, Decimal>();
     for (OrderItem oi : orderItems) {
-      Decimal unit = oi.UnitPrice == null ? 0 : oi.UnitPrice;
+      Decimal totalPrice = oi.TotalPrice == null ? 0 : oi.TotalPrice;
       Decimal qty = oi.Quantity == null ? 0 : oi.Quantity;
       subtotalByLine.put(
         oi.Id,
-        (unit * qty).setScale(4, System.RoundingMode.HALF_UP)
+        totalPrice.setScale(4, System.RoundingMode.HALF_UP)
       );
       Decimal floor = (Decimal) oi.get('Floor_Price__c');
       if (floor == null || floor < 0) {
@@ -192,7 +197,14 @@ public with sharing class PromoCodeAllocationEngine {
       : code.Product_Scope_Type__c;
 
     if (scopeType == 'All Items') {
-      return new List<OrderItem>(all);
+      // Exclude ARM-managed rows (billing schedule entries, sub-asset placeholders)
+      // that carry non-zero UnitPrice but have no real Product association.
+      List<OrderItem> hits = new List<OrderItem>();
+      for (OrderItem oi : all) {
+        if (oi.Product2Id != null)
+          hits.add(oi);
+      }
+      return hits;
     }
     if (scopeType == 'Product Family') {
       Set<String> families = splitMultiPicklist(code.Product_Family_Scope__c);

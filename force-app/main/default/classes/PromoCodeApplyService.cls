@@ -635,6 +635,7 @@ public with sharing class PromoCodeApplyService {
         Product2.ProductCode,
         Quantity,
         UnitPrice,
+        TotalPrice,
         Floor_Price__c
       FROM OrderItem
       WHERE OrderId = :orderId
