@@ -90,6 +90,10 @@ public with sharing class PromoCodeApplyService {
     public String errorMessage;
     @AuraEnabled
     public String displayName;
+    @AuraEnabled
+    public String discountType;
+    @AuraEnabled
+    public Decimal discountValue;
   }
 
   /**
@@ -501,6 +505,8 @@ public with sharing class PromoCodeApplyService {
         Promo_Code__r.Code__c,
         Promo_Code__r.Display_Name__c,
         Promo_Code__r.CurrencyIsoCode,
+        Promo_Code__r.Discount_Type__c,
+        Promo_Code__r.Discount_Value__c,
         Applied_Discount_Amount__c,
         Application_Group_Id__c,
         Order_Item__c,
@@ -528,6 +534,8 @@ public with sharing class PromoCodeApplyService {
         cr.code = pci.Promo_Code__r.Code__c;
         cr.displayName = pci.Promo_Code__r.Display_Name__c;
         cr.currencyIsoCode = (String) pci.Promo_Code__r.get('CurrencyIsoCode');
+        cr.discountType = pci.Promo_Code__r.Discount_Type__c;
+        cr.discountValue = pci.Promo_Code__r.Discount_Value__c;
         cr.valid = true;
         cr.appliedAmount = 0;
         cr.appliedToOrderItemIds = new List<Id>();
@@ -636,7 +644,8 @@ public with sharing class PromoCodeApplyService {
         Quantity,
         UnitPrice,
         TotalPrice,
-        Floor_Price__c
+        Floor_Price__c,
+        Promotion_Value__c
       FROM OrderItem
       WHERE OrderId = :orderId
     ];

@@ -117,7 +117,8 @@ describe("c-promo-code-entry", () => {
           code: "SAVE10",
           currencyIsoCode: "USD",
           displayName: "Save 10%",
-          appliedAmount: 50
+          appliedAmount: 50,
+          discountLabel: ""
         }
       ],
       totalAdjustment: 50

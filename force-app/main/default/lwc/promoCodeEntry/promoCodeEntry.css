@@ -34,7 +34,7 @@
 
 .input-row {
   display: flex;
-  align-items: end;
+  align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
@@ -82,11 +82,25 @@
   color: #181818;
 }
 
+.code-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
 .code-name {
   color: var(--gbta-text-muted);
   font-size: 0.8125rem;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-discount {
+  color: var(--gbta-accent-blue);
+  font-size: 0.8125rem;
+  font-weight: 600;
   white-space: nowrap;
 }
 

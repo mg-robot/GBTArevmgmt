@@ -51,12 +51,13 @@ private class PromoCodeAllocationEngineTest {
       UnitPrice = unitPrice,
       Quantity = qty
     );
-    // ARM writes the pricing-procedure's NetPrice to TotalPrice, leaving UnitPrice as the
-    // pricebook list price. The engine now uses TotalPrice as the discount base. For tests
-    // where the ARM price equals the list price (the common case), set TotalPrice = UnitPrice × Qty.
-    // Tests that need to simulate ARM repricing (TotalPrice ≠ UnitPrice × Qty) call
-    // oi.put('TotalPrice', armNetPrice) after building the line.
+    // Engine uses basePrice = TotalPrice + Promotion_Value__c. ARM writes member price to
+    // TotalPrice and subtracts Promotion_Value__c (prior promo) from it. Default: no prior promo
+    // so Promotion_Value__c = 0 and TotalPrice = listPrice × Qty (ARM price equals list price).
+    // Override TotalPrice or Promotion_Value__c after building to simulate ARM repricing or
+    // a prior promo-applied state.
     oi.put('TotalPrice', unitPrice * qty);
+    oi.put('Promotion_Value__c', 0);
     oi.Product2 = new Product2(
       Name = productName,
       Family = family,
@@ -905,10 +906,9 @@ private class PromoCodeAllocationEngineTest {
 
   @IsTest
   static void perLine_percent_usesArmNetPriceNotListPrice() {
-    // Regression test for the ARM UnitPrice vs TotalPrice discrepancy.
-    // ARM leaves UnitPrice as the pricebook list price ($420) and writes the pricing-procedure's
-    // NetPrice into TotalPrice ($165). A 25% code should discount against $165, producing $41.25 —
-    // NOT against $420 (list price), which would incorrectly produce $105.
+    // Regression: ARM leaves UnitPrice = pricebook price ($420), writes member price to TotalPrice
+    // ($165), Promotion_Value__c = 0 (fresh order). basePrice = $165 + 0 = $165.
+    // 25% × $165 = $41.25 — NOT 25% × $420 ($105, wrong) or 25% × (unitPrice×qty) ($105, wrong).
     Promo_Code__c c = buildCode(
       'LAT25P',
       'Percent',
@@ -926,8 +926,7 @@ private class PromoCodeAllocationEngineTest {
       420,
       1
     );
-    // Override TotalPrice to simulate ARM having repriced the line to $165.
-    allied.put('TotalPrice', 165.00);
+    allied.put('TotalPrice', 165.00); // ARM member price (not pricebook $420)
 
     List<PromoCodeAllocationEngine.CodeAllocation> result = PromoCodeAllocationEngine.allocate(
       new List<Promo_Code__c>{ c },
@@ -939,6 +938,53 @@ private class PromoCodeAllocationEngineTest {
       41.25,
       result[0].adjustmentAmount,
       '25% off ARM NetPrice ($165) = $41.25; must NOT use pricebook list price ($420) which would give $105'
+    );
+  }
+
+  @IsTest
+  static void perLine_percent_stableBaseOnReApply() {
+    // Regression: when the user removes and re-applies a promo code, ARM re-prices the order.
+    // The PreHook writes Promotion_Value__c to the pricing context; ARM then sets
+    // TotalPrice = memberPrice - Promotion_Value__c. Without correcting for this, the engine
+    // would see a progressively-shrinking TotalPrice and compute smaller discounts each re-apply.
+    //
+    // Fix: engine uses basePrice = TotalPrice + Promotion_Value__c, which always recovers the
+    // original ARM member price. For Direct Membership ($370 member price):
+    //   - Prior promo applied $80.19 → Promotion_Value__c = $80.19
+    //   - ARM re-prices: TotalPrice = $370 - $80.19 = $289.81
+    //   - basePrice = $289.81 + $80.19 = $370
+    //   - 30% × $370 = $111 (same result as a fresh order)
+    Promo_Code__c c = buildCode(
+      'MICAHTEST',
+      'Percent',
+      30,
+      'Per Line',
+      'All Items',
+      null,
+      null,
+      null
+    );
+    OrderItem direct = buildLine(
+      'Direct Membership',
+      'Membership',
+      'DIRECT',
+      370,
+      1
+    );
+    // Simulate ARM having re-priced after a prior $80.19 promo application.
+    direct.put('TotalPrice', 289.81); // $370 - $80.19
+    direct.put('Promotion_Value__c', 80.19); // prior promo written by PreHook
+
+    List<PromoCodeAllocationEngine.CodeAllocation> result = PromoCodeAllocationEngine.allocate(
+      new List<Promo_Code__c>{ c },
+      new List<OrderItem>{ direct }
+    );
+
+    System.assertEquals(1, result.size());
+    System.assertEquals(
+      111.00,
+      result[0].adjustmentAmount,
+      '30% off $370 member price = $111; base must be TotalPrice+Promotion_Value__c ($289.81+$80.19=$370), not raw TotalPrice ($289.81) which gives $86.94'
     );
   }
 

@@ -61,9 +61,14 @@
             <div class="code-row-main">
               <div class="code-info">
                 <span class="code-value">{c.code}</span>
-                <template if:true={c.displayName}>
-                  <span class="code-name">{c.displayName}</span>
-                </template>
+                <div class="code-meta">
+                  <template if:true={c.displayName}>
+                    <span class="code-name">{c.displayName}</span>
+                  </template>
+                  <template if:true={c.discountLabel}>
+                    <span class="code-discount">{c.discountLabel}</span>
+                  </template>
+                </div>
               </div>
               <div class="code-amount">
                 <lightning-formatted-number

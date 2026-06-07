@@ -16,6 +16,13 @@ import LBL_Dismiss from "@salesforce/label/c.PromoCodeEntry_Dismiss";
 import LBL_TotalSavings from "@salesforce/label/c.PromoCodeEntry_TotalSavings";
 import LBL_RetryMessage from "@salesforce/label/c.PromoCodeEntry_RetryMessage";
 
+function buildDiscountLabel(discountType, discountValue) {
+  if (discountType === "Percent" && discountValue != null) {
+    return `${discountValue}% Discount`;
+  }
+  return "";
+}
+
 /**
  * Member-facing inline panel for entering promo codes at checkout. Validates each code via Apex,
  * renders per-code error banners for failed attempts, and surfaces the total savings summary.
@@ -275,7 +282,8 @@ export default class PromoCodeEntry extends LightningElement {
           code: cr.code,
           currencyIsoCode: cr.currencyIsoCode,
           displayName: cr.displayName,
-          appliedAmount: cr.appliedAmount
+          appliedAmount: cr.appliedAmount,
+          discountLabel: buildDiscountLabel(cr.discountType, cr.discountValue)
         }));
       this.appliedCodes = applied;
       this.applicationGroupId = result.applicationGroupId || null;
@@ -308,7 +316,8 @@ export default class PromoCodeEntry extends LightningElement {
             code: cr.code,
             currencyIsoCode: cr.currencyIsoCode,
             displayName: cr.displayName,
-            appliedAmount: cr.appliedAmount
+            appliedAmount: cr.appliedAmount,
+            discountLabel: buildDiscountLabel(cr.discountType, cr.discountValue)
           });
         } else if (cr.errorCode === "DROPPED_NON_COMBINABLE") {
           // Apex's combinability resolver removed this code because the cart has 2+

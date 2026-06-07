@@ -22,12 +22,15 @@
  *
  * Step 2 — value math (Application_Level × Discount_Type):
  *   Per Line × Amount  → Discount_Value to each eligible line
- *   Per Line × Percent → TotalPrice × pct/100 per eligible line
+ *   Per Line × Percent → basePrice × pct/100 per eligible line
  *   Per Order × Amount  → targetValue = Discount_Value, distributed proportionately
- *   Per Order × Percent → targetValue = Σ TotalPrice × pct/100, distributed proportionately
+ *   Per Order × Percent → targetValue = Σ basePrice × pct/100, distributed proportionately
  *
- *   TotalPrice is used (not UnitPrice × Quantity) because ARM writes the pricing-procedure's
- *   computed NetPrice to TotalPrice while leaving UnitPrice as the pricebook list price.
+ *   basePrice = TotalPrice + Promotion_Value__c per line. ARM writes the pricing-procedure's
+ *   computed NetPrice to TotalPrice after subtracting Promotion_Value__c (the previously-applied
+ *   promo discount written by the PreHook). Adding Promotion_Value__c back recovers the original
+ *   ARM member price so re-applying a code always uses the same stable base. On a fresh order
+ *   with no prior promo, Promotion_Value__c = 0 and basePrice = TotalPrice (ARM member price).
  *
  *   Proportionate distribution: lineAdjustment[i] = targetValue × (subtotal[i] / Σ subtotal),
  *   computed internally at 4 decimals, rounded to 2 for output. Residual cent (= targetValue −
@@ -75,10 +78,12 @@ public with sharing class PromoCodeAllocationEngine {
       return out;
     }
 
-    // Pre-compute per-line subtotal once. ARM writes the pricing-procedure's computed NetPrice
-    // into OrderItem.TotalPrice during each pricing run, leaving UnitPrice as the pricebook
-    // list/catalog price. Using TotalPrice ensures percent discounts are applied against the
-    // member's actual ARM-computed price, not the gross list price.
+    // Pre-compute per-line base price once. basePrice = TotalPrice + Promotion_Value__c, which
+    // recovers the original ARM member price when the PreHook has already baked a prior promo
+    // discount into TotalPrice (ARM computes TotalPrice = member_price − Promotion_Value__c).
+    // On a fresh order with no prior promo, Promotion_Value__c = 0 so basePrice = TotalPrice.
+    // UnitPrice is NOT used because ARM leaves it as the pricebook catalog price while writing
+    // the actual member price into TotalPrice.
     Map<Id, Decimal> subtotalByLine = new Map<Id, Decimal>();
     // Per-line floor expressed as a line total: Floor_Price__c × Quantity. Null Floor_Price__c
     // is treated as 0 (no floor). The allocation cap keeps cumulative discount ≤ subtotal - floor
@@ -86,10 +91,13 @@ public with sharing class PromoCodeAllocationEngine {
     Map<Id, Decimal> floorByLine = new Map<Id, Decimal>();
     for (OrderItem oi : orderItems) {
       Decimal totalPrice = oi.TotalPrice == null ? 0 : oi.TotalPrice;
+      Decimal promoValue = oi.get('Promotion_Value__c') == null
+        ? 0
+        : (Decimal) oi.get('Promotion_Value__c');
       Decimal qty = oi.Quantity == null ? 0 : oi.Quantity;
       subtotalByLine.put(
         oi.Id,
-        totalPrice.setScale(4, System.RoundingMode.HALF_UP)
+        (totalPrice + promoValue).setScale(4, System.RoundingMode.HALF_UP)
       );
       Decimal floor = (Decimal) oi.get('Floor_Price__c');
       if (floor == null || floor < 0) {

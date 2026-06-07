@@ -9,7 +9,7 @@
         </itemInstances>
         <itemInstances>
             <componentInstance>
-                <componentName>c:promoCodeListSection</componentName>
+                <componentName>promoCodeListSection</componentName>
                 <identifier>listSection</identifier>
             </componentInstance>
         </itemInstances>

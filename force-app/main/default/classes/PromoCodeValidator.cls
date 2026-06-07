@@ -55,6 +55,8 @@ public with sharing class PromoCodeValidator {
       );
     }
     cr.displayName = parent.Display_Name__c;
+    cr.discountType = parent.Discount_Type__c;
+    cr.discountValue = parent.Discount_Value__c;
 
     // 2. NOT_ACTIVE
     if (parent.Status__c != 'Active') {
