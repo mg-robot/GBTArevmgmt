@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<QuickAction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description
+  >Expire the current pricing record and create a new one with updated pricing.</description>
+    <label>Update Price</label>
+    <lightningWebComponent
+  >pricingMatrixUpdatePriceAction</lightningWebComponent>
+    <optionsCreateFeedItem>false</optionsCreateFeedItem>
+    <type>LightningWebComponent</type>
+</QuickAction>
