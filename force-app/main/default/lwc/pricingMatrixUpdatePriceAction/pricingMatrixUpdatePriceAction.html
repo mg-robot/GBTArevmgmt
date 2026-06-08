@@ -1,7 +1,9 @@
 <template>
-  <lightning-flow
-    flow-api-name="Pricing_Matrix_Update_Price"
-    flow-input-variables={flowInputVariables}
-    onstatuschange={handleStatusChange}
-  ></lightning-flow>
+  <template lwc:if={recordId}>
+    <lightning-flow
+      flow-api-name="Pricing_Matrix_Update_Price"
+      flow-input-variables={flowInputVariables}
+      onstatuschange={handleStatusChange}
+    ></lightning-flow>
+  </template>
 </template>
