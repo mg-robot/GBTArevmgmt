@@ -198,6 +198,7 @@ export default class PromoCodeWizardStepScope extends LightningElement {
       if (new Date(d.effectiveEnd) <= new Date(d.effectiveStart)) valid = false;
     }
     // Required fields
+    if (!d.effectiveStart) valid = false;
     if (!d.productScopeType) valid = false;
     if (!d.applicableTo) valid = false;
     // Min Months must be a non-negative integer when present; only meaningful for Join codes.

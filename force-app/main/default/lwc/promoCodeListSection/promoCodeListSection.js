@@ -1,7 +1,6 @@
 import { LightningElement, wire } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
 import { getListRecordsByName } from "lightning/uiListsApi";
-import { refreshApex } from "@salesforce/apex";
 
 import getPromoCodeListViews from "@salesforce/apex/PromoCodeListViewService.getPromoCodeListViews";
 
@@ -58,7 +57,6 @@ export default class PromoCodeListSection extends NavigationMixin(
   selectedView;
   records = [];
   isLoading = true;
-  _wiredRecordsResult;
 
   // Pagination state. `pageToken` is the token sent to the wire adapter for the
   // current page; null fetches the first page. `nextPageToken` /
@@ -91,9 +89,7 @@ export default class PromoCodeListSection extends NavigationMixin(
     pageToken: "$pageToken",
     fields: FIELDS_TO_FETCH
   })
-  wiredRecords(result) {
-    this._wiredRecordsResult = result;
-    const { data, error } = result;
+  wiredRecords({ data, error }) {
     if (data) {
       const recs = data.records || [];
       this.records = recs.map((r) => {
@@ -185,12 +181,14 @@ export default class PromoCodeListSection extends NavigationMixin(
   }
 
   handleRefresh() {
-    if (this._wiredRecordsResult) {
-      this.isLoading = true;
-      refreshApex(this._wiredRecordsResult).finally(() => {
-        this.isLoading = false;
-      });
-    }
+    // refreshApex returns undefined for UI API wire adapters (getListRecordsByName
+    // is not Apex-backed), so we force re-execution by toggling the reactive param.
+    this.isLoading = true;
+    const currentView = this.selectedView;
+    this.selectedView = undefined;
+    Promise.resolve().then(() => {
+      this.selectedView = currentView;
+    });
   }
 
   handleNext() {
