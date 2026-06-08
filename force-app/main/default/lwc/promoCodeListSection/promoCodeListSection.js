@@ -182,13 +182,18 @@ export default class PromoCodeListSection extends NavigationMixin(
 
   handleRefresh() {
     // refreshApex returns undefined for UI API wire adapters (getListRecordsByName
+    // refreshApex returns undefined for UI API wire adapters (getListRecordsByName
     // is not Apex-backed), so we force re-execution by toggling the reactive param.
+    // setTimeout(0) is required — Promise.resolve().then() is a microtask and runs
+    // before LWC's render cycle, so both assignments collapse into a single render
+    // with no net change and the wire never re-fires.
     this.isLoading = true;
     const currentView = this.selectedView;
     this.selectedView = undefined;
-    Promise.resolve().then(() => {
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    setTimeout(() => {
       this.selectedView = currentView;
-    });
+    }, 0);
   }
 
   handleNext() {
