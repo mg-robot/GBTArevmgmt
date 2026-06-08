@@ -1094,9 +1094,14 @@ private class PromoCodeValidatorTest {
   @IsTest
   static void validate_renewFlow_joinOnlyCode_returnsFlowNotApplicable() {
     Account a = ensureAccount();
-    Promo_Code__c pc = insertActiveCode('JOINONLY');
+    Promo_Code__c pc = PromoCodeTestDataFactory.buildBase(
+      'JOINONLY',
+      CURRENCY_ISO,
+      'Percent',
+      10
+    );
     pc.Applicable_To__c = 'Join';
-    update pc;
+    insert pc;
 
     PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
     ctx.flowType = PromoCodeApplyService.FLOW_RENEW;
@@ -1119,9 +1124,14 @@ private class PromoCodeValidatorTest {
   @IsTest
   static void validate_joinFlow_renewOnlyCode_returnsFlowNotApplicable() {
     Account a = ensureAccount();
-    Promo_Code__c pc = insertActiveCode('RENEWONLY');
+    Promo_Code__c pc = PromoCodeTestDataFactory.buildBase(
+      'RENEWONLY',
+      CURRENCY_ISO,
+      'Percent',
+      10
+    );
     pc.Applicable_To__c = 'Renew';
-    update pc;
+    insert pc;
 
     PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
     ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
@@ -1185,9 +1195,14 @@ private class PromoCodeValidatorTest {
   @IsTest
   static void validate_blankFlowType_treatedAsJoin() {
     Account a = ensureAccount();
-    Promo_Code__c pc = insertActiveCode('JOINBLANK');
+    Promo_Code__c pc = PromoCodeTestDataFactory.buildBase(
+      'JOINBLANK',
+      CURRENCY_ISO,
+      'Percent',
+      10
+    );
     pc.Applicable_To__c = 'Renew';
-    update pc;
+    insert pc;
 
     PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
     ctx.flowType = null; // null -> default Join inside validator
@@ -1214,10 +1229,15 @@ private class PromoCodeValidatorTest {
   @IsTest
   static void validate_join_lookback_recentMember_returnsRecentlyActive() {
     Account a = ensureAccount();
-    Promo_Code__c pc = insertActiveCode('LAPSED12');
+    Promo_Code__c pc = PromoCodeTestDataFactory.buildBase(
+      'LAPSED12',
+      CURRENCY_ISO,
+      'Percent',
+      10
+    );
     pc.Min_Months_Since_Last_Active__c = 12;
     pc.Applicable_To__c = 'Join';
-    update pc;
+    insert pc;
 
     PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
     ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
@@ -1241,10 +1261,15 @@ private class PromoCodeValidatorTest {
   @IsTest
   static void validate_join_lookback_lapsedMember_passes() {
     Account a = ensureAccount();
-    Promo_Code__c pc = insertActiveCode('LAPSED12OK');
+    Promo_Code__c pc = PromoCodeTestDataFactory.buildBase(
+      'LAPSED12OK',
+      CURRENCY_ISO,
+      'Percent',
+      10
+    );
     pc.Min_Months_Since_Last_Active__c = 12;
     pc.Applicable_To__c = 'Join';
-    update pc;
+    insert pc;
 
     PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
     ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
@@ -1264,10 +1289,15 @@ private class PromoCodeValidatorTest {
   @IsTest
   static void validate_join_lookback_neverActiveMember_passes() {
     Account a = ensureAccount();
-    Promo_Code__c pc = insertActiveCode('NEVERACTIVE');
+    Promo_Code__c pc = PromoCodeTestDataFactory.buildBase(
+      'NEVERACTIVE',
+      CURRENCY_ISO,
+      'Percent',
+      10
+    );
     pc.Min_Months_Since_Last_Active__c = 12;
     pc.Applicable_To__c = 'Join';
-    update pc;
+    insert pc;
 
     PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
     ctx.flowType = PromoCodeApplyService.FLOW_JOIN;
@@ -1294,10 +1324,15 @@ private class PromoCodeValidatorTest {
     // if the code's lookback is set (and a Both code is the only way the renew cart
     // would survive the FLOW_NOT_APPLICABLE rule when Min Months is set).
     Account a = ensureAccount();
-    Promo_Code__c pc = insertActiveCode('BOTHLAPSE');
+    Promo_Code__c pc = PromoCodeTestDataFactory.buildBase(
+      'BOTHLAPSE',
+      CURRENCY_ISO,
+      'Percent',
+      10
+    );
     pc.Min_Months_Since_Last_Active__c = 12;
     pc.Applicable_To__c = 'Both';
-    update pc;
+    insert pc;
 
     PromoCodeApplyService.OrderContext ctx = buildContext(a.Id, null, 'NA');
     ctx.flowType = PromoCodeApplyService.FLOW_RENEW;
