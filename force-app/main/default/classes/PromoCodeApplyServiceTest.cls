@@ -464,20 +464,29 @@ private class PromoCodeApplyServiceTest {
   }
 
   @IsTest
-  static void revalidateAll_codeStatusChangedToDraft_returnsNotActive() {
+  static void revalidateAll_codeIsNotActive_returnsNotActive() {
+    // The org VR (VR_PromoCode_Status_Transitions) blocks Active → Draft via direct DML.
+    // We simulate a post-apply deactivation by wiring a Pending PCI directly to a Draft code,
+    // which mirrors the state left behind when an admin uses the bypass-permitted flow to
+    // deactivate a code after the member has already applied it to their cart.
     Order ord = setupOrderWithOneItem();
     if (ord == null)
       return;
-    Promo_Code__c pc = PromoCodeTestDataFactory.newActivePercentCode(
-      uniqueCode('DEACT_'),
-      CURRENCY_ISO,
+    Promo_Code__c draftCode = PromoCodeTestDataFactory.newDraftCode(
+      uniqueCode('NOTACT_'),
+      CURRENCY_ISO
+    );
+    OrderItem oi = firstOrderItem(ord.Id);
+    if (oi == null)
+      return;
+    Id memberId = [SELECT AccountId FROM Order WHERE Id = :ord.Id LIMIT 1]
+    .AccountId;
+    PromoCodeTestDataFactory.newPendingPci(
+      draftCode,
+      oi,
+      new Account(Id = memberId),
       10
     );
-    PromoCodeApplyService.apply(ord.Id, new List<String>{ pc.Code__c });
-
-    // Staff deactivates the code while the member's cart is still open.
-    pc.Status__c = 'Draft';
-    update pc;
 
     Test.startTest();
     List<PromoCodeApplyService.CodeResult> results = PromoCodeApplyService.revalidateAll(
@@ -490,7 +499,7 @@ private class PromoCodeApplyServiceTest {
     System.assertEquals(
       PromoCodeApplyService.ERR_NOT_ACTIVE,
       results[0].errorCode,
-      'Status change to Draft mid-cart should surface as NOT_ACTIVE'
+      'Draft code linked via PCI should surface as NOT_ACTIVE at revalidation'
     );
   }
 
