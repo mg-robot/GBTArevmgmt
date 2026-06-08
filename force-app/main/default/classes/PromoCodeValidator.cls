@@ -630,38 +630,6 @@ public with sharing class PromoCodeValidator {
     return out;
   }
 
-  private static Boolean isCombinableWith(
-    Promo_Code__c candidate,
-    List<Promo_Code__c> alreadyValid
-  ) {
-    if (alreadyValid == null || alreadyValid.isEmpty())
-      return true;
-
-    if (candidate.Combinable__c == false)
-      return false;
-
-    for (Promo_Code__c existing : alreadyValid) {
-      if (existing.Combinable__c == false)
-        return false;
-    }
-
-    String candidateGroup = candidate.Combination_Group__c;
-    if (String.isBlank(candidateGroup)) {
-      // Combinable=true with no group — treat as not-combinable. The data-layer VR
-      // VR_PromoCode_RequireCombinationGroup should prevent this state at save time.
-      return false;
-    }
-    for (Promo_Code__c existing : alreadyValid) {
-      String existingGroup = existing.Combination_Group__c;
-      if (
-        existingGroup == null || !existingGroup.equalsIgnoreCase(candidateGroup)
-      ) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   /**
    * Flow-type acceptance check. Null/blank Applicable_To__c is treated as 'Both' so legacy
    * records (created before the field existed) keep working until backfilled.

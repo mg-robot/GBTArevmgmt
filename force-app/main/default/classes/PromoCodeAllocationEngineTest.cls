@@ -521,6 +521,55 @@ private class PromoCodeAllocationEngineTest {
     );
   }
 
+  @IsTest
+  static void perOrder_amount_fourNonUniformLines_residualOnLargest() {
+    // $10 off across four non-uniform lines ($41, $63, $82, $115 = $301 total).
+    // Pro-rata shares round to $1.36 + $2.09 + $2.72 + $3.82 = $9.99, leaving a $0.01 residual
+    // that must be added to the largest-subtotal line ($115) to reach exactly $10.00.
+    Promo_Code__c c = buildCode(
+      'NONUNIFORM',
+      'Amount',
+      10,
+      'Per Order',
+      'All Items',
+      null,
+      null,
+      null
+    );
+    OrderItem lineA = buildLine('A', 'Membership', 'A1', 41, 1);
+    OrderItem lineB = buildLine('B', 'Membership', 'B1', 63, 1);
+    OrderItem lineC = buildLine('C', 'Membership', 'C1', 82, 1);
+    OrderItem lineD = buildLine('D', 'Membership', 'D1', 115, 1);
+
+    List<PromoCodeAllocationEngine.CodeAllocation> result = PromoCodeAllocationEngine.allocate(
+      new List<Promo_Code__c>{ c },
+      new List<OrderItem>{ lineA, lineB, lineC, lineD }
+    );
+
+    System.assertEquals(
+      4,
+      result.size(),
+      'All four lines should receive an allocation'
+    );
+    System.assertEquals(
+      10.00,
+      sumAdjustments(result),
+      'Residual cent must be reconciled onto the largest line so total = $10.00 exactly'
+    );
+
+    // Verify the largest line (lineD, $115) absorbed the residual.
+    Decimal lineDAdjustment = 0;
+    for (PromoCodeAllocationEngine.CodeAllocation a : result) {
+      if (a.orderItemId == lineD.Id)
+        lineDAdjustment = a.adjustmentAmount;
+    }
+    System.assertEquals(
+      3.83,
+      lineDAdjustment,
+      'Largest line should receive base share $3.82 + residual $0.01 = $3.83'
+    );
+  }
+
   // ============================================================
   // Stacking
   // ============================================================

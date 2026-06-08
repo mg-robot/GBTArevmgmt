@@ -241,6 +241,20 @@ private class PromoCodeApplyServiceTest {
   }
 
   @IsTest
+  static void apply_nullCodes_returnsEmpty() {
+    Order ord = setupOrderWithOneItem();
+    if (ord == null)
+      return;
+
+    PromoCodeApplyService.ApplyResult result = PromoCodeApplyService.apply(
+      ord.Id,
+      null
+    );
+    System.assertEquals(0, result.codeResults.size());
+    System.assertEquals(false, result.repriceRequired);
+  }
+
+  @IsTest
   static void apply_emptyCodes_returnsEmptyResult() {
     Order ord = setupOrderWithOneItem();
     if (ord == null)
@@ -447,6 +461,116 @@ private class PromoCodeApplyServiceTest {
       PromoCodeApplyService.ERR_OUT_OF_WINDOW,
       results[0].errorCode
     );
+  }
+
+  @IsTest
+  static void revalidateAll_codeStatusChangedToDraft_returnsNotActive() {
+    Order ord = setupOrderWithOneItem();
+    if (ord == null)
+      return;
+    Promo_Code__c pc = PromoCodeTestDataFactory.newActivePercentCode(
+      uniqueCode('DEACT_'),
+      CURRENCY_ISO,
+      10
+    );
+    PromoCodeApplyService.apply(ord.Id, new List<String>{ pc.Code__c });
+
+    // Staff deactivates the code while the member's cart is still open.
+    pc.Status__c = 'Draft';
+    update pc;
+
+    Test.startTest();
+    List<PromoCodeApplyService.CodeResult> results = PromoCodeApplyService.revalidateAll(
+      ord.Id
+    );
+    Test.stopTest();
+
+    System.assertEquals(1, results.size());
+    System.assertEquals(false, results[0].valid);
+    System.assertEquals(
+      PromoCodeApplyService.ERR_NOT_ACTIVE,
+      results[0].errorCode,
+      'Status change to Draft mid-cart should surface as NOT_ACTIVE'
+    );
+  }
+
+  @IsTest
+  static void getCurrentlyApplied_multipleGroups_returnsLatestGroupId() {
+    // Directly insert two Pending PCIs from different application groups with different
+    // Applied_Date__c timestamps to verify getCurrentlyApplied picks the most-recent group.
+    Order ord = setupOrderWithItems(2);
+    if (ord == null)
+      return;
+
+    List<OrderItem> ois = [
+      SELECT Id
+      FROM OrderItem
+      WHERE OrderId = :ord.Id
+      LIMIT 2
+    ];
+    if (ois.size() < 2)
+      return;
+
+    Id memberId = [SELECT AccountId FROM Order WHERE Id = :ord.Id LIMIT 1]
+    .AccountId;
+    Promo_Code__c pc1 = PromoCodeTestDataFactory.newActivePercentCode(
+      uniqueCode('MGA_'),
+      CURRENCY_ISO,
+      10
+    );
+    Promo_Code__c pc2 = PromoCodeTestDataFactory.newActivePercentCode(
+      uniqueCode('MGB_'),
+      CURRENCY_ISO,
+      5
+    );
+
+    String earlierGroupId =
+      'GROUP-EARLIER-' + String.valueOf(System.currentTimeMillis());
+    String laterGroupId =
+      'GROUP-LATER-' + String.valueOf(System.currentTimeMillis() + 1000);
+
+    insert new List<Promo_Code_Item__c>{
+      new Promo_Code_Item__c(
+        Promo_Code__c = pc1.Id,
+        Order_Item__c = ois[0].Id,
+        Member__c = memberId,
+        Applied_Discount_Amount__c = 15,
+        Discount_Type_Snapshot__c = 'Percent',
+        Discount_Value_Snapshot__c = 10,
+        Application_Group_Id__c = earlierGroupId,
+        Applied_Date__c = Datetime.now().addHours(-2),
+        Status__c = 'Pending'
+      ),
+      new Promo_Code_Item__c(
+        Promo_Code__c = pc2.Id,
+        Order_Item__c = ois[1].Id,
+        Member__c = memberId,
+        Applied_Discount_Amount__c = 7.50,
+        Discount_Type_Snapshot__c = 'Percent',
+        Discount_Value_Snapshot__c = 5,
+        Application_Group_Id__c = laterGroupId,
+        Applied_Date__c = Datetime.now().addHours(-1),
+        Status__c = 'Pending'
+      )
+    };
+
+    Test.startTest();
+    PromoCodeApplyService.ApplyResult result = PromoCodeApplyService.getCurrentlyApplied(
+      ord.Id
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      2,
+      result.codeResults.size(),
+      'Both codes should appear'
+    );
+    System.assertEquals(
+      laterGroupId,
+      result.applicationGroupId,
+      'Most-recent Applied_Date__c determines applicationGroupId'
+    );
+    System.assert(result.totalAdjustment > 0);
   }
 
   // -----------------------------------------------------------

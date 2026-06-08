@@ -43,35 +43,19 @@
   <div class="slds-m-bottom_medium">
     <h3 class="section-heading">{label.productAppHeading}</h3>
     <p class="helper-text">{label.productAppHelper}</p>
-    <div class="slds-grid slds-gutters slds-wrap">
-      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-        <lightning-radio-group
-          label={label.productScope}
-          options={productScopeTypeOptions}
-          value={wizardData.productScopeType}
-          type="radio"
-          required
-          onchange={handleProductScopeTypeChange}
-        >
-        </lightning-radio-group>
-      </div>
-      <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-2">
-        <template if:true={isAllItems}>
-          <p class="helper-text slds-text-color_weak">
-            {label.allItemsMessage}
-          </p>
-        </template>
-        <template if:true={isSpecificMembershipTypes}>
-          <lightning-checkbox-group
-            label={label.memberTypeScope}
-            options={memberTypeOptions}
-            value={wizardData.memberTypeScope}
-            onchange={handleMemberTypeScopeChange}
-          >
-          </lightning-checkbox-group>
-        </template>
-      </div>
-    </div>
+    <lightning-input
+      type="checkbox"
+      label={label.selectAll}
+      checked={selectAllChecked}
+      onchange={handleSelectAllChange}
+      class="slds-m-bottom_xx-small"
+    ></lightning-input>
+    <lightning-checkbox-group
+      label={label.memberTypeScope}
+      options={memberTypeOptions}
+      value={wizardData.memberTypeScope}
+      onchange={handleMemberTypeScopeChange}
+    ></lightning-checkbox-group>
   </div>
 
   <!-- Section 4: Account Scope -->

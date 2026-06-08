@@ -17,7 +17,6 @@ import LBL_TotalLimit from "@salesforce/label/c.PromoCodeWizard_S4_TotalLimit_La
 import LBL_PerMemberLimit from "@salesforce/label/c.PromoCodeWizard_S4_PerMemberLimit_Label";
 import LBL_Combinable from "@salesforce/label/c.PromoCodeWizard_S4_Combinable_Label";
 import LBL_All from "@salesforce/label/c.PromoCodeWizard_S4_All";
-import LBL_AllItems from "@salesforce/label/c.PromoCodeWizard_S4_AllItems";
 import LBL_Unlimited from "@salesforce/label/c.PromoCodeWizard_S4_Unlimited";
 import LBL_Any from "@salesforce/label/c.PromoCodeWizard_S4_Any";
 import LBL_NoStart from "@salesforce/label/c.PromoCodeWizard_S4_NoStart";
@@ -115,14 +114,8 @@ export default class PromoCodeWizardStepReview extends LightningElement {
     return arr.length ? arr.join(", ") : LBL_All;
   }
   get productScopeDisplay() {
-    const d = this.wizardData || {};
-    const t = d.productScopeType;
-    if (t === "All Items") return LBL_AllItems;
-    if (t === "Specific Membership Types") {
-      const types = d.memberTypeScope || [];
-      return `Specific Membership Types: ${types.length ? types.join(", ") : LBL_None}`;
-    }
-    return "—";
+    const types = this.wizardData?.memberTypeScope || [];
+    return types.length ? types.join(", ") : LBL_None;
   }
   get accountDisplay() {
     return this.wizardData?.accountId || LBL_Any;

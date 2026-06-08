@@ -11,7 +11,6 @@ import LBL_EffectiveEnd from "@salesforce/label/c.PromoCodeWizard_S2_EffectiveEn
 import LBL_MemberTypeScope from "@salesforce/label/c.PromoCodeWizard_S2_MemberType_Label";
 import LBL_RegionScope from "@salesforce/label/c.PromoCodeWizard_S2_Region_Label";
 import LBL_ProductAppHeading from "@salesforce/label/c.PromoCodeWizard_S2_ProductApp_Heading";
-import LBL_ProductScope from "@salesforce/label/c.PromoCodeWizard_S2_ProductScope_Label";
 import LBL_AccountScopeHeading from "@salesforce/label/c.PromoCodeWizard_S2_AccountScope_Heading";
 import LBL_AccountScopeHelper from "@salesforce/label/c.PromoCodeWizard_S2_AccountScope_Helper";
 import LBL_Account from "@salesforce/label/c.PromoCodeWizard_S2_Account_Label";
@@ -30,21 +29,14 @@ const REGION_HELPER =
   "Leave Region Scope blank to make this code available in all regions.";
 const PRODUCT_APP_HELPER =
   "Choose which membership product lines this code discounts. The full discount value will be applied to each eligible line.";
-const ALL_ITEMS_MESSAGE =
-  "All membership product lines in the order are eligible.";
-
-// Product scope options — limited to the two applicable types (no Product Family or Specific Products).
-const PRODUCT_SCOPE_OPTIONS = [
-  { label: "All Items", value: "All Items" },
-  { label: "Specific Membership Types", value: "Specific Membership Types" }
-];
+const SELECT_ALL_LABEL = "Select All Membership Types";
 
 /**
  * Step 2 of the wizard — Scope & Eligibility.
  * Sections:
  *   1. Validity Window
  *   2. Region
- *   3. Product Applicability (All Items or Specific Membership Types only)
+ *   3. Product Applicability (membership types only — at least one required)
  *   4. Account Scope
  *   5. Flow Applicability (Join / Renew / Both + optional lookback)
  *
@@ -68,8 +60,7 @@ export default class PromoCodeWizardStepScope extends LightningElement {
     regionScope: LBL_RegionScope,
     productAppHeading: LBL_ProductAppHeading,
     productAppHelper: PRODUCT_APP_HELPER,
-    productScope: LBL_ProductScope,
-    allItemsMessage: ALL_ITEMS_MESSAGE,
+    selectAll: SELECT_ALL_LABEL,
     accountScopeHeading: LBL_AccountScopeHeading,
     accountScopeHelper: LBL_AccountScopeHelper,
     account: LBL_Account,
@@ -120,9 +111,6 @@ export default class PromoCodeWizardStepScope extends LightningElement {
   get regionOptions() {
     return this._regionOptions;
   }
-  get productScopeTypeOptions() {
-    return PRODUCT_SCOPE_OPTIONS;
-  }
   get applicableToOptions() {
     return this._applicableToOptions;
   }
@@ -132,14 +120,17 @@ export default class PromoCodeWizardStepScope extends LightningElement {
     return !v || v === "Both" || v === "Join";
   }
 
-  get isAllItems() {
-    return this.wizardData?.productScopeType === "All Items";
-  }
-  get isSpecificMembershipTypes() {
-    return this.wizardData?.productScopeType === "Specific Membership Types";
+  get selectAllChecked() {
+    const opts = this._memberTypeOptions;
+    const selected = this.wizardData?.memberTypeScope || [];
+    return opts.length > 0 && selected.length === opts.length;
   }
 
   connectedCallback() {
+    // Normalize legacy 'All Items' records to the only supported scope value
+    if (this.wizardData?.productScopeType !== "Specific Membership Types") {
+      this.dispatch("productScopeType", "Specific Membership Types");
+    }
     Promise.resolve().then(() => this.fireValidate());
   }
 
@@ -153,14 +144,11 @@ export default class PromoCodeWizardStepScope extends LightningElement {
     this.dispatch("regionScope", e.detail.value);
   }
 
-  handleProductScopeTypeChange(e) {
-    const v = e.detail.value;
-    const prev = this.wizardData?.productScopeType;
-    this.dispatch("productScopeType", v);
-    // Clear stale member type selections when switching away from Specific Membership Types
-    if (prev === "Specific Membership Types" && v !== prev) {
-      this.dispatch("memberTypeScope", []);
-    }
+  handleSelectAllChange(e) {
+    const allValues = e.target.checked
+      ? this._memberTypeOptions.map((o) => o.value)
+      : [];
+    this.dispatch("memberTypeScope", allValues);
   }
 
   handleMemberTypeScopeChange(e) {
@@ -199,8 +187,9 @@ export default class PromoCodeWizardStepScope extends LightningElement {
     }
     // Required fields
     if (!d.effectiveStart) valid = false;
-    if (!d.productScopeType) valid = false;
     if (!d.applicableTo) valid = false;
+    // At least one membership type must be selected
+    if (!d.memberTypeScope || d.memberTypeScope.length === 0) valid = false;
     // Min Months must be a non-negative integer when present; only meaningful for Join codes.
     if (
       d.minMonthsSinceLastActive != null &&
@@ -210,12 +199,6 @@ export default class PromoCodeWizardStepScope extends LightningElement {
       if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) valid = false;
       if (d.applicableTo === "Renew") valid = false;
     }
-    // Specific Membership Types requires at least one type selected
-    if (
-      d.productScopeType === "Specific Membership Types" &&
-      (!d.memberTypeScope || d.memberTypeScope.length === 0)
-    )
-      valid = false;
     this.dispatchEvent(new CustomEvent("stepvalidate", { detail: { valid } }));
   }
 }
