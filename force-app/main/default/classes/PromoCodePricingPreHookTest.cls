@@ -434,6 +434,129 @@ private class PromoCodePricingPreHookTest {
     );
   }
 
+  @IsTest
+  static void buildNodeUpdates_nullOrderItemIds_returnsEmpty() {
+    List<Map<String, Object>> result = PromoCodePricingPreHook.buildNodeUpdates(
+      null,
+      new Map<Id, List<Object>>(),
+      new Map<Id, Decimal>()
+    );
+    System.assertEquals(
+      0,
+      result.size(),
+      'Null orderItemIds should return empty list'
+    );
+  }
+
+  @IsTest
+  static void buildNodeUpdates_nullPathMap_skipsAllItems() {
+    Id oi = fakeId(OrderItem.SObjectType, 99);
+    List<Map<String, Object>> result = PromoCodePricingPreHook.buildNodeUpdates(
+      new Set<Id>{ oi },
+      null, // null pathMap → fullPath = null → skip all
+      new Map<Id, Decimal>{ oi => 10 }
+    );
+    System.assertEquals(
+      0,
+      result.size(),
+      'Null pathMap should produce no node updates'
+    );
+  }
+
+  @IsTest
+  static void buildNodeUpdates_nullAdjustmentMap_defaultsToZero() {
+    Id oi = fakeId(OrderItem.SObjectType, 99);
+    List<Object> path = new List<Object>{ 'Order/abc', 'Item/x', 'Line/0' };
+    List<Map<String, Object>> result = PromoCodePricingPreHook.buildNodeUpdates(
+      new Set<Id>{ oi },
+      new Map<Id, List<Object>>{ oi => path },
+      null // null adjustmentMap → should fall through to 0
+    );
+    System.assertEquals(1, result.size());
+    List<Object> attrs = (List<Object>) result[0].get('attributes');
+    Map<String, Object> attr = (Map<String, Object>) attrs[0];
+    System.assertEquals(
+      0,
+      (Decimal) attr.get('attributeValue'),
+      'Null adjustmentMap should default Promotion_Value__c to 0'
+    );
+  }
+
+  // -----------------------------------------------------------------------
+  // processContext — exercises lines 50-80 of execute() that are unreachable
+  // without a live Context.IndustriesContext
+  // -----------------------------------------------------------------------
+
+  @IsTest
+  static void processContext_nullItemList_returnsSuccessNoItems() {
+    RevSignaling.TransactionResponse r = PromoCodePricingPreHook.processContext(
+      null,
+      'any-ctx',
+      null
+    );
+    System.assertEquals(RevSignaling.TransactionStatus.SUCCESS, r.status);
+    System.assert(r.message.contains('no OrderItems'), 'Got: ' + r.message);
+  }
+
+  @IsTest
+  static void processContext_emptyItemList_returnsSuccessNoItems() {
+    RevSignaling.TransactionResponse r = PromoCodePricingPreHook.processContext(
+      null,
+      'any-ctx',
+      new List<Object>()
+    );
+    System.assertEquals(RevSignaling.TransactionStatus.SUCCESS, r.status);
+    System.assert(r.message.contains('no OrderItems'), 'Got: ' + r.message);
+  }
+
+  @IsTest
+  static void processContext_validNodeShortPath_aggregatesAndReturnsSuccess() {
+    // A node whose dataPath has only 1 element is skipped by buildNodeUpdates (too short
+    // after the contextId strip), so nodeUpdates is empty, submitContextUpdates is a
+    // no-op with null industriesContext, and we get a SUCCESS summary back.
+    // This covers the aggregation + build + submit + return lines without a live platform context.
+    Id oi = fakeId(OrderItem.SObjectType, 5);
+    List<Object> nodes = new List<Object>{
+      buildNode(oi, new List<Object>{ 'OnlyContextId' }) // 1 element → skipped by buildNodeUpdates
+    };
+    RevSignaling.TransactionResponse r = PromoCodePricingPreHook.processContext(
+      null,
+      'any-ctx',
+      nodes
+    );
+    System.assertEquals(RevSignaling.TransactionStatus.SUCCESS, r.status);
+    System.assert(r.message.contains('0 adjustment'), 'Got: ' + r.message);
+    System.assert(
+      r.message.contains('0 OrderItem(s) reset'),
+      'Got: ' + r.message
+    );
+  }
+
+  @IsTest
+  static void extractOrderItemPaths_lineItemIsNotAMap_skipsNode() {
+    // LineItem entry is a String rather than a Map<String,Object> — the instanceof
+    // guard should skip this node rather than throw a cast exception.
+    Id validOi = fakeId(OrderItem.SObjectType, 1);
+    List<Object> nodes = new List<Object>{
+      new Map<String, Object>{
+        'tagValue' => new Map<String, Object>{
+          'LineItem' => 'not-a-map' // String, not Map<String,Object>
+        },
+        'dataPath' => new List<Object>{ 'Order/abc', 'Item/x', 'Line/0' }
+      },
+      buildNode(validOi, new List<Object>{ 'Order/abc', 'Item/x', 'Line/1' })
+    };
+
+    Map<Id, List<Object>> result = PromoCodePricingPreHook.extractOrderItemPaths(
+      nodes
+    );
+    System.assertEquals(1, result.size(), 'Non-Map LineItem should be skipped');
+    System.assert(
+      result.containsKey(validOi),
+      'Valid node should still be mapped'
+    );
+  }
+
   // -----------------------------------------------------------------------
   // helpers
   // -----------------------------------------------------------------------

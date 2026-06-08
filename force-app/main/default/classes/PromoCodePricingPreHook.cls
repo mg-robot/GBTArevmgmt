@@ -47,43 +47,52 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
         contextId
       );
       System.debug(itemDataList);
-      Map<String, List<Object>> orderItemToDataPath = extractOrderItemPaths(
-        itemDataList
-      );
-      System.debug('past extractOderItems Paths');
-      System.debug(orderItemToDataPath);
-      Set<String> orderItemIds = orderItemToDataPath.keySet();
-      System.debug(orderItemIds);
-
-      if (orderItemIds.isEmpty()) {
-        return buildResponse(
-          RevSignaling.TransactionStatus.SUCCESS,
-          'PromoCodePricingPreHook: no OrderItems in pricing context.'
-        );
-      }
-
-      Map<String, Decimal> adjustmentByOrderItem = aggregateAdjustments(
-        orderItemIds
-      );
-      System.debug(adjustmentByOrderItem);
-      List<Map<String, Object>> nodeUpdates = buildNodeUpdates(
-        orderItemIds,
-        orderItemToDataPath,
-        adjustmentByOrderItem
-      );
-      System.debug(nodeUpdates);
-      submitContextUpdates(industriesContext, contextId, nodeUpdates);
-
-      return buildResponse(
-        RevSignaling.TransactionStatus.SUCCESS,
-        summarizeResult(adjustmentByOrderItem.size(), nodeUpdates.size())
-      );
+      return processContext(industriesContext, contextId, itemDataList);
     } catch (Exception e) {
       return buildResponse(
         RevSignaling.TransactionStatus.FAILED,
         'PromoCodePricingPreHook error: ' + e.getMessage()
       );
     }
+  }
+
+  // Extracted so @TestVisible tests can exercise the core logic without a live
+  // Context.IndustriesContext (platform class; not constructable in test context).
+  @TestVisible
+  private static RevSignaling.TransactionResponse processContext(
+    Context.IndustriesContext industriesContext,
+    String contextId,
+    List<Object> itemDataList
+  ) {
+    Map<Id, List<Object>> orderItemToDataPath = extractOrderItemPaths(
+      itemDataList
+    );
+    System.debug('past extractOderItems Paths');
+    System.debug(orderItemToDataPath);
+    Set<Id> orderItemIds = orderItemToDataPath.keySet();
+    System.debug(orderItemIds);
+
+    if (orderItemIds.isEmpty()) {
+      return buildResponse(
+        RevSignaling.TransactionStatus.SUCCESS,
+        'PromoCodePricingPreHook: no OrderItems in pricing context.'
+      );
+    }
+
+    Map<Id, Decimal> adjustmentByOrderItem = aggregateAdjustments(orderItemIds);
+    System.debug(adjustmentByOrderItem);
+    List<Map<String, Object>> nodeUpdates = buildNodeUpdates(
+      orderItemIds,
+      orderItemToDataPath,
+      adjustmentByOrderItem
+    );
+    System.debug(nodeUpdates);
+    submitContextUpdates(industriesContext, contextId, nodeUpdates);
+
+    return buildResponse(
+      RevSignaling.TransactionStatus.SUCCESS,
+      summarizeResult(adjustmentByOrderItem.size(), nodeUpdates.size())
+    );
   }
 
   private static List<Object> queryTransactionItems(
@@ -154,10 +163,10 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
    * in queryTags output but should not receive context updates).
    */
   @TestVisible
-  private static Map<String, List<Object>> extractOrderItemPaths(
+  private static Map<Id, List<Object>> extractOrderItemPaths(
     List<Object> itemDataList
   ) {
-    Map<String, List<Object>> result = new Map<String, List<Object>>();
+    Map<Id, List<Object>> result = new Map<Id, List<Object>>();
     if (itemDataList == null)
       return result;
     for (Object itemObj : itemDataList) {
@@ -183,7 +192,7 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
       if (oiIdObj == null)
         continue;
       System.debug('oiIdObj: ' + oiIdObj);
-      String orderItemId = String.valueOf(oiIdObj);
+      Id orderItemId = Id.valueOf(String.valueOf(oiIdObj));
       System.debug('orderItemId: ' + orderItemId);
       result.put(orderItemId, (List<Object>) itemNode.get('dataPath'));
       System.debug(result);
@@ -197,10 +206,8 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
    * returned map (callers MUST treat absence as 0 for the reset behavior).
    */
   @TestVisible
-  private static Map<String, Decimal> aggregateAdjustments(
-    Set<String> orderItemIds
-  ) {
-    Map<String, Decimal> result = new Map<String, Decimal>();
+  private static Map<Id, Decimal> aggregateAdjustments(Set<Id> orderItemIds) {
+    Map<Id, Decimal> result = new Map<Id, Decimal>();
     if (orderItemIds == null || orderItemIds.isEmpty())
       return result;
     for (Promo_Code_Item__c pci : [
@@ -208,7 +215,7 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
       FROM Promo_Code_Item__c
       WHERE Order_Item__c IN :orderItemIds AND Status__c = 'Pending'
     ]) {
-      String oiKey = String.valueOf(pci.Order_Item__c);
+      Id oiKey = pci.Order_Item__c;
       Decimal current = result.get(oiKey);
       Decimal amount = pci.Applied_Discount_Amount__c == null
         ? 0
@@ -232,14 +239,14 @@ global with sharing class PromoCodePricingPreHook implements RevSignaling.Signal
    */
   @TestVisible
   private static List<Map<String, Object>> buildNodeUpdates(
-    Set<String> orderItemIds,
-    Map<String, List<Object>> orderItemToDataPath,
-    Map<String, Decimal> adjustmentByOrderItem
+    Set<Id> orderItemIds,
+    Map<Id, List<Object>> orderItemToDataPath,
+    Map<Id, Decimal> adjustmentByOrderItem
   ) {
     List<Map<String, Object>> nodeUpdates = new List<Map<String, Object>>();
     if (orderItemIds == null)
       return nodeUpdates;
-    for (String oiId : orderItemIds) {
+    for (Id oiId : orderItemIds) {
       List<Object> fullPath = orderItemToDataPath == null
         ? null
         : orderItemToDataPath.get(oiId);
