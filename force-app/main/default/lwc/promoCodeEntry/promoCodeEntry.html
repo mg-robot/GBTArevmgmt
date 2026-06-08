@@ -61,23 +61,11 @@
             <div class="code-row-main">
               <div class="code-info">
                 <span class="code-value">{c.code}</span>
-                <div class="code-meta">
-                  <template if:true={c.displayName}>
-                    <span class="code-name">{c.displayName}</span>
-                  </template>
-                  <template if:true={c.discountLabel}>
-                    <span class="code-discount">{c.discountLabel}</span>
-                  </template>
-                </div>
+                <template if:true={c.displayName}>
+                  <span class="code-name">{c.displayName}</span>
+                </template>
               </div>
-              <div class="code-amount">
-                <lightning-formatted-number
-                  value={c.appliedAmount}
-                  format-style="currency"
-                  currency-code={c.currencyIsoCode}
-                >
-                </lightning-formatted-number>
-              </div>
+              <span class="discount-badge">{c.discountBadge}</span>
               <lightning-button-icon
                 icon-name="utility:close"
                 alternative-text={label.removeCode}
@@ -142,19 +130,6 @@
           </li>
         </template>
       </ul>
-    </template>
-
-    <template if:true={hasAppliedCodes}>
-      <div class="savings-summary">
-        <span class="savings-label">{label.totalSavings}</span>
-        <lightning-formatted-number
-          value={totalAdjustment}
-          format-style="currency"
-          currency-code={summaryCurrency}
-          class="savings-amount"
-        >
-        </lightning-formatted-number>
-      </div>
     </template>
   </div>
 </template>

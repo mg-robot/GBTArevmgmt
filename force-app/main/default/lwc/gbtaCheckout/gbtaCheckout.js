@@ -28,6 +28,11 @@ export default class GbtaCheckout extends LightningElement {
   _apiOrderId;
   _wiredError;
   _wiredOrderDetailsResult;
+  _promoDiscounts = [];
+
+  get promoDiscounts() {
+    return this._promoDiscounts;
+  }
 
   @api
   get orderId() {
@@ -88,6 +93,14 @@ export default class GbtaCheckout extends LightningElement {
     return this.isNeedsReview
       ? this.labels.needsReviewMessage
       : this.labels.successMessage;
+  }
+
+  handlePromoCodesApplied(event) {
+    this._promoDiscounts = event.detail.codes || [];
+  }
+
+  handlePromoCodesRemoved() {
+    this._promoDiscounts = [];
   }
 
   handleVatApplied() {

@@ -46,6 +46,17 @@
         </div>
 
         <div class="pricing-section">
+          <template if:true={hasPromoDiscounts}>
+            <template for:each={promoDiscountRows} for:item="discount">
+              <div key={discount.key} class="pricing-row">
+                <span class="pricing-label">{discount.label}</span>
+                <span class="promo-discount-value"
+                  >{discount.formattedAmount}</span
+                >
+              </div>
+            </template>
+          </template>
+
           <div class="pricing-row">
             <span class="pricing-label">{labels.subtotalLabel}</span>
             <span class="pricing-value">{formattedSubtotal}</span>

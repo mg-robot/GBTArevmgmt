@@ -53,7 +53,13 @@
           <div class="checkout-right">
             <c-gbta-order-summary
               order-id={resolvedOrderId}
+              promo-discounts={promoDiscounts}
             ></c-gbta-order-summary>
+            <c-promo-code-entry
+              order-id={resolvedOrderId}
+              oncodesapplied={handlePromoCodesApplied}
+              oncodesremoved={handlePromoCodesRemoved}
+            ></c-promo-code-entry>
           </div>
         </div>
       </template>

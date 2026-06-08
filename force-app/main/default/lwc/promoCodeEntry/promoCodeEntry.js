@@ -13,7 +13,6 @@ import LBL_RemoveCode from "@salesforce/label/c.PromoCodeEntry_RemoveCode";
 import LBL_DismissFailed from "@salesforce/label/c.PromoCodeEntry_DismissFailed";
 import LBL_DismissNotice from "@salesforce/label/c.PromoCodeEntry_DismissNotice";
 import LBL_Dismiss from "@salesforce/label/c.PromoCodeEntry_Dismiss";
-import LBL_TotalSavings from "@salesforce/label/c.PromoCodeEntry_TotalSavings";
 import LBL_RetryMessage from "@salesforce/label/c.PromoCodeEntry_RetryMessage";
 
 function buildDiscountLabel(discountType, discountValue) {
@@ -21,6 +20,21 @@ function buildDiscountLabel(discountType, discountValue) {
     return `${discountValue}% Discount`;
   }
   return "";
+}
+
+function buildDiscountBadge(
+  discountType,
+  discountValue,
+  appliedAmount,
+  currencyIsoCode
+) {
+  if (discountType === "Percent" && discountValue != null) {
+    return `${discountValue}%`;
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currencyIsoCode || "USD"
+  }).format(appliedAmount || 0);
 }
 
 /**
@@ -71,8 +85,7 @@ export default class PromoCodeEntry extends LightningElement {
     removeCode: LBL_RemoveCode,
     dismissFailed: LBL_DismissFailed,
     dismissNotice: LBL_DismissNotice,
-    dismiss: LBL_Dismiss,
-    totalSavings: LBL_TotalSavings
+    dismiss: LBL_Dismiss
   };
 
   showInput = false;
@@ -283,6 +296,14 @@ export default class PromoCodeEntry extends LightningElement {
           currencyIsoCode: cr.currencyIsoCode,
           displayName: cr.displayName,
           appliedAmount: cr.appliedAmount,
+          discountType: cr.discountType,
+          discountValue: cr.discountValue,
+          discountBadge: buildDiscountBadge(
+            cr.discountType,
+            cr.discountValue,
+            cr.appliedAmount,
+            cr.currencyIsoCode
+          ),
           discountLabel: buildDiscountLabel(cr.discountType, cr.discountValue)
         }));
       this.appliedCodes = applied;
@@ -317,6 +338,14 @@ export default class PromoCodeEntry extends LightningElement {
             currencyIsoCode: cr.currencyIsoCode,
             displayName: cr.displayName,
             appliedAmount: cr.appliedAmount,
+            discountType: cr.discountType,
+            discountValue: cr.discountValue,
+            discountBadge: buildDiscountBadge(
+              cr.discountType,
+              cr.discountValue,
+              cr.appliedAmount,
+              cr.currencyIsoCode
+            ),
             discountLabel: buildDiscountLabel(cr.discountType, cr.discountValue)
           });
         } else if (cr.errorCode === "DROPPED_NON_COMBINABLE") {
@@ -353,7 +382,14 @@ export default class PromoCodeEntry extends LightningElement {
           new CustomEvent("codesapplied", {
             detail: {
               applicationGroupId: this.applicationGroupId,
-              codes: applied,
+              codes: applied.map((c) => ({
+                code: c.code,
+                currencyIsoCode: c.currencyIsoCode,
+                displayName: c.displayName,
+                appliedAmount: c.appliedAmount,
+                discountType: c.discountType,
+                discountValue: c.discountValue
+              })),
               totalAdjustment: this.totalAdjustment
             }
           })

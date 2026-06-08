@@ -104,7 +104,7 @@
   white-space: nowrap;
 }
 
-.code-amount {
+.discount-badge {
   color: var(--gbta-success);
   font-weight: 600;
   flex-shrink: 0;
@@ -137,23 +137,4 @@
   border-radius: 0.125rem;
   font-size: 0.8125rem;
   margin-top: 0.25rem;
-}
-
-.savings-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0.75rem;
-  border-top: 2px solid var(--gbta-border);
-}
-
-.savings-label {
-  color: var(--gbta-text-muted);
-  font-weight: 600;
-}
-
-.savings-amount {
-  color: var(--gbta-success);
-  font-weight: 700;
-  font-size: 1.125rem;
 }

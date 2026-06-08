@@ -122,6 +122,12 @@
   margin-bottom: 0;
 }
 
+.promo-discount-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
 .total-label {
   font-size: 16px;
   font-weight: 700;

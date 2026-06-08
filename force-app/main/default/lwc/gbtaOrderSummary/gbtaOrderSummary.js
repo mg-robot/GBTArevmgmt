@@ -19,6 +19,7 @@ export default class GbtaOrderSummary extends LightningElement {
     totalLabel: labelTotalLabel
   };
   @api orderId;
+  @api promoDiscounts = [];
   lineItems = [];
   order;
   isLoading = true;
@@ -159,6 +160,28 @@ export default class GbtaOrderSummary extends LightningElement {
       this.order?.GrandTotalAmount ?? 0,
       this.order?.CurrencyIsoCode ?? "USD"
     );
+  }
+
+  get hasPromoDiscounts() {
+    return Array.isArray(this.promoDiscounts) && this.promoDiscounts.length > 0;
+  }
+
+  get promoDiscountRows() {
+    if (!this.hasPromoDiscounts) return [];
+    const currency = this.order?.CurrencyIsoCode ?? "USD";
+    const sorted = [...this.promoDiscounts].sort((a, b) => {
+      const aRank = a.discountType === "Percent" ? 0 : 1;
+      const bRank = b.discountType === "Percent" ? 0 : 1;
+      return aRank - bRank;
+    });
+    return sorted.map((d) => ({
+      key: d.code,
+      label: d.code,
+      formattedAmount: this._formatCurrency(
+        d.appliedAmount,
+        d.currencyIsoCode || currency
+      )
+    }));
   }
 
   get hasTax() {
