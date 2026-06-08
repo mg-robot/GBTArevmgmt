@@ -11,8 +11,9 @@ export default class PricingMatrixUpdatePriceAction extends LightningElement {
     return this._recordId;
   }
   set recordId(value) {
-    this._recordId = value;
-    if (value) {
+    // Set once — ignore null/undefined resets from the platform
+    if (value && !this._recordId) {
+      this._recordId = value;
       this._showFlow = true;
     }
   }
@@ -22,6 +23,7 @@ export default class PricingMatrixUpdatePriceAction extends LightningElement {
   }
 
   get flowInputVariables() {
+    if (!this._recordId) return [];
     return [{ name: "recordId", type: "String", value: this._recordId }];
   }
 
